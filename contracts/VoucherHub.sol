@@ -6,8 +6,7 @@ pragma solidity ^0.8.20;
 contract VoucherHub {
     event VoucherCreated();
 
-    constructor() {
-    }
+    constructor() {}
 
     function createVoucher() public {
         emit VoucherCreated();
