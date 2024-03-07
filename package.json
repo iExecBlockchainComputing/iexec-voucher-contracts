@@ -1,0 +1,23 @@
+{
+  "name": "iexec-voucher-contracts",
+  "version": "0.1.0",
+  "description": "Contracts related to iExec Voucher",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iExecBlockchainComputing/iexec-voucher-contracts.git"
+  },
+  "author": "iExec",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/iExecBlockchainComputing/iexec-voucher-contracts/issues"
+  },
+  "homepage": "https://github.com/iExecBlockchainComputing/iexec-voucher-contracts#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.21.0"
+  }
+}
