@@ -8,7 +8,7 @@ node {
             sh 'npm ci'
         }
         stage('Test') {
-            sh 'npx hardhat test'
+            sh 'npm run test'
         }
     }
 }
