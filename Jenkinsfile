@@ -1,0 +1,3 @@
+stage('Init') {
+    echo 'Initializing'
+}
