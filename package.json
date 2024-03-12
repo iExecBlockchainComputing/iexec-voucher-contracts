@@ -1,0 +1,33 @@
+{
+  "name": "iexec-voucher-contracts",
+  "version": "0.1.0",
+  "description": "Contracts related to iExec Voucher",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iExecBlockchainComputing/iexec-voucher-contracts.git"
+  },
+  "author": "iExec",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/iExecBlockchainComputing/iexec-voucher-contracts/issues"
+  },
+  "homepage": "https://github.com/iExecBlockchainComputing/iexec-voucher-contracts#readme",
+  "scripts": {
+    "test": "npx hardhat test",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.{js,ts,sol}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.21.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "prettier-plugin-organize-imports": "^3.2.4",
+    "prettier-plugin-solidity": "^1.3.1"
+  }
+}
