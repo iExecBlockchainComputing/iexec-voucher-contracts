@@ -11,7 +11,7 @@ node {
             sh 'npm ci'
         }
         stage('Test') {
-            sh 'npm run test'
+            sh 'npm run coverage'
         }
     }
 }
