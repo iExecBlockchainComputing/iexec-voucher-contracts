@@ -9,7 +9,7 @@ import {IVoucherHub} from "./IVoucherHub.sol";
 pragma solidity ^0.8.20;
 
 contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
-    /// @custom:storage-location erc7201:iexec.storage.VoucherHub
+    /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
         address _iexecPoco;
     }
