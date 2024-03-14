@@ -9,9 +9,9 @@ import {IVoucherHub} from "./IVoucherHub.sol";
 pragma solidity ^0.8.20;
 
 contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
-    /// @custom:storage-location erc7201:iexec.storage.VoucherHub
+    /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
-        address _iexecAddress;
+        address _iexecPoco;
         VoucherTypeDescription[] _voucherTypeDescriptions;
         mapping(uint256 => uint256) _voucherDurationByVoucherTypeId;
         mapping(uint256 => mapping(address => bool)) _isAssetEligibleToMatchOrdersSponsoringByVoucherTypeId;
@@ -26,9 +26,9 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     event VoucherDurationSet(uint256 indexed voucherTypeId, uint256 duration);
     event AssetEligibilitySet(uint256 indexed voucherTypeId, address asset, bool isEligible);
 
-    // keccak256(abi.encode(uint256(keccak256("iexec.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
+    // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 private constant VOUCHER_HUB_STORAGE_LOCATION =
-        0x8610b975c8d15083165a17dde673f1051edf836f87d56f9b9697dc45474fe600;
+        0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800;
 
     function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
         assembly {
@@ -41,10 +41,10 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         _disableInitializers();
     }
 
-    function initialize(address iexecAddress) public initializer {
+    function initialize(address iexecPoco) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
-        _getVoucherHubStorage()._iexecAddress = iexecAddress;
+        _getVoucherHubStorage()._iexecPoco = iexecPoco;
     }
 
     function addVoucherTypeDescription(
@@ -72,9 +72,9 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         emit AssetEligibilitySet(voucherTypeId, asset, isEligible);
     }
 
-    function getIexecAddress() public view returns (address) {
+    function getIexecPoco() public view returns (address) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $._iexecAddress;
+        return $._iexecPoco;
     }
 
     function createVoucher() public {

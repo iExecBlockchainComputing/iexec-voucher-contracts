@@ -17,13 +17,15 @@ describe('VoucherHub', function () {
         // Contracts are deployed using the first signer/account by default
         const [owner, otherAccount] = await ethers.getSigners();
 
-        const VoucherHub = await ethers.getContractFactory('VoucherHub');
+        const VoucherHubFactory = await ethers.getContractFactory('VoucherHub');
         /**
          * @dev Type declaration produces a warning until feature is supported by
          * openzeppelin plugin. See "Support TypeChain in deployProxy function":
          * https://github.com/OpenZeppelin/openzeppelin-upgrades/pull/535
          */
-        const voucherHub: VoucherHub = await upgrades.deployProxy(VoucherHub, [iexecAddress]);
+        const voucherHub: VoucherHub = await upgrades.deployProxy(VoucherHubFactory, [
+            iexecAddress,
+        ]);
         await voucherHub.waitForDeployment();
 
         return { voucherHub, owner, otherAccount };
@@ -34,7 +36,7 @@ describe('VoucherHub', function () {
             const { voucherHub, owner } = await loadFixture(deployFixture);
 
             expect(await voucherHub.owner()).to.equal(owner);
-            expect(await voucherHub.getIexecAddress()).to.equal(iexecAddress);
+            expect(await voucherHub.getIexecPoco()).to.equal(iexecAddress);
         });
 
         it('Should not initialize twice', async () => {
@@ -51,16 +53,16 @@ describe('VoucherHub', function () {
         it('Should upgrade', async () => {
             const { voucherHub } = await loadFixture(deployFixture);
             const voucherHubAddress = await voucherHub.getAddress();
-            const VoucherHubV2 = await ethers.getContractFactory('VoucherHubV2Mock');
+            const VoucherHubV2Factory = await ethers.getContractFactory('VoucherHubV2Mock');
             // Next line should throw if new storage schema is not compatible with previous one
             const voucherHubV2: VoucherHubV2Mock = await upgrades.upgradeProxy(
                 voucherHubAddress,
-                VoucherHubV2,
+                VoucherHubV2Factory,
             );
             await voucherHubV2.initializeV2('bar');
 
             expect(await voucherHubV2.getAddress()).to.equal(voucherHubAddress);
-            expect(await voucherHubV2.getIexecAddress()).to.equal(iexecAddress); // V1
+            expect(await voucherHubV2.getIexecPoco()).to.equal(iexecAddress); // V1
             expect(await voucherHubV2.foo()).to.equal('bar'); // V2
         });
 
