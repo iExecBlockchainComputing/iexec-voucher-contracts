@@ -1,11 +1,14 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
-import { ethers } from 'hardhat';
+import { ethers, upgrades } from 'hardhat';
 
 async function main() {
-    const voucherHub = await ethers.deployContract('VoucherHub');
+    const iexecAddress = '0x123456789a123456789b123456789b123456789d'; // TODO: Change it
+    const VoucherHubFactory = await ethers.getContractFactory('VoucherHub');
+    const voucherHub = await upgrades.deployProxy(VoucherHubFactory, [iexecAddress]);
     await voucherHub.waitForDeployment();
+    console.log('VoucherHub deployed to:', await voucherHub.getAddress());
 }
 
 // We recommend this pattern to be able to use async/await everywhere
