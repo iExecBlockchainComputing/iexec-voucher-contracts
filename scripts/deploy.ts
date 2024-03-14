@@ -5,8 +5,8 @@ import { ethers, upgrades } from 'hardhat';
 
 async function main() {
     const iexecAddress = '0x123456789a123456789b123456789b123456789d'; // TODO: Change it
-    const VoucherHub = await ethers.getContractFactory('VoucherHub');
-    const voucherHub = await upgrades.deployProxy(VoucherHub, [iexecAddress]);
+    const VoucherHubFactory = await ethers.getContractFactory('VoucherHub');
+    const voucherHub = await upgrades.deployProxy(VoucherHubFactory, [iexecAddress]);
     await voucherHub.waitForDeployment();
     console.log('VoucherHub deployed to:', await voucherHub.getAddress());
 }
