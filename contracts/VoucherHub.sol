@@ -41,6 +41,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         _getVoucherHubStorage()._iexecPoco = iexecPoco;
     }
 
+    // TODO: Replace most onlyOwner to onlyVoucherManager
     function createVoucherType(
         string memory voucherTypeDescription,
         uint256 voucherTypeduration
