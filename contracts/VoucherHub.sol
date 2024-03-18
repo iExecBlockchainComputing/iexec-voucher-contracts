@@ -61,7 +61,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require(
             voucherTypeId < $._voucherTypeInfos.length + 1 && voucherTypeId > 0,
-            "Index out of bounds"
+            "VoucherHub: Index out of bounds"
         );
         $._voucherTypeInfos[voucherTypeId - 1].voucherDescription = newVoucherDescription;
         emit VoucherTypeDescriptionUpdated(voucherTypeId, newVoucherDescription);
@@ -71,7 +71,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require(
             voucherTypeId < $._voucherTypeInfos.length + 1 && voucherTypeId > 0,
-            "Index out of bounds"
+            "VoucherHub: Index out of bounds"
         );
         $._voucherTypeInfos[voucherTypeId - 1].voucherDuration = newDuration;
         emit VoucherTypeDurationUpdated(voucherTypeId, newDuration);
@@ -83,7 +83,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require(
             voucherTypeId < $._voucherTypeInfos.length + 1 && voucherTypeId > 0,
-            "Index out of bounds"
+            "VoucherHub: Index out of bounds"
         );
         VoucherTypeInfo storage info = $._voucherTypeInfos[voucherTypeId - 1];
         return (info.voucherDescription, info.voucherDuration);
