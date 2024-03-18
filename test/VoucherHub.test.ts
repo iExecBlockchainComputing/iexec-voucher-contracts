@@ -134,7 +134,7 @@ describe('VoucherHub', function () {
             const initialDuration = 3600;
             const newDuration = 7200;
             await voucherHub.createVoucherType(description, initialDuration);
-            await expect(voucherHub.modifyVoucherDuration(1, newDuration))
+            await expect(voucherHub.updateVoucherTypeDuration(1, newDuration))
                 .to.emit(voucherHub, 'VoucherTypeDurationUpdated')
                 .withArgs(1, newDuration);
         });
@@ -145,7 +145,7 @@ describe('VoucherHub', function () {
             const initialDuration = 3600;
             const newDuration = 7200;
             await voucherHub.createVoucherType(description, initialDuration);
-            await expect(voucherHub.modifyVoucherDuration(0, newDuration)).to.be.revertedWith(
+            await expect(voucherHub.updateVoucherTypeDuration(0, newDuration)).to.be.revertedWith(
                 'VoucherHub: Index out of bounds',
             );
         });
@@ -157,7 +157,7 @@ describe('VoucherHub', function () {
             const newDuration = 7200;
             await voucherHub.createVoucherType(description, initialDuration);
             await expect(
-                voucherHub.connect(otherAccount).modifyVoucherDuration(1, newDuration),
+                voucherHub.connect(otherAccount).updateVoucherTypeDuration(1, newDuration),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
