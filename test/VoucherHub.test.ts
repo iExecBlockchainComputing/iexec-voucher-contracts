@@ -180,9 +180,15 @@ describe('VoucherHub', function () {
             const description = 'Voucher for Testing';
             const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
-            await voucherHub.setEligibleAsset(1, asset);
+            expect(await voucherHub.setEligibleAsset(1, asset)).to.emit(
+                voucherHub,
+                'SetEligibleAsset',
+            );
             expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(1, asset)).to.be.true;
-            await voucherHub.unsetEligibleAsset(1, asset);
+            expect(await voucherHub.unsetEligibleAsset(1, asset)).to.emit(
+                voucherHub,
+                'UnsetEligibleAsset',
+            );
             expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(1, asset)).to.be.false;
         });
 

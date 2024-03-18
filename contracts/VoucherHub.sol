@@ -93,15 +93,16 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
 
     function setEligibleAsset(uint256 voucherTypeId, address asset) public onlyOwner {
         _setAssetEligibility(voucherTypeId, asset, true);
+        emit SetEligibleAsset(voucherTypeId, asset);
     }
 
     function unsetEligibleAsset(uint256 voucherTypeId, address asset) public onlyOwner {
         _setAssetEligibility(voucherTypeId, asset, false);
+        emit UnsetEligibleAsset(voucherTypeId, asset);
     }
     function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._isAssetEligibleToMatchOrdersSponsoringByVoucherTypeId[voucherTypeId][asset] = isEligible;
-        emit AssetEligibilitySet(voucherTypeId, asset, isEligible);
     }
     function isAssetEligibleToMatchOrdersSponsoring(
         uint256 voucherTypeId,
