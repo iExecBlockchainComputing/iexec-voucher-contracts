@@ -7,7 +7,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {IVoucher} from "./IVoucher.sol";
 import {VoucherBase} from "./VoucherBase.sol";
 
-contract Voucher is IVoucher, VoucherBase, Initializable {
+contract VoucherImpl is IVoucher, VoucherBase, Initializable {
     function initialize(uint version_) external initializer {
         version = version_;
     }
