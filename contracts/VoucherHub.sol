@@ -16,7 +16,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
         address _iexecPoco;
-        VoucherTypeInfos[] _voucherTypeInfo;
+        VoucherTypeInfo[] _voucherTypeInfos;
         mapping(uint256 => mapping(address => bool)) _isAssetEligibleToMatchOrdersSponsoringByVoucherTypeId;
     }
 
@@ -41,80 +41,57 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         _getVoucherHubStorage()._iexecPoco = iexecPoco;
     }
 
-    /* 
-    Create a new voucher type
-    */
-
     function createVoucherType(
         string memory voucherTypeDescription,
         uint256 voucherTypeduration
     ) public onlyOwner {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $._voucherTypeDescriptions.push(VoucherTypeInfos(description, duration));
-        emit NewVoucherTypeCreated($._voucherTypeDescriptions.length, description, duration);
+        $._voucherTypeInfos.push(VoucherTypeInfo(voucherTypeDescription, voucherTypeduration));
+        emit NewVoucherTypeCreated(
+            $._voucherTypeInfos.length,
+            voucherTypeDescription,
+            voucherTypeduration
+        );
     }
-
-    /* 
-    Manage voucher type information 
-    Set new voucher description for the given voucher type
-    */
 
     function modifyVoucherDescription(
         uint256 voucherTypeId,
         string memory newVoucherDescription
     ) public onlyOwner {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        require(voucherTypeId < $._voucherTypeDescriptions.length + 1, "Index out of bounds");
-        VoucherTypeInfos storage voucherTypeInfo = $._voucherTypeDescriptions[voucherTypeId - 1];
-        voucherTypeInfo.voucherDescription = newVoucherDescription;
-        $._voucherTypeDescriptions[voucherTypeId - 1] = voucherTypeInfos;
+        require(
+            voucherTypeId < $._voucherTypeInfos.length + 1 && voucherTypeId > 0,
+            "Index out of bounds"
+        );
+        $._voucherTypeInfos[voucherTypeId - 1].voucherDescription = newVoucherDescription;
         emit SetNewVoucherDescription(voucherTypeId, newVoucherDescription);
     }
 
-    /* 
-    Manage voucher type information 
-    Set new voucher duration for the given voucher type
-    */
     function modifyVoucherDuration(uint256 voucherTypeId, uint256 newDuration) public onlyOwner {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        require(voucherTypeId < $._voucherTypeDescriptions.length + 1, "Index out of bounds");
-        VoucherTypeInfos storage voucherTypeInfos = $._voucherTypeDescriptions[voucherTypeId - 1];
-        voucherTypeInfos.voucherDuration = newDuration;
-        $._voucherTypeDescriptions[voucherTypeId - 1] = voucherTypeInfos;
+        require(
+            voucherTypeId < $._voucherTypeInfos.length + 1 && voucherTypeId > 0,
+            "Index out of bounds"
+        );
+        $._voucherTypeInfos[voucherTypeId - 1].voucherDuration = newDuration;
         emit SetNewVoucherDuration(voucherTypeId, newDuration);
     }
 
-    /**
-     * Getting voucher information for a given type
-     * @param voucherTypeId
-     * @return
-     * @return
-     */
-
-    function getVoucherTypeInfos(
+    function getVoucherTypeInfo(
         uint256 voucherTypeId
-    ) public view returns (uint256, string memory) {
+    ) public view returns (string memory, uint256) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require(
-            voucherTypeId < $._voucherTypeDescriptions.length + 1,
-            "voucherTypeId out of bounds"
+            voucherTypeId < $._voucherTypeInfos.length + 1 && voucherTypeId > 0,
+            "Index out of bounds"
         );
-        VoucherTypeInfos storage voucherTypeInfos = $._voucherTypeDescriptions[voucherTypeId - 1];
-        return (voucherTypeInfos.voucherDescription, voucherTypeInfos.voucherDuration);
+        VoucherTypeInfo storage info = $._voucherTypeInfos[voucherTypeId - 1];
+        return (info.voucherDescription, info.voucherDuration);
     }
 
     function getVoucherTypeCount() public view returns (uint256) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $._voucherTypeDescriptions.length;
+        return _getVoucherHubStorage()._voucherTypeInfos.length;
     }
-
-    /**
-     * @notice Sets the eligibility of an asset for a specific voucher type.
-     * @dev Can only be called by the admin. Emits an AssetEligibilitySet event upon success.
-     * @param voucherTypeId The unique identifier of the voucher type.
-     * @param asset The address of the asset to set eligibility for.
-     * @param isEligible A boolean indicating whether the asset is eligible for the voucher type.
-     */
 
     function setEligibleAsset(uint256 voucherTypeId, address asset) public onlyOwner {
         _setAssetEligibility(voucherTypeId, asset, true);
@@ -127,22 +104,19 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         uint256 voucherTypeId,
         address asset,
         bool isEligible
-    ) private onlyOwner {
+    ) public onlyOwner {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._isAssetEligibleToMatchOrdersSponsoringByVoucherTypeId[voucherTypeId][asset] = isEligible;
         emit AssetEligibilitySet(voucherTypeId, asset, isEligible);
     }
-    /**
-     *
-     * @param voucherTypeId
-     * @param asset
-     */
     function isAssetEligibleToMatchOrdersSponsoring(
         uint256 voucherTypeId,
         address asset
     ) public view returns (bool) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $._isAssetEligibleToMatchOrdersSponsoringByVoucherTypeId[voucherTypeId][asset];
+        return
+            _getVoucherHubStorage()._isAssetEligibleToMatchOrdersSponsoringByVoucherTypeId[
+                voucherTypeId
+            ][asset];
     }
 
     function getIexecPoco() public view returns (address) {
