@@ -10,7 +10,7 @@ interface IVoucherHub {
         string description,
         uint256 duration
     );
-    event SetNewVoucherDuration(uint256 indexed voucherTypeId, uint256 duration);
-    event SetNewVoucherDescription(uint256 indexed voucherTypeId, string description);
+    event VoucherTypeDescriptionUpdated(uint256 indexed id, string description);
+    event VoucherTypeDurationUpdated(uint256 indexed id, uint256 duration);
     event AssetEligibilitySet(uint256 indexed voucherTypeId, address asset, bool isEligible);
 }

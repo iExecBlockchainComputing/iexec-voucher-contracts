@@ -64,7 +64,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
             "Index out of bounds"
         );
         $._voucherTypeInfos[voucherTypeId - 1].voucherDescription = newVoucherDescription;
-        emit SetNewVoucherDescription(voucherTypeId, newVoucherDescription);
+        emit VoucherTypeDescriptionUpdated(voucherTypeId, newVoucherDescription);
     }
 
     function modifyVoucherDuration(uint256 voucherTypeId, uint256 newDuration) public onlyOwner {
@@ -74,7 +74,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
             "Index out of bounds"
         );
         $._voucherTypeInfos[voucherTypeId - 1].voucherDuration = newDuration;
-        emit SetNewVoucherDuration(voucherTypeId, newDuration);
+        emit VoucherTypeDurationUpdated(voucherTypeId, newDuration);
     }
 
     function getVoucherTypeInfo(
