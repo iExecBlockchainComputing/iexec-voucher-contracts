@@ -54,17 +54,17 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         );
     }
 
-    function modifyVoucherDescription(
+    function updateVoucherTypeDescription(
         uint256 voucherTypeId,
-        string memory newVoucherDescription
+        string memory newVoucherTypeDescription
     ) public onlyOwner {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require(
             voucherTypeId < $._voucherTypes.length + 1 && voucherTypeId > 0,
             "VoucherHub: Index out of bounds"
         );
-        $._voucherTypes[voucherTypeId - 1].description = newVoucherDescription;
-        emit VoucherTypeDescriptionUpdated(voucherTypeId, newVoucherDescription);
+        $._voucherTypes[voucherTypeId - 1].description = newVoucherTypeDescription;
+        emit VoucherTypeDescriptionUpdated(voucherTypeId, newVoucherTypeDescription);
     }
 
     function modifyVoucherDuration(uint256 voucherTypeId, uint256 newDuration) public onlyOwner {
