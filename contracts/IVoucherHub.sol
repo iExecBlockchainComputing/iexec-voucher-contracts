@@ -5,12 +5,8 @@ pragma solidity ^0.8.20;
 
 interface IVoucherHub {
     event VoucherCreated();
-    event NewVoucherTypeCreated(
-        uint256 indexed voucherTypeId,
-        string description,
-        uint256 duration
-    );
+    event NewVoucherTypeCreated(uint256 indexed id, string description, uint256 duration);
     event VoucherTypeDescriptionUpdated(uint256 indexed id, string description);
     event VoucherTypeDurationUpdated(uint256 indexed id, uint256 duration);
-    event AssetEligibilitySet(uint256 indexed voucherTypeId, address asset, bool isEligible);
+    event AssetEligibilitySet(uint256 indexed id, address asset, bool isEligible);
 }
