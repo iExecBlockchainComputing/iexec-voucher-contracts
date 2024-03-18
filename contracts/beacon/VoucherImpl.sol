@@ -7,16 +7,16 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {IVoucher} from "./IVoucher.sol";
 import {VoucherBase} from "./VoucherBase.sol";
 
-contract VoucherImpl is IVoucher, VoucherBase, Initializable {
-    function initialize(uint version_) external initializer {
-        version = version_;
+contract VoucherImpl is Initializable, IVoucher, VoucherBase {
+    function initialize(uint _version) external initializer {
+        version = _version;
     }
 
     function implementation() internal returns (address) {}
 
     // TODO remove
-    function setVersion(uint newVersion) external override {
-        version = newVersion;
+    function setVersion(uint _newVersion) external override {
+        version = _newVersion;
     }
 
     // TODO remove

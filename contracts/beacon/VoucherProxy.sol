@@ -7,6 +7,10 @@ import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol"
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {VoucherBase} from "./VoucherBase.sol";
 
+/**
+ * @notice proxy contract instance that is deployed per user.
+ * TODO use oz/OwnableUpgradeable if relevant.
+ */
 contract VoucherProxy is Ownable, BeaconProxy, VoucherBase {
     constructor(
         address _beacon,
@@ -28,8 +32,8 @@ contract VoucherProxy is Ownable, BeaconProxy, VoucherBase {
     }
 
     /**
-     * TODO
-     * @dev Remove warning:
+     * TODO !
+     * @dev Removes warning:
      * "This contract has a payable fallback function, but no receive
      * ether function. Consider adding a receive ether function"
      */
