@@ -113,7 +113,7 @@ describe('VoucherHub', function () {
             const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
             await expect(voucherHub.modifyVoucherDescription(1, newDescription))
-                .to.emit(voucherHub, 'SetNewVoucherDescription')
+                .to.emit(voucherHub, 'VoucherTypeDescriptionUpdated')
                 .withArgs(1, newDescription);
         });
 
@@ -135,7 +135,7 @@ describe('VoucherHub', function () {
             const newDuration = 7200;
             await voucherHub.createVoucherType(description, initialDuration);
             await expect(voucherHub.modifyVoucherDuration(1, newDuration))
-                .to.emit(voucherHub, 'SetNewVoucherDuration')
+                .to.emit(voucherHub, 'VoucherTypeDurationUpdated')
                 .withArgs(1, newDuration);
         });
 
@@ -146,7 +146,7 @@ describe('VoucherHub', function () {
             const newDuration = 7200;
             await voucherHub.createVoucherType(description, initialDuration);
             await expect(voucherHub.modifyVoucherDuration(0, newDuration)).to.be.revertedWith(
-                'Index out of bounds',
+                'VoucherHub: Index out of bounds',
             );
         });
 
@@ -168,7 +168,7 @@ describe('VoucherHub', function () {
             const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
             await expect(voucherHub.modifyVoucherDescription(0, newDescription)).to.be.revertedWith(
-                'Index out of bounds',
+                'VoucherHub: Index out of bounds',
             );
         });
     });
@@ -211,26 +211,26 @@ describe('VoucherHub', function () {
         });
     });
 
-    describe('getVoucherTypeInfo', function () {
+    describe('getVoucherType', function () {
         it('Should return correct voucher type information', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
 
             await voucherHub.createVoucherType('Early Access', 3600);
             await voucherHub.createVoucherType('Premium Access', 7200);
 
-            const info1 = await voucherHub.getVoucherTypeInfo(1);
+            const info1 = await voucherHub.getVoucherType(1);
             expect(info1[0]).to.equal('Early Access');
             expect(info1[1]).to.equal(3600);
 
-            const info2 = await voucherHub.getVoucherTypeInfo(2);
+            const info2 = await voucherHub.getVoucherType(2);
             expect(info2[0]).to.equal('Premium Access');
             expect(info2[1]).to.equal(7200);
         });
 
         it('Should revert for an out of bounds voucher type ID', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            await expect(voucherHub.getVoucherTypeInfo(999)).to.be.revertedWith(
-                'Index out of bounds',
+            await expect(voucherHub.getVoucherType(999)).to.be.revertedWith(
+                'VoucherHub: Index out of bounds',
             );
         });
     });
