@@ -9,7 +9,7 @@ import {IVoucherHub} from "./IVoucherHub.sol";
 pragma solidity ^0.8.20;
 
 contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
-    struct VoucherTypeInfo {
+    struct VoucherType {
         string voucherDescription;
         uint256 voucherDuration;
     }
