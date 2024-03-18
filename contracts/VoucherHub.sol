@@ -81,14 +81,14 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         emit VoucherTypeDurationUpdated(voucherTypeId, newVoucherTypeDuration);
     }
 
-    function getVoucherType(uint256 voucherTypeId) public view returns (string memory, uint256) {
+    function getVoucherType(uint256 voucherTypeId) public view returns (VoucherType memory) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require(
             voucherTypeId < $._voucherTypes.length + 1 && voucherTypeId > 0,
             "VoucherHub: Index out of bounds"
         );
         VoucherType storage info = $._voucherTypes[voucherTypeId - 1];
-        return (info.description, info.duration);
+        return info;
     }
 
     function getVoucherTypeCount() public view returns (uint256) {
