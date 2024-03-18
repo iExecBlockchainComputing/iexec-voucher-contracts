@@ -85,178 +85,165 @@ describe('VoucherHub', function () {
         });
     });
 
-    describe('Testing each setter function separately', function () {
-        describe('addVoucherTypeDescription', function () {
-            it('Should allow owner to add a voucher type description', async function () {
-                const { voucherHub, owner } = await loadFixture(deployFixture);
-                const voucherTypeId = 1;
-                const description = 'Test Voucher Type';
-
-                await expect(voucherHub.addVoucherTypeDescription(voucherTypeId, description))
-                    .to.emit(voucherHub, 'VoucherTypeAdded')
-                    .withArgs(voucherTypeId, description);
-            });
-
-            it('Should not allow non-owner to add a voucher type description', async function () {
-                const { voucherHub, otherAccount } = await loadFixture(deployFixture);
-                const voucherTypeId = 1;
-                const description = 'Test Voucher Type';
-
-                await expect(
-                    voucherHub
-                        .connect(otherAccount)
-                        .addVoucherTypeDescription(voucherTypeId, description),
-                ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
-            });
+    describe('Create Voucher Type', function () {
+        it('Should allow owner to create a voucher type', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            const description = 'Test Voucher';
+            const duration = 3600;
+            await expect(voucherHub.createVoucherType(description, duration))
+                .to.emit(voucherHub, 'NewVoucherTypeCreated')
+                .withArgs(1, description, duration);
         });
 
-        describe('setVoucherDuration', function () {
-            it('Should allow owner to set voucher duration', async function () {
-                const { voucherHub } = await loadFixture(deployFixture);
-                const voucherTypeId = 1;
-                const duration = 3600;
-
-                await expect(voucherHub.setVoucherDuration(voucherTypeId, duration))
-                    .to.emit(voucherHub, 'VoucherDurationSet')
-                    .withArgs(voucherTypeId, duration);
-            });
-
-            it('Should not allow non-owner to set voucher duration', async function () {
-                const { voucherHub, otherAccount } = await loadFixture(deployFixture);
-                const voucherTypeId = 1;
-                const duration = 3600;
-
-                await expect(
-                    voucherHub.connect(otherAccount).setVoucherDuration(voucherTypeId, duration),
-                ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
-            });
-        });
-
-        describe('setAssetEligibility', function () {
-            it('Should allow owner to set asset eligibility', async function () {
-                const { voucherHub } = await loadFixture(deployFixture);
-                const voucherTypeId = 1;
-                const asset = ethers.Wallet.createRandom().address;
-                const isEligible = true;
-
-                await expect(voucherHub.setAssetEligibility(voucherTypeId, asset, isEligible))
-                    .to.emit(voucherHub, 'AssetEligibilitySet')
-                    .withArgs(voucherTypeId, asset, isEligible);
-            });
-
-            it('Should not allow non-owner to set asset eligibility', async function () {
-                const { voucherHub, otherAccount } = await loadFixture(deployFixture);
-                const voucherTypeId = 1;
-                const asset = ethers.Wallet.createRandom().address;
-                const isEligible = true;
-
-                await expect(
-                    voucherHub
-                        .connect(otherAccount)
-                        .setAssetEligibility(voucherTypeId, asset, isEligible),
-                ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
-            });
+        it('Should not allow non-owner to create a voucher type', async function () {
+            const { voucherHub, otherAccount } = await loadFixture(deployFixture);
+            const description = 'Test Voucher';
+            const duration = 3600;
+            await expect(
+                voucherHub.connect(otherAccount).createVoucherType(description, duration),
+            ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
     });
 
-    describe('Set Multiple Voucher Types, Allowed assets.', function () {
-        async function setupVoucherTypes(voucherHub: VoucherHub) {
-            // Adding two voucher types
-            await voucherHub.addVoucherTypeDescription(1, 'Voucher Type 1');
-            await voucherHub.addVoucherTypeDescription(2, 'Voucher Type 2');
-
-            // Setting durations for each voucher type
-            await voucherHub.setVoucherDuration(1, 3600);
-            await voucherHub.setVoucherDuration(2, 7200);
-
-            // Setting asset eligibility for each voucher type
-            const asset1 = ethers.Wallet.createRandom().address;
-            const asset2 = ethers.Wallet.createRandom().address;
-            await voucherHub.setAssetEligibility(1, asset1, true);
-            await voucherHub.setAssetEligibility(2, asset2, true);
-
-            return { asset1, asset2 };
-        }
-
-        it('Should correctly set up two voucher types with unique properties', async function () {
+    describe('Modify Voucher Type Info', function () {
+        it('Should modify voucher description correctly', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const { asset1, asset2 } = await setupVoucherTypes(voucherHub);
-
-            const voucherTypes = [
-                { typeId: 1, description: 'Voucher Type 1', duration: 3600, asset: asset1 },
-                { typeId: 2, description: 'Voucher Type 2', duration: 7200, asset: asset2 },
-            ];
-
-            for (const voucherType of voucherTypes) {
-                // Adding voucher type description
-                await expect(
-                    voucherHub.addVoucherTypeDescription(
-                        voucherType.typeId,
-                        voucherType.description,
-                    ),
-                )
-                    .to.emit(voucherHub, 'VoucherTypeAdded')
-                    .withArgs(voucherType.typeId, voucherType.description);
-
-                // Setting voucher duration
-                await expect(
-                    voucherHub.setVoucherDuration(voucherType.typeId, voucherType.duration),
-                )
-                    .to.emit(voucherHub, 'VoucherDurationSet')
-                    .withArgs(voucherType.typeId, voucherType.duration);
-
-                // Setting asset eligibility
-                await expect(
-                    voucherHub.setAssetEligibility(voucherType.typeId, voucherType.asset, true),
-                )
-                    .to.emit(voucherHub, 'AssetEligibilitySet')
-                    .withArgs(voucherType.typeId, voucherType.asset, true);
-            }
+            const description = 'Initial Description';
+            const newDescription = 'Updated Description';
+            const duration = 3600;
+            await voucherHub.createVoucherType(description, duration);
+            await expect(voucherHub.modifyVoucherDescription(1, newDescription))
+                .to.emit(voucherHub, 'SetNewVoucherDescription')
+                .withArgs(1, newDescription);
         });
-        describe('Test Getter Functions on multiple voucher and allowed assets', function () {
-            describe('Voucher Type Descriptions', function () {
-                it('Should return the correct count of voucher type descriptions', async function () {
-                    const { voucherHub } = await loadFixture(deployFixture);
-                    await setupVoucherTypes(voucherHub);
-                    expect(await voucherHub.getVoucherTypeDescriptionsCount()).to.equal(2);
-                });
 
-                it('Should return the correct voucher type description for each type', async function () {
-                    const { voucherHub } = await loadFixture(deployFixture);
-                    await setupVoucherTypes(voucherHub);
-                    const type1Description = await voucherHub.getVoucherTypeDescription(0);
-                    expect(type1Description[0]).to.equal(1);
-                    expect(type1Description[1]).to.equal('Voucher Type 1');
+        it('Should not allow non-owner to modify voucher description', async function () {
+            const { voucherHub, otherAccount } = await loadFixture(deployFixture);
+            const description = 'Initial Description';
+            const newDescription = 'Updated Description';
+            const duration = 3600;
+            await voucherHub.createVoucherType(description, duration);
+            await expect(
+                voucherHub.connect(otherAccount).modifyVoucherDescription(1, newDescription),
+            ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
+        });
 
-                    const type2Description = await voucherHub.getVoucherTypeDescription(1);
-                    expect(type2Description[0]).to.equal(2);
-                    expect(type2Description[1]).to.equal('Voucher Type 2');
-                });
-            });
+        it('Should modify voucher duration correctly', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            const description = 'Voucher Description';
+            const initialDuration = 3600;
+            const newDuration = 7200;
+            await voucherHub.createVoucherType(description, initialDuration);
+            await expect(voucherHub.modifyVoucherDuration(1, newDuration))
+                .to.emit(voucherHub, 'SetNewVoucherDuration')
+                .withArgs(1, newDuration);
+        });
 
-            describe('Voucher Duration By Type ID', function () {
-                it('Should return the correct duration for each voucher type', async function () {
-                    const { voucherHub } = await loadFixture(deployFixture);
-                    await setupVoucherTypes(voucherHub);
-                    expect(await voucherHub.getVoucherDurationByVoucherTypeId(1)).to.equal(3600);
-                    expect(await voucherHub.getVoucherDurationByVoucherTypeId(2)).to.equal(7200);
-                });
-            });
+        it('Should not allow zero voucher Id to change duration', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            const description = 'Voucher Description';
+            const initialDuration = 3600;
+            const newDuration = 7200;
+            await voucherHub.createVoucherType(description, initialDuration);
+            await expect(voucherHub.modifyVoucherDuration(0, newDuration)).to.be.revertedWith(
+                'Index out of bounds',
+            );
+        });
 
-            describe('Asset Eligibility By Voucher Type ID', function () {
-                it('Should return true for eligible assets and false for non-eligible assets', async function () {
-                    const { voucherHub } = await loadFixture(deployFixture);
-                    const { asset1, asset2 } = await setupVoucherTypes(voucherHub);
-                    const randomAsset = ethers.Wallet.createRandom().address;
+        it('Should not allow non-owner to modify voucher duration correctly', async function () {
+            const { voucherHub, otherAccount } = await loadFixture(deployFixture);
+            const description = 'Voucher Description';
+            const initialDuration = 3600;
+            const newDuration = 7200;
+            await voucherHub.createVoucherType(description, initialDuration);
+            await expect(
+                voucherHub.connect(otherAccount).modifyVoucherDuration(1, newDuration),
+            ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
+        });
 
-                    expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(1, asset1)).to.be
-                        .true;
-                    expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(2, asset2)).to.be
-                        .true;
-                    expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(1, randomAsset))
-                        .to.be.false;
-                });
-            });
+        it('Should not allow zero voucher Id to change description', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            const description = 'Initial Description';
+            const newDescription = 'Updated Description';
+            const duration = 3600;
+            await voucherHub.createVoucherType(description, duration);
+            await expect(voucherHub.modifyVoucherDescription(0, newDescription)).to.be.revertedWith(
+                'Index out of bounds',
+            );
+        });
+    });
+
+    describe('Asset Eligibility', function () {
+        it('Should set and unset asset eligibility', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            const asset = ethers.Wallet.createRandom().address;
+            const description = 'Voucher for Testing';
+            const duration = 3600;
+            await voucherHub.createVoucherType(description, duration);
+            await voucherHub.setEligibleAsset(1, asset);
+            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(1, asset)).to.be.true;
+            await voucherHub.unsetEligibleAsset(1, asset);
+            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(1, asset)).to.be.false;
+        });
+
+        it('Should not allow non-owner to set asset eligibility', async function () {
+            const { voucherHub, otherAccount } = await loadFixture(deployFixture);
+            const asset = ethers.Wallet.createRandom().address;
+            const description = 'Voucher for Testing';
+            const duration = 3600;
+            await voucherHub.createVoucherType(description, duration);
+            await expect(
+                voucherHub.connect(otherAccount).setEligibleAsset(1, asset),
+            ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
+        });
+
+        it('Should not allow non-owner to unset asset eligibility', async function () {
+            const { voucherHub, otherAccount } = await loadFixture(deployFixture);
+            const asset = ethers.Wallet.createRandom().address;
+            const description = 'Voucher for Testing';
+            const duration = 3600;
+            await voucherHub.createVoucherType(description, duration);
+            await voucherHub.setEligibleAsset(1, asset);
+            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(1, asset)).to.be.true;
+            await expect(
+                voucherHub.connect(otherAccount).unsetEligibleAsset(1, asset),
+            ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
+        });
+    });
+
+    describe('getVoucherTypeInfo', function () {
+        it('Should return correct voucher type information', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+
+            await voucherHub.createVoucherType('Early Access', 3600);
+            await voucherHub.createVoucherType('Premium Access', 7200);
+
+            const info1 = await voucherHub.getVoucherTypeInfo(1);
+            expect(info1[0]).to.equal('Early Access');
+            expect(info1[1]).to.equal(3600);
+
+            const info2 = await voucherHub.getVoucherTypeInfo(2);
+            expect(info2[0]).to.equal('Premium Access');
+            expect(info2[1]).to.equal(7200);
+        });
+
+        it('Should revert for an out of bounds voucher type ID', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            await expect(voucherHub.getVoucherTypeInfo(999)).to.be.revertedWith(
+                'Index out of bounds',
+            );
+        });
+    });
+
+    describe('getVoucherTypeCount', function () {
+        it('Should return the total count of voucher types', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+
+            await voucherHub.createVoucherType('Standard Access', 1800);
+            await voucherHub.createVoucherType('Extended Access', 5400);
+
+            const count = await voucherHub.getVoucherTypeCount();
+            expect(count).to.equal(2);
         });
     });
 });
