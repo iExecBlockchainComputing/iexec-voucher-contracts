@@ -11,7 +11,7 @@ const iexecAddress = '0x123456789a123456789b123456789b123456789d'; // random
 const description = 'Early Access';
 const duration = 3600;
 const asset = ethers.Wallet.createRandom().address;
-const newDescription = 'Updated Description';
+const newDescription = 'Long Term Duration';
 const newDuration = 7200;
 
 describe('VoucherHub', function () {
