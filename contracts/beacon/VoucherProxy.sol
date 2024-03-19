@@ -8,7 +8,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {VoucherBase} from "./VoucherBase.sol";
 
 /**
- * @notice Beacon proxy contract instance that is deployed per user.
+ * @title Beacon proxy contract instance that is deployed per user.
  *
  * @dev TODO use oz/OwnableUpgradeable if compatible to benefit from erc7201 storage
  * (openzeppelin.storage.Ownable).
@@ -28,6 +28,7 @@ contract VoucherProxy is Ownable, BeaconProxy, VoucherBase {
 
     /**
      * TODO remove if not useful.
+     * Currently used in tests.
      */
     function implementation() public view returns (address) {
         return _implementation();
