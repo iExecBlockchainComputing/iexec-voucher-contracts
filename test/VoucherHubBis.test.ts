@@ -111,6 +111,60 @@ describe('VoucherHubBis', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
     });
+
+    describe('Upgrade voucher', async function () {
+        it('Should upgrade voucher', async () => {
+            const { beacon, voucherHub, owner, voucherOwner1, voucherOwner2 } =
+                await loadFixture(deployFixture);
+            // Create voucher1.
+            const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, initialVersion);
+            createVoucherTx1.wait();
+            const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
+            const voucherProxy1: VoucherProxy = await ethers.getContractAt(
+                'VoucherProxy',
+                voucherAddress1,
+            );
+            const voucherImpl1: VoucherImpl = await ethers.getContractAt(
+                'VoucherImpl',
+                voucherAddress1,
+            );
+            // Create voucher2.
+            const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, initialVersion);
+            createVoucherTx2.wait();
+            const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
+            const voucherProxy2: VoucherProxy = await ethers.getContractAt(
+                'VoucherProxy',
+                voucherAddress2,
+            );
+            const voucherImpl2: VoucherImpl = await ethers.getContractAt(
+                'VoucherImpl',
+                voucherAddress2,
+            );
+            const initialImplementation = await beacon.implementation();
+
+            // Upgrade beacon.
+            const voucherImplV2Factory = await ethers.getContractFactory('VoucherImplV2Mock');
+            const upgrade = await upgrades.upgradeBeacon(beacon, voucherImplV2Factory);
+            await upgrade.waitForDeployment();
+
+            // Implementation
+            expect(await beacon.implementation()).to.not.equal(initialImplementation);
+            expect(await voucherProxy1.implementation(), 'Implementation mismatch').to.equal(
+                await beacon.implementation(),
+            );
+            expect(await voucherProxy1.implementation(), 'Implementation mismatch').to.equal(
+                await voucherProxy2.implementation(),
+            );
+            // Version
+            expect(await voucherImpl1.getVersion(), 'Version mismatch').to.equal(initialVersion);
+            expect(await voucherImpl1.getVersion(), 'Version mismatch').to.equal(
+                await voucherImpl2.getVersion(),
+            );
+            // Owner
+            expect(await voucherProxy1.owner(), 'Owner mismatch').to.equal(voucherOwner1);
+            expect(await voucherProxy2.owner(), 'Owner mismatch').to.equal(voucherOwner2);
+        });
+    });
 });
 
 async function deployVoucherHub(beacon: string): Promise<VoucherHub> {
