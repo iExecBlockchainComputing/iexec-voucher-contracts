@@ -24,10 +24,10 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     bytes32 private constant VOUCHER_HUB_STORAGE_LOCATION =
         0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800;
 
-    modifier whenVoucherTypeExists(uint256 voucherTypeId) {
+    modifier whenVoucherTypeExists(uint256 id) {
         require(
-            voucherTypeId < _getVoucherHubStorage().voucherTypes.length,
-            "VoucherHub: Index out of bounds"
+            id < _getVoucherHubStorage().voucherTypes.length,
+            "VoucherHub: type index out of bounds"
         );
         _;
     }
