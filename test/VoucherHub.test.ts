@@ -8,6 +8,11 @@ import { VoucherHub } from '../typechain-types/contracts';
 import { VoucherHubV2Mock } from '../typechain-types/contracts/mocks';
 
 const iexecAddress = '0x123456789a123456789b123456789b123456789d'; // random
+const description = 'Early Access';
+const duration = 3600;
+const asset = ethers.Wallet.createRandom().address;
+const newDescription = 'Updated Description';
+const newDuration = 7200;
 
 describe('VoucherHub', function () {
     // We define a fixture to reuse the same setup in every test.
@@ -87,8 +92,6 @@ describe('VoucherHub', function () {
     describe('Create voucher type', function () {
         it('Should allow owner to create a voucher type', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const description = 'Early Access';
-            const duration = 3600;
             await expect(voucherHub.createVoucherType(description, duration))
                 .to.emit(voucherHub, 'VoucherTypeCreated')
                 .withArgs(0, description, duration);
@@ -101,8 +104,6 @@ describe('VoucherHub', function () {
 
         it('Should not allow non-owner to create a voucher type', async function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
-            const description = 'Early Access';
-            const duration = 3600;
             await expect(
                 voucherHub.connect(otherAccount).createVoucherType(description, duration),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
@@ -121,9 +122,6 @@ describe('VoucherHub', function () {
     describe('Update Voucher Type Description', function () {
         it('Should modify voucher description correctly', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const description = 'Initial Description';
-            const newDescription = 'Updated Description';
-            const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
             await expect(voucherHub.updateVoucherTypeDescription(0, newDescription))
                 .to.emit(voucherHub, 'VoucherTypeDescriptionUpdated')
@@ -132,9 +130,6 @@ describe('VoucherHub', function () {
 
         it('Should not allow non-owner to modify voucher description', async function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
-            const description = 'Initial Description';
-            const newDescription = 'Updated Description';
-            const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
             await expect(
                 voucherHub.connect(otherAccount).updateVoucherTypeDescription(0, newDescription),
@@ -143,9 +138,6 @@ describe('VoucherHub', function () {
 
         it('Should not allow out of bound voucher Id change description', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const description = 'Initial Description';
-            const newDescription = 'Updated Description';
-            const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
             await expect(
                 voucherHub.updateVoucherTypeDescription(999, newDescription),
@@ -156,10 +148,7 @@ describe('VoucherHub', function () {
     describe('Update Voucher Type Duration', function () {
         it('Should modify voucher duration correctly', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const description = 'Voucher Description';
-            const initialDuration = 3600;
-            const newDuration = 7200;
-            await voucherHub.createVoucherType(description, initialDuration);
+            await voucherHub.createVoucherType(description, duration);
             await expect(voucherHub.updateVoucherTypeDuration(0, newDuration))
                 .to.emit(voucherHub, 'VoucherTypeDurationUpdated')
                 .withArgs(0, newDuration);
@@ -167,10 +156,7 @@ describe('VoucherHub', function () {
 
         it('Should not allow non-owner to modify voucher duration correctly', async function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
-            const description = 'Voucher Description';
-            const initialDuration = 3600;
-            const newDuration = 7200;
-            await voucherHub.createVoucherType(description, initialDuration);
+            await voucherHub.createVoucherType(description, duration);
             await expect(
                 voucherHub.connect(otherAccount).updateVoucherTypeDuration(0, newDuration),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
@@ -178,10 +164,7 @@ describe('VoucherHub', function () {
 
         it('Should not allow out of bound voucher Id to change duration', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const description = 'Voucher Description';
-            const initialDuration = 3600;
-            const newDuration = 7200;
-            await voucherHub.createVoucherType(description, initialDuration);
+            await voucherHub.createVoucherType(description, duration);
             await expect(voucherHub.updateVoucherTypeDuration(999, newDuration)).to.be.revertedWith(
                 'VoucherHub: type index out of bounds',
             );
@@ -191,9 +174,6 @@ describe('VoucherHub', function () {
     describe('Asset Eligibility', function () {
         it('Should set and unset asset eligibility', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const asset = ethers.Wallet.createRandom().address;
-            const description = 'Voucher for Testing';
-            const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
             expect(await voucherHub.setEligibleAsset(0, asset)).to.emit(
                 voucherHub,
@@ -209,9 +189,6 @@ describe('VoucherHub', function () {
 
         it('Should not allow non-owner to set asset eligibility', async function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
-            const asset = ethers.Wallet.createRandom().address;
-            const description = 'Voucher for Testing';
-            const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
             await expect(
                 voucherHub.connect(otherAccount).setEligibleAsset(0, asset),
@@ -220,9 +197,6 @@ describe('VoucherHub', function () {
 
         it('Should not allow non-owner to unset asset eligibility', async function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
-            const asset = ethers.Wallet.createRandom().address;
-            const description = 'Voucher for Testing';
-            const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
             await voucherHub.setEligibleAsset(0, asset);
             expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(0, asset)).to.be.true;
