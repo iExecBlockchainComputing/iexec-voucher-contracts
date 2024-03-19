@@ -52,7 +52,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     function createVoucherType(
         string memory voucherTypeDescription,
         uint256 voucherTypeduration
-    ) public onlyOwner {
+    ) external onlyOwner {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._voucherTypes.push(VoucherType(voucherTypeDescription, voucherTypeduration));
         emit VoucherTypeCreated(
@@ -65,7 +65,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     function updateVoucherTypeDescription(
         uint256 voucherTypeId,
         string memory newVoucherTypeDescription
-    ) public onlyOwner voucherTypeExists(voucherTypeId) {
+    ) external onlyOwner voucherTypeExists(voucherTypeId) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._voucherTypes[voucherTypeId].description = newVoucherTypeDescription;
         emit VoucherTypeDescriptionUpdated(voucherTypeId, newVoucherTypeDescription);
@@ -74,7 +74,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     function updateVoucherTypeDuration(
         uint256 voucherTypeId,
         uint256 newVoucherTypeDuration
-    ) public onlyOwner voucherTypeExists(voucherTypeId) {
+    ) external onlyOwner voucherTypeExists(voucherTypeId) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._voucherTypes[voucherTypeId].duration = newVoucherTypeDuration;
         emit VoucherTypeDurationUpdated(voucherTypeId, newVoucherTypeDuration);
@@ -91,12 +91,12 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         return _getVoucherHubStorage()._voucherTypes.length;
     }
 
-    function setEligibleAsset(uint256 voucherTypeId, address asset) public onlyOwner {
+    function setEligibleAsset(uint256 voucherTypeId, address asset) external onlyOwner {
         _setAssetEligibility(voucherTypeId, asset, true);
         emit SetEligibleAsset(voucherTypeId, asset);
     }
 
-    function unsetEligibleAsset(uint256 voucherTypeId, address asset) public onlyOwner {
+    function unsetEligibleAsset(uint256 voucherTypeId, address asset) external onlyOwner {
         _setAssetEligibility(voucherTypeId, asset, false);
         emit UnsetEligibleAsset(voucherTypeId, asset);
     }
