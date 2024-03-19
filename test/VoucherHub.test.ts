@@ -93,8 +93,8 @@ describe('VoucherHub', function () {
                 .to.emit(voucherHub, 'VoucherTypeCreated')
                 .withArgs(0, description, duration);
             const type1 = await voucherHub.getVoucherType(0);
-            expect(type1.description).to.equal('Early Access');
-            expect(type1.duration).to.equal(3600);
+            expect(type1.description).to.equal(description);
+            expect(type1.duration).to.equal(duration);
             const count = await voucherHub.getVoucherTypeCount();
             expect(count).to.equal(1);
         });
