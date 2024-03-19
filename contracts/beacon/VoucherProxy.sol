@@ -29,16 +29,15 @@ contract VoucherProxy is Ownable, BeaconProxy, VoucherBase {
     receive() external payable {}
 
     /**
-     * TODO remove if not useful.
-     * Currently used in tests.
+     * Get beacon address.
      */
     function beacon() external view returns (address) {
         return _getBeacon();
     }
 
     /**
-     * TODO remove if not useful.
-     * Currently used in tests.
+     * Get implementation address.
+     * @dev Used in tests.
      */
     function implementation() external view returns (address) {
         return _implementation();
