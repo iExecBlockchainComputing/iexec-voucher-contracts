@@ -87,8 +87,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
             voucherTypeId < $._voucherTypes.length + 1 && voucherTypeId > 0,
             "VoucherHub: Index out of bounds"
         );
-        VoucherType storage info = $._voucherTypes[voucherTypeId - 1];
-        return info;
+        return $._voucherTypes[voucherTypeId - 1];
     }
 
     function getVoucherTypeCount() public view returns (uint256) {
