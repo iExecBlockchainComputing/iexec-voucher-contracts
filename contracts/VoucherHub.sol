@@ -24,9 +24,9 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     bytes32 private constant VOUCHER_HUB_STORAGE_LOCATION =
         0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800;
 
-    modifier whenVoucherTypeExists(uint256 voucherTypeId_) {
+    modifier whenVoucherTypeExists(uint256 voucherTypeId) {
         require(
-            voucherTypeId_ < _getVoucherHubStorage().voucherTypes.length,
+            voucherTypeId < _getVoucherHubStorage().voucherTypes.length,
             "VoucherHub: Index out of bounds"
         );
         _;
@@ -58,56 +58,54 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
 
     function updateVoucherTypeDescription(
         uint256 id,
-        string memory description_
+        string memory description
     ) external onlyOwner whenVoucherTypeExists(id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.voucherTypes[id].description = description_;
-        emit VoucherTypeDescriptionUpdated(id, description_);
+        $.voucherTypes[id].description = description;
+        emit VoucherTypeDescriptionUpdated(id, description);
     }
 
     function updateVoucherTypeDuration(
-        uint256 id_,
-        uint256 duration_
-    ) external onlyOwner whenVoucherTypeExists(id_) {
+        uint256 id,
+        uint256 duration
+    ) external onlyOwner whenVoucherTypeExists(id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.voucherTypes[id_].duration = duration_;
-        emit VoucherTypeDurationUpdated(id_, duration_);
+        $.voucherTypes[id].duration = duration;
+        emit VoucherTypeDurationUpdated(id, duration);
     }
 
     function getVoucherType(
-        uint256 id_
-    ) public view whenVoucherTypeExists(id_) returns (VoucherType memory) {
+        uint256 id
+    ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.voucherTypes[id_];
+        return $.voucherTypes[id];
     }
 
     function getVoucherTypeCount() public view returns (uint256) {
         return _getVoucherHubStorage().voucherTypes.length;
     }
 
-    function setEligibleAsset(uint256 voucherTypeId_, address asset_) external onlyOwner {
-        _setAssetEligibility(voucherTypeId_, asset_, true);
-        emit SetEligibleAsset(voucherTypeId_, asset_);
+    function setEligibleAsset(uint256 voucherTypeId, address asset) external onlyOwner {
+        _setAssetEligibility(voucherTypeId, asset, true);
+        emit SetEligibleAsset(voucherTypeId, asset);
     }
 
-    function unsetEligibleAsset(uint256 voucherTypeId_, address asset_) external onlyOwner {
-        _setAssetEligibility(voucherTypeId_, asset_, false);
-        emit UnsetEligibleAsset(voucherTypeId_, asset_);
+    function unsetEligibleAsset(uint256 voucherTypeId, address asset) external onlyOwner {
+        _setAssetEligibility(voucherTypeId, asset, false);
+        emit UnsetEligibleAsset(voucherTypeId, asset);
     }
-    function _setAssetEligibility(uint256 voucherTypeId_, address asset_, bool isEligible) private {
+    function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.isAssetEligibleToMatchOrdersSponsoringByVoucherTypeId[voucherTypeId_][
-            asset_
-        ] = isEligible;
+        $.isAssetEligibleToMatchOrdersSponsoringByVoucherTypeId[voucherTypeId][asset] = isEligible;
     }
     function isAssetEligibleToMatchOrdersSponsoring(
-        uint256 voucherTypeId_,
-        address asset_
+        uint256 voucherTypeId,
+        address asset
     ) public view returns (bool) {
         return
             _getVoucherHubStorage().isAssetEligibleToMatchOrdersSponsoringByVoucherTypeId[
-                voucherTypeId_
-            ][asset_];
+                voucherTypeId
+            ][asset];
     }
 
     function getIexecPoco() public view returns (address) {
