@@ -15,12 +15,22 @@ import {VoucherBase} from "./VoucherBase.sol";
  */
 contract VoucherProxy is Ownable, BeaconProxy, VoucherBase {
     constructor(
-        address _beacon,
-        bytes memory _data
-    ) Ownable(_msgSender()) BeaconProxy(_beacon, _data) {}
+        address ownerAddress,
+        address beaconAddress,
+        bytes memory initialization
+    ) Ownable(ownerAddress) BeaconProxy(beaconAddress, initialization) {}
+
+    /**
+     * TODO
+     * @dev Removes warning:
+     * "This contract has a payable fallback function, but no receive
+     * ether function. Consider adding a receive ether function"
+     */
+    receive() external payable {}
 
     /**
      * TODO remove if not useful.
+     * Currently used in tests.
      */
     function beacon() external view returns (address) {
         return _getBeacon();
@@ -30,15 +40,7 @@ contract VoucherProxy is Ownable, BeaconProxy, VoucherBase {
      * TODO remove if not useful.
      * Currently used in tests.
      */
-    function implementation() public view returns (address) {
+    function implementation() external view returns (address) {
         return _implementation();
     }
-
-    /**
-     * TODO
-     * @dev Removes warning:
-     * "This contract has a payable fallback function, but no receive
-     * ether function. Consider adding a receive ether function"
-     */
-    receive() external payable {}
 }
