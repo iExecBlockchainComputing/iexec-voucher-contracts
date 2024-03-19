@@ -9,6 +9,5 @@ pragma solidity ^0.8.20;
 interface IVoucher {
     event VersionUpdated(uint newVersion);
 
-    function setVersion(uint newVersion) external;
     function getVersion() external returns (uint);
 }

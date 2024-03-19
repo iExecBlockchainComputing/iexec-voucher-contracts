@@ -21,12 +21,6 @@ contract VoucherImpl is Initializable, IVoucher, VoucherBase {
     }
 
     // TODO remove
-    function setVersion(uint newVersion) external override {
-        _getVoucherStorage().version = newVersion;
-        emit VersionUpdated(newVersion);
-    }
-
-    // TODO remove
     function getVersion() external view override returns (uint) {
         return _getVoucherStorage().version;
     }

@@ -4,5 +4,8 @@
 pragma solidity ^0.8.20;
 
 interface IVoucherHub {
-    event VoucherCreated();
+    event VoucherCreated(address voucher, address owner);
+
+    function createVoucher(address account, uint version) external returns (address voucherAddress);
+    function getVoucher(address account) external view returns (address voucherAddress);
 }

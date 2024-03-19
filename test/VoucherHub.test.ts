@@ -8,6 +8,7 @@ import { VoucherHub } from '../typechain-types/contracts';
 import { VoucherHubV2Mock } from '../typechain-types/contracts/mocks';
 
 const iexecAddress = '0x123456789a123456789b123456789b123456789d'; // random
+const beaconAddress = '0xABcdEFABcdEFabcdEfAbCdefabcdeFABcDEFabCD'; // random
 
 describe('VoucherHub', function () {
     // We define a fixture to reuse the same setup in every test.
@@ -25,6 +26,7 @@ describe('VoucherHub', function () {
          */
         const voucherHub: VoucherHub = await upgrades.deployProxy(VoucherHubFactory, [
             iexecAddress,
+            beaconAddress,
         ]);
         await voucherHub.waitForDeployment();
 
@@ -37,15 +39,15 @@ describe('VoucherHub', function () {
 
             expect(await voucherHub.owner()).to.equal(owner);
             expect(await voucherHub.getIexecPoco()).to.equal(iexecAddress);
+            expect(await voucherHub.beacon()).to.equal(beaconAddress);
         });
 
         it('Should not initialize twice', async () => {
             const { voucherHub } = await loadFixture(deployFixture);
 
-            await expect(voucherHub.initialize(iexecAddress)).to.be.revertedWithCustomError(
-                voucherHub,
-                'InvalidInitialization',
-            );
+            await expect(
+                voucherHub.initialize(iexecAddress, beaconAddress),
+            ).to.be.revertedWithCustomError(voucherHub, 'InvalidInitialization');
         });
     });
 
@@ -74,14 +76,6 @@ describe('VoucherHub', function () {
                     .connect(otherAccount)
                     .upgradeToAndCall(ethers.Wallet.createRandom().address, '0x'),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
-        });
-    });
-
-    describe('Create voucher', function () {
-        it('Should create voucher', async function () {
-            const { voucherHub } = await loadFixture(deployFixture);
-
-            await expect(voucherHub.createVoucher()).to.emit(voucherHub, 'VoucherCreated');
         });
     });
 });
