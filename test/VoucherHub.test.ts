@@ -175,14 +175,14 @@ describe('VoucherHub', function () {
         it('Should set and unset asset eligibility', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             await voucherHub.createVoucherType(description, duration);
-            expect(await voucherHub.setEligibleAsset(0, asset)).to.emit(
+            expect(await voucherHub.addEligibleAsset(0, asset)).to.emit(
                 voucherHub,
-                'SetEligibleAsset',
+                'AddEligibleAsset',
             );
             expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(0, asset)).to.be.true;
-            expect(await voucherHub.unsetEligibleAsset(0, asset)).to.emit(
+            expect(await voucherHub.removeEligibleAsset(0, asset)).to.emit(
                 voucherHub,
-                'UnsetEligibleAsset',
+                'RemoveEligibleAsset',
             );
             expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(0, asset)).to.be.false;
         });
@@ -191,17 +191,17 @@ describe('VoucherHub', function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
             await voucherHub.createVoucherType(description, duration);
             await expect(
-                voucherHub.connect(otherAccount).setEligibleAsset(0, asset),
+                voucherHub.connect(otherAccount).addEligibleAsset(0, asset),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
         it('Should not allow non-owner to unset asset eligibility', async function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
             await voucherHub.createVoucherType(description, duration);
-            await voucherHub.setEligibleAsset(0, asset);
+            await voucherHub.addEligibleAsset(0, asset);
             expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(0, asset)).to.be.true;
             await expect(
-                voucherHub.connect(otherAccount).unsetEligibleAsset(0, asset),
+                voucherHub.connect(otherAccount).removeEligibleAsset(0, asset),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
     });
