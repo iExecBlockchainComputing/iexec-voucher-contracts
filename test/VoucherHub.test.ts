@@ -80,24 +80,28 @@ describe('VoucherHub', function () {
     describe('Create voucher', function () {
         it('Should create voucher', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-
             await expect(voucherHub.createVoucher()).to.emit(voucherHub, 'VoucherCreated');
         });
     });
 
-    describe('Create Voucher Type', function () {
+    describe('Create voucher type', function () {
         it('Should allow owner to create a voucher type', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const description = 'Test Voucher';
+            const description = 'Early Access';
             const duration = 3600;
             await expect(voucherHub.createVoucherType(description, duration))
                 .to.emit(voucherHub, 'VoucherTypeCreated')
                 .withArgs(0, description, duration);
+            const type1 = await voucherHub.getVoucherType(0);
+            expect(type1.description).to.equal('Early Access');
+            expect(type1.duration).to.equal(3600);
+            const count = await voucherHub.getVoucherTypeCount();
+            expect(count).to.equal(1);
         });
 
         it('Should not allow non-owner to create a voucher type', async function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
-            const description = 'Test Voucher';
+            const description = 'Early Access';
             const duration = 3600;
             await expect(
                 voucherHub.connect(otherAccount).createVoucherType(description, duration),
@@ -105,7 +109,16 @@ describe('VoucherHub', function () {
         });
     });
 
-    describe('Modify Voucher Type type', function () {
+    describe('Get voucher type', function () {
+        it('Should revert for an out of bounds voucher type ID', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            await expect(voucherHub.getVoucherType(999)).to.be.revertedWith(
+                'VoucherHub: Index out of bounds',
+            );
+        });
+    });
+
+    describe('Update Voucher Type Description', function () {
         it('Should modify voucher description correctly', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             const description = 'Initial Description';
@@ -128,6 +141,19 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
+        it('Should not allow out of bound voucher Id change description', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            const description = 'Initial Description';
+            const newDescription = 'Updated Description';
+            const duration = 3600;
+            await voucherHub.createVoucherType(description, duration);
+            await expect(
+                voucherHub.updateVoucherTypeDescription(999, newDescription),
+            ).to.be.revertedWith('VoucherHub: Index out of bounds');
+        });
+    });
+
+    describe('Update Voucher Type Duration', function () {
         it('Should modify voucher duration correctly', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             const description = 'Voucher Description';
@@ -137,17 +163,6 @@ describe('VoucherHub', function () {
             await expect(voucherHub.updateVoucherTypeDuration(0, newDuration))
                 .to.emit(voucherHub, 'VoucherTypeDurationUpdated')
                 .withArgs(0, newDuration);
-        });
-
-        it('Should not allow out of bound voucher Id to change duration', async function () {
-            const { voucherHub } = await loadFixture(deployFixture);
-            const description = 'Voucher Description';
-            const initialDuration = 3600;
-            const newDuration = 7200;
-            await voucherHub.createVoucherType(description, initialDuration);
-            await expect(voucherHub.updateVoucherTypeDuration(999, newDuration)).to.be.revertedWith(
-                'VoucherHub: Index out of bounds',
-            );
         });
 
         it('Should not allow non-owner to modify voucher duration correctly', async function () {
@@ -161,15 +176,15 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
-        it('Should not allow out of bound voucher Id change description', async function () {
+        it('Should not allow out of bound voucher Id to change duration', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const description = 'Initial Description';
-            const newDescription = 'Updated Description';
-            const duration = 3600;
-            await voucherHub.createVoucherType(description, duration);
-            await expect(
-                voucherHub.updateVoucherTypeDescription(999, newDescription),
-            ).to.be.revertedWith('VoucherHub: Index out of bounds');
+            const description = 'Voucher Description';
+            const initialDuration = 3600;
+            const newDuration = 7200;
+            await voucherHub.createVoucherType(description, initialDuration);
+            await expect(voucherHub.updateVoucherTypeDuration(999, newDuration)).to.be.revertedWith(
+                'VoucherHub: Index out of bounds',
+            );
         });
     });
 
@@ -214,42 +229,6 @@ describe('VoucherHub', function () {
             await expect(
                 voucherHub.connect(otherAccount).unsetEligibleAsset(0, asset),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
-        });
-    });
-
-    describe('getVoucherType', function () {
-        it('Should return correct voucher type', async function () {
-            const { voucherHub } = await loadFixture(deployFixture);
-
-            await voucherHub.createVoucherType('Early Access', 3600);
-            await voucherHub.createVoucherType('Premium Access', 7200);
-
-            const type1 = await voucherHub.getVoucherType(0);
-            expect(type1[0]).to.equal('Early Access');
-            expect(type1[1]).to.equal(3600);
-
-            const type2 = await voucherHub.getVoucherType(1);
-            expect(type2[0]).to.equal('Premium Access');
-            expect(type2[1]).to.equal(7200);
-        });
-
-        it('Should revert for an out of bounds voucher type ID', async function () {
-            const { voucherHub } = await loadFixture(deployFixture);
-            await expect(voucherHub.getVoucherType(999)).to.be.revertedWith(
-                'VoucherHub: Index out of bounds',
-            );
-        });
-    });
-
-    describe('getVoucherTypeCount', function () {
-        it('Should return the total count of voucher types', async function () {
-            const { voucherHub } = await loadFixture(deployFixture);
-
-            await voucherHub.createVoucherType('Standard Access', 1800);
-            await voucherHub.createVoucherType('Extended Access', 5400);
-
-            const count = await voucherHub.getVoucherTypeCount();
-            expect(count).to.equal(2);
         });
     });
 });
