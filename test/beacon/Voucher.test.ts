@@ -14,35 +14,32 @@ describe('VoucherContract', function () {
         // Contracts are deployed using the first signer/account by default
         const [owner, unprivilegedAccount] = await ethers.getSigners();
 
-        // // Deploy implementation.
-        // const voucherImpl = await ethers.getContractFactory('VoucherImpl')
-        //     .then(factory => factory.deploy())
-        //     .then(contract => contract.waitForDeployment())
-        //     .catch(error => {throw error});
-        // const voucherImplAddress = await voucherImpl.getAddress();
-        // console.log(`Contract VoucherImpl deployed at ${voucherImplAddress}`);
-
         // Deploy implementation and beacon contracts.
         const voucherImplFactory: VoucherImpl__factory =
             await ethers.getContractFactory('VoucherImpl');
+        // upgrades.deployBeacon() does the following:
+        // 1. Deploys the implementation contract.
+        // 2. Deploys an instance of oz/UpgradeableBeacon contract.
+        // 3. Links the implementation in the beacon contract.
         const beaconContract = (await upgrades.deployBeacon(voucherImplFactory, {
             initialOwner: owner.address,
-            // unsafeAllow: ['constructor'],
         })) as unknown; // to be able to convert to "VoucherBeacon";
         const beacon = beaconContract as UpgradeableBeacon;
         await beacon.waitForDeployment();
-        console.log(`Beacon deployed at ${await beacon.getAddress()}`);
-        return { owner, unprivilegedAccount, beacon };
+        return { beacon, owner, unprivilegedAccount };
     }
 
     describe('Version', async function () {
         it('Should get same version', async () => {
-            const { owner, unprivilegedAccount, beacon } = await loadFixture(deployFixture);
+            const { beacon, owner, unprivilegedAccount } = await loadFixture(deployFixture);
             const beaconAddress = await beacon.getAddress();
             const implementation = await beacon.implementation();
-            // Deploy proxy.
-            const voucherProxy = await _deployVoucherProxy(beaconAddress, '0x');
-            expect(await voucherProxy.implementation()).to.be.equal(implementation);
+            // Deploy proxies.
+            const voucherProxy1 = await _deployVoucherProxy(beaconAddress, '0x');
+            const voucherProxy2 = await _deployVoucherProxy(beaconAddress, '0x');
+            // Check proxies configuration.
+            expect(await voucherProxy1.implementation()).to.be.equal(implementation);
+            expect(await voucherProxy2.implementation()).to.be.equal(implementation);
         });
     });
 
@@ -54,7 +51,6 @@ describe('VoucherContract', function () {
             .catch((error) => {
                 throw error;
             });
-        console.log(`Contract VoucherProxy deployed at ${await voucherProxy.getAddress()}`);
         return voucherProxy;
     }
 });
