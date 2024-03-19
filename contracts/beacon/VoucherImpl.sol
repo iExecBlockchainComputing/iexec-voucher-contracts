@@ -12,8 +12,6 @@ contract VoucherImpl is Initializable, IVoucher, VoucherBase {
         version = _version;
     }
 
-    function implementation() internal returns (address) {}
-
     // TODO remove
     function setVersion(uint _newVersion) external override {
         version = _newVersion;

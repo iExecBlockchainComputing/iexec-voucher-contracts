@@ -3,11 +3,13 @@
 
 pragma solidity ^0.8.20;
 
-import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+// import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
-contract VoucherBeacon is UpgradeableBeacon {
-    constructor(
-        address initialImplementation,
-        address initialOwner
-    ) UpgradeableBeacon(initialImplementation, initialOwner) {}
-}
+// contract VoucherBeacon is UpgradeableBeacon {
+
+//     /// @custom:oz-upgrades-unsafe-allow constructor
+//     constructor(
+//         address initialImplementation,
+//         address initialOwner
+//     ) UpgradeableBeacon(initialImplementation, initialOwner) {}
+// }
