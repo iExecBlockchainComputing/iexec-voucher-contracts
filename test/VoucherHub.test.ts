@@ -91,7 +91,7 @@ describe('VoucherHub', function () {
             const description = 'Test Voucher';
             const duration = 3600;
             await expect(voucherHub.createVoucherType(description, duration))
-                .to.emit(voucherHub, 'NewVoucherTypeCreated')
+                .to.emit(voucherHub, 'VoucherTypeCreated')
                 .withArgs(1, description, duration);
         });
 

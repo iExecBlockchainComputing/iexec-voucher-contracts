@@ -48,7 +48,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     ) public onlyOwner {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._voucherTypes.push(VoucherType(voucherTypeDescription, voucherTypeduration));
-        emit NewVoucherTypeCreated(
+        emit VoucherTypeCreated(
             $._voucherTypes.length,
             voucherTypeDescription,
             voucherTypeduration
