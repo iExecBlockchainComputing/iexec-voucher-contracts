@@ -9,6 +9,13 @@ import {IVoucherHub} from "./IVoucherHub.sol";
 pragma solidity ^0.8.20;
 
 contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
+    modifier voucherTypeExists(uint256 voucherTypeId) {
+        require(
+            voucherTypeId < _getVoucherHubStorage()._voucherTypes.length,
+            "VoucherHub: Index out of bounds"
+        );
+        _;
+    }
     struct VoucherType {
         string description;
         uint256 duration;
@@ -58,9 +65,8 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     function updateVoucherTypeDescription(
         uint256 voucherTypeId,
         string memory newVoucherTypeDescription
-    ) public onlyOwner {
+    ) public onlyOwner voucherTypeExists(voucherTypeId) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        require(voucherTypeId < $._voucherTypes.length, "VoucherHub: Index out of bounds");
         $._voucherTypes[voucherTypeId].description = newVoucherTypeDescription;
         emit VoucherTypeDescriptionUpdated(voucherTypeId, newVoucherTypeDescription);
     }
@@ -68,16 +74,16 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     function updateVoucherTypeDuration(
         uint256 voucherTypeId,
         uint256 newVoucherTypeDuration
-    ) public onlyOwner {
+    ) public onlyOwner voucherTypeExists(voucherTypeId) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        require(voucherTypeId < $._voucherTypes.length, "VoucherHub: Index out of bounds");
         $._voucherTypes[voucherTypeId].duration = newVoucherTypeDuration;
         emit VoucherTypeDurationUpdated(voucherTypeId, newVoucherTypeDuration);
     }
 
-    function getVoucherType(uint256 voucherTypeId) public view returns (VoucherType memory) {
+    function getVoucherType(
+        uint256 voucherTypeId
+    ) public view voucherTypeExists(voucherTypeId) returns (VoucherType memory) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        require(voucherTypeId < $._voucherTypes.length, "VoucherHub: Index out of bounds");
         return $._voucherTypes[voucherTypeId];
     }
 
