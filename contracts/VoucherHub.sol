@@ -49,7 +49,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._voucherTypes.push(VoucherType(voucherTypeDescription, voucherTypeduration));
         emit VoucherTypeCreated(
-            $._voucherTypes.length,
+            $._voucherTypes.length - 1,
             voucherTypeDescription,
             voucherTypeduration
         );
@@ -60,11 +60,8 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         string memory newVoucherTypeDescription
     ) public onlyOwner {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        require(
-            voucherTypeId < $._voucherTypes.length + 1 && voucherTypeId > 0,
-            "VoucherHub: Index out of bounds"
-        );
-        $._voucherTypes[voucherTypeId - 1].description = newVoucherTypeDescription;
+        require(voucherTypeId < $._voucherTypes.length, "VoucherHub: Index out of bounds");
+        $._voucherTypes[voucherTypeId].description = newVoucherTypeDescription;
         emit VoucherTypeDescriptionUpdated(voucherTypeId, newVoucherTypeDescription);
     }
 
@@ -73,21 +70,15 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         uint256 newVoucherTypeDuration
     ) public onlyOwner {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        require(
-            voucherTypeId < $._voucherTypes.length + 1 && voucherTypeId > 0,
-            "VoucherHub: Index out of bounds"
-        );
-        $._voucherTypes[voucherTypeId - 1].duration = newVoucherTypeDuration;
+        require(voucherTypeId < $._voucherTypes.length, "VoucherHub: Index out of bounds");
+        $._voucherTypes[voucherTypeId].duration = newVoucherTypeDuration;
         emit VoucherTypeDurationUpdated(voucherTypeId, newVoucherTypeDuration);
     }
 
     function getVoucherType(uint256 voucherTypeId) public view returns (VoucherType memory) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        require(
-            voucherTypeId < $._voucherTypes.length + 1 && voucherTypeId > 0,
-            "VoucherHub: Index out of bounds"
-        );
-        return $._voucherTypes[voucherTypeId - 1];
+        require(voucherTypeId < $._voucherTypes.length, "VoucherHub: Index out of bounds");
+        return $._voucherTypes[voucherTypeId];
     }
 
     function getVoucherTypeCount() public view returns (uint256) {

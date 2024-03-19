@@ -92,7 +92,7 @@ describe('VoucherHub', function () {
             const duration = 3600;
             await expect(voucherHub.createVoucherType(description, duration))
                 .to.emit(voucherHub, 'VoucherTypeCreated')
-                .withArgs(1, description, duration);
+                .withArgs(0, description, duration);
         });
 
         it('Should not allow non-owner to create a voucher type', async function () {
@@ -105,16 +105,16 @@ describe('VoucherHub', function () {
         });
     });
 
-    describe('Modify Voucher Type Info', function () {
+    describe('Modify Voucher Type type', function () {
         it('Should modify voucher description correctly', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             const description = 'Initial Description';
             const newDescription = 'Updated Description';
             const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
-            await expect(voucherHub.updateVoucherTypeDescription(1, newDescription))
+            await expect(voucherHub.updateVoucherTypeDescription(0, newDescription))
                 .to.emit(voucherHub, 'VoucherTypeDescriptionUpdated')
-                .withArgs(1, newDescription);
+                .withArgs(0, newDescription);
         });
 
         it('Should not allow non-owner to modify voucher description', async function () {
@@ -124,7 +124,7 @@ describe('VoucherHub', function () {
             const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
             await expect(
-                voucherHub.connect(otherAccount).updateVoucherTypeDescription(1, newDescription),
+                voucherHub.connect(otherAccount).updateVoucherTypeDescription(0, newDescription),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
@@ -134,18 +134,18 @@ describe('VoucherHub', function () {
             const initialDuration = 3600;
             const newDuration = 7200;
             await voucherHub.createVoucherType(description, initialDuration);
-            await expect(voucherHub.updateVoucherTypeDuration(1, newDuration))
+            await expect(voucherHub.updateVoucherTypeDuration(0, newDuration))
                 .to.emit(voucherHub, 'VoucherTypeDurationUpdated')
-                .withArgs(1, newDuration);
+                .withArgs(0, newDuration);
         });
 
-        it('Should not allow zero voucher Id to change duration', async function () {
+        it('Should not allow out of bound voucher Id to change duration', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             const description = 'Voucher Description';
             const initialDuration = 3600;
             const newDuration = 7200;
             await voucherHub.createVoucherType(description, initialDuration);
-            await expect(voucherHub.updateVoucherTypeDuration(0, newDuration)).to.be.revertedWith(
+            await expect(voucherHub.updateVoucherTypeDuration(999, newDuration)).to.be.revertedWith(
                 'VoucherHub: Index out of bounds',
             );
         });
@@ -157,18 +157,18 @@ describe('VoucherHub', function () {
             const newDuration = 7200;
             await voucherHub.createVoucherType(description, initialDuration);
             await expect(
-                voucherHub.connect(otherAccount).updateVoucherTypeDuration(1, newDuration),
+                voucherHub.connect(otherAccount).updateVoucherTypeDuration(0, newDuration),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
-        it('Should not allow zero voucher Id to change description', async function () {
+        it('Should not allow out of bound voucher Id change description', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             const description = 'Initial Description';
             const newDescription = 'Updated Description';
             const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
             await expect(
-                voucherHub.updateVoucherTypeDescription(0, newDescription),
+                voucherHub.updateVoucherTypeDescription(999, newDescription),
             ).to.be.revertedWith('VoucherHub: Index out of bounds');
         });
     });
@@ -180,16 +180,16 @@ describe('VoucherHub', function () {
             const description = 'Voucher for Testing';
             const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
-            expect(await voucherHub.setEligibleAsset(1, asset)).to.emit(
+            expect(await voucherHub.setEligibleAsset(0, asset)).to.emit(
                 voucherHub,
                 'SetEligibleAsset',
             );
-            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(1, asset)).to.be.true;
-            expect(await voucherHub.unsetEligibleAsset(1, asset)).to.emit(
+            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(0, asset)).to.be.true;
+            expect(await voucherHub.unsetEligibleAsset(0, asset)).to.emit(
                 voucherHub,
                 'UnsetEligibleAsset',
             );
-            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(1, asset)).to.be.false;
+            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(0, asset)).to.be.false;
         });
 
         it('Should not allow non-owner to set asset eligibility', async function () {
@@ -199,7 +199,7 @@ describe('VoucherHub', function () {
             const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
             await expect(
-                voucherHub.connect(otherAccount).setEligibleAsset(1, asset),
+                voucherHub.connect(otherAccount).setEligibleAsset(0, asset),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
@@ -209,28 +209,28 @@ describe('VoucherHub', function () {
             const description = 'Voucher for Testing';
             const duration = 3600;
             await voucherHub.createVoucherType(description, duration);
-            await voucherHub.setEligibleAsset(1, asset);
-            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(1, asset)).to.be.true;
+            await voucherHub.setEligibleAsset(0, asset);
+            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(0, asset)).to.be.true;
             await expect(
-                voucherHub.connect(otherAccount).unsetEligibleAsset(1, asset),
+                voucherHub.connect(otherAccount).unsetEligibleAsset(0, asset),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
     });
 
     describe('getVoucherType', function () {
-        it('Should return correct voucher type information', async function () {
+        it('Should return correct voucher type', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
 
             await voucherHub.createVoucherType('Early Access', 3600);
             await voucherHub.createVoucherType('Premium Access', 7200);
 
-            const info1 = await voucherHub.getVoucherType(1);
-            expect(info1[0]).to.equal('Early Access');
-            expect(info1[1]).to.equal(3600);
+            const type1 = await voucherHub.getVoucherType(0);
+            expect(type1[0]).to.equal('Early Access');
+            expect(type1[1]).to.equal(3600);
 
-            const info2 = await voucherHub.getVoucherType(2);
-            expect(info2[0]).to.equal('Premium Access');
-            expect(info2[1]).to.equal(7200);
+            const type2 = await voucherHub.getVoucherType(1);
+            expect(type2[0]).to.equal('Premium Access');
+            expect(type2[1]).to.equal(7200);
         });
 
         it('Should revert for an out of bounds voucher type ID', async function () {
