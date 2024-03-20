@@ -83,20 +83,21 @@ describe('VoucherHubBis', function () {
                 voucherAddress2,
             );
 
-            // Check common config.
+            // Check common config state.
             expect(createVoucherTx1)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(voucherAddress1, voucherOwner1.address);
             expect(createVoucherTx2)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(voucherAddress2, voucherOwner2.address);
-            expect(await voucherProxy1.implementation(), 'Implementation mismatch').to.equal(
-                await voucherProxy2.implementation(),
-            );
-            expect(await voucherImpl1.getVersion(), 'Version mismatch').to.equal(
+            expect(
+                await voucherProxy1.implementation(),
+                'Implementation mismatch between proxies',
+            ).to.equal(await voucherProxy2.implementation());
+            expect(await voucherImpl1.getVersion(), 'Version mismatch between proxies').to.equal(
                 await voucherImpl2.getVersion(),
             );
-            // Check different config.
+            // Check different config state.
             expect(await voucherProxy1.owner(), 'Owners should not match').to.not.equal(
                 await voucherProxy2.owner(),
             );
@@ -124,20 +125,12 @@ describe('VoucherHubBis', function () {
                 'VoucherProxy',
                 voucherAddress1,
             );
-            const voucherImpl1: VoucherImpl = await ethers.getContractAt(
-                'VoucherImpl',
-                voucherAddress1,
-            );
             // Create voucher2.
             const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, initialVersion);
             createVoucherTx2.wait();
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucherProxy2: VoucherProxy = await ethers.getContractAt(
                 'VoucherProxy',
-                voucherAddress2,
-            );
-            const voucherImpl2: VoucherImpl = await ethers.getContractAt(
-                'VoucherImpl',
                 voucherAddress2,
             );
             // Save old implementation.
@@ -148,27 +141,66 @@ describe('VoucherHubBis', function () {
             // Note: upgrades.upgradeBeacon() deploys the new impl contract only if it is
             // different from the old implementation. To override the default config 'onchange'
             // use the option (redeployImplementation: 'always').
-            const upgrade = await upgrades.upgradeBeacon(beacon, voucherImplV2Factory);
-            await upgrade.waitForDeployment();
+            await upgrades
+                .upgradeBeacon(beacon, voucherImplV2Factory)
+                .then((contract) => contract.waitForDeployment());
 
-            // Implementation
+            // Make sure the implementation has changed.
             expect(await beacon.implementation(), 'Implementation did not change').to.not.equal(
                 initialImplementation,
             );
-            expect(await voucherProxy1.implementation(), 'Implementation mismatch').to.equal(
+            expect(await voucherProxy1.implementation(), 'New implementation mismatch').to.equal(
                 await beacon.implementation(),
             );
-            expect(await voucherProxy1.implementation(), 'Implementation mismatch').to.equal(
-                await voucherProxy2.implementation(),
+            expect(
+                await voucherProxy1.implementation(),
+                'New implementation mismatch between proxies',
+            ).to.equal(await voucherProxy2.implementation());
+            // Make sure the state did not change
+            // Check common config state.
+            const voucher1ImplV2: VoucherImpl = await ethers.getContractAt(
+                'VoucherImpl',
+                voucherAddress1,
             );
-            // Version
-            expect(await voucherImpl1.getVersion(), 'Version mismatch').to.equal(initialVersion);
-            expect(await voucherImpl1.getVersion(), 'Version mismatch').to.equal(
-                await voucherImpl2.getVersion(),
+            const voucher2ImplV2: VoucherImpl = await ethers.getContractAt(
+                'VoucherImpl',
+                voucherAddress1,
             );
-            // Owner
-            expect(await voucherProxy1.owner(), 'Owner mismatch').to.equal(voucherOwner1);
-            expect(await voucherProxy2.owner(), 'Owner mismatch').to.equal(voucherOwner2);
+            expect(
+                await voucher1ImplV2.getVersion(),
+                'New implementation version mismatch',
+            ).to.equal(initialVersion);
+            expect(
+                await voucher1ImplV2.getVersion(),
+                'New implementation version mismatch between proxies',
+            ).to.equal(await voucher2ImplV2.getVersion());
+            // Check different config state.
+            expect(await voucherProxy1.owner(), 'New implementation owner mismatch').to.equal(
+                voucherOwner1,
+            );
+            expect(await voucherProxy2.owner(), 'New implementation owner mismatch').to.equal(
+                voucherOwner2,
+            );
+        });
+
+        it('Should not upgrade voucher when unauthorized', async () => {
+            const { beacon, voucherHub, owner, unprivilegedAccount } =
+                await loadFixture(deployFixture);
+            // Save implementation.
+            const initialImplementation = await beacon.implementation();
+            // Change beacon owner.
+            await beacon.transferOwnership(ethers.Wallet.createRandom().address);
+            // Try to upgrade beacon.
+            expect(
+                upgrades.upgradeBeacon(
+                    beacon,
+                    await ethers.getContractFactory('VoucherImplV2Mock'),
+                ),
+            ).to.revertedWithCustomError(beacon, 'OwnableUnauthorizedAccount');
+            // Check implementation did not change.
+            expect(await beacon.implementation(), 'Implementation has changed').to.equal(
+                initialImplementation,
+            );
         });
     });
 });
@@ -195,16 +227,4 @@ async function deployBeaconAndImplementation(beaconOwner: string): Promise<Upgra
     const beacon = beaconContract as UpgradeableBeacon;
     await beacon.waitForDeployment();
     return beacon;
-}
-
-// TODO use voucherHub.createVoucher().
-async function deployVoucherProxy(owner: string, beaconAddress: string, data: string) {
-    const voucherProxy = await ethers
-        .getContractFactory('VoucherProxy')
-        .then(async (factory) => factory.deploy(owner, beaconAddress, data))
-        .then((contract) => contract.waitForDeployment())
-        .catch((error) => {
-            throw error;
-        });
-    return voucherProxy;
 }
