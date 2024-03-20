@@ -55,7 +55,7 @@ describe('VoucherHubBis', function () {
             expect(await voucherProxy.owner(), 'Owner mismatch').to.equal(voucherOwner1);
         });
 
-        it('Should create multiple vouchers with the same common config', async () => {
+        it('Should create multiple vouchers with the correct config', async () => {
             const { beacon, voucherHub, owner, voucherOwner1, voucherOwner2 } =
                 await loadFixture(deployFixture);
             // Create voucher1.
@@ -140,15 +140,21 @@ describe('VoucherHubBis', function () {
                 'VoucherImpl',
                 voucherAddress2,
             );
+            // Save old implementation.
             const initialImplementation = await beacon.implementation();
 
             // Upgrade beacon.
             const voucherImplV2Factory = await ethers.getContractFactory('VoucherImplV2Mock');
+            // Note: upgrades.upgradeBeacon() deploys the new impl contract only if it is
+            // different from the old implementation. To override the default config 'onchange'
+            // use the option (redeployImplementation: 'always').
             const upgrade = await upgrades.upgradeBeacon(beacon, voucherImplV2Factory);
             await upgrade.waitForDeployment();
 
             // Implementation
-            expect(await beacon.implementation()).to.not.equal(initialImplementation);
+            expect(await beacon.implementation(), 'Implementation did not change').to.not.equal(
+                initialImplementation,
+            );
             expect(await voucherProxy1.implementation(), 'Implementation mismatch').to.equal(
                 await beacon.implementation(),
             );
