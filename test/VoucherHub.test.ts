@@ -177,12 +177,12 @@ describe('VoucherHub', function () {
             await voucherHub.createVoucherType(description, duration);
             expect(await voucherHub.addEligibleAsset(0, asset)).to.emit(
                 voucherHub,
-                'AddEligibleAsset',
+                'EligibleAssetAdded',
             );
             expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(0, asset)).to.be.true;
             expect(await voucherHub.removeEligibleAsset(0, asset)).to.emit(
                 voucherHub,
-                'RemoveEligibleAsset',
+                'EligibleAssetRemoved',
             );
             expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(0, asset)).to.be.false;
         });
