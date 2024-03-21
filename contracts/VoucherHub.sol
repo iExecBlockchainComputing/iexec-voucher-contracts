@@ -17,7 +17,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     struct VoucherHubStorage {
         address iexecPoco;
         VoucherType[] voucherTypes;
-        mapping(uint256 => mapping(address => bool)) isAssetEligibleToMatchOrdersSponsoringByVoucherTypeId;
+        mapping(uint256 => mapping(address => bool)) matchOrdersEligibility;
     }
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
@@ -96,16 +96,13 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     }
     function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.isAssetEligibleToMatchOrdersSponsoringByVoucherTypeId[voucherTypeId][asset] = isEligible;
+        $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
     }
     function isAssetEligibleToMatchOrdersSponsoring(
         uint256 voucherTypeId,
         address asset
     ) public view returns (bool) {
-        return
-            _getVoucherHubStorage().isAssetEligibleToMatchOrdersSponsoringByVoucherTypeId[
-                voucherTypeId
-            ][asset];
+        return _getVoucherHubStorage().matchOrdersEligibility[voucherTypeId][asset];
     }
 
     function getIexecPoco() public view returns (address) {
