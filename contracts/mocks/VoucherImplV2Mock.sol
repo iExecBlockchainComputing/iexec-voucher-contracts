@@ -5,7 +5,6 @@ pragma solidity ^0.8.20;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IVoucher} from "../beacon/IVoucher.sol";
-import {VoucherStorageAbstract} from "../beacon/VoucherStorageAbstract.sol";
 
 contract VoucherImplV2Mock is Initializable, IVoucher {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
@@ -22,6 +21,15 @@ contract VoucherImplV2Mock is Initializable, IVoucher {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
+    }
+
+    /**
+     * Initialize new implementation contract.
+     * @param newStateVariable test variable.
+     */
+    function initialize(uint256 newStateVariable) external reinitializer(2) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        $.newStateVariable = newStateVariable;
     }
 
     function getExpiration() external view override returns (uint256) {
