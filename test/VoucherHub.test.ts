@@ -192,15 +192,17 @@ describe('VoucherHub', function () {
             const { voucherHub } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
-            const id = await getVoucherTypeCreatedId(voucherHub);
-            const addEligibleAssetTx = await voucherHub.addEligibleAsset(id, asset);
+            const typeId = await getVoucherTypeCreatedId(voucherHub);
+            const addEligibleAssetTx = await voucherHub.addEligibleAsset(typeId, asset);
             await addEligibleAssetTx.wait();
             expect(addEligibleAssetTx).to.emit(voucherHub, 'EligibleAssetAdded');
-            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(id, asset)).to.be.true;
-            const removeEligibleAssetTx = await voucherHub.removeEligibleAsset(id, asset);
+            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(typeId, asset)).to.be
+                .true;
+            const removeEligibleAssetTx = await voucherHub.removeEligibleAsset(typeId, asset);
             await removeEligibleAssetTx.wait();
             expect(removeEligibleAssetTx).to.emit(voucherHub, 'EligibleAssetRemoved');
-            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(id, asset)).to.be.false;
+            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(typeId, asset)).to.be
+                .false;
         });
 
         it('Should not allow non-owner to set asset eligibility', async function () {
@@ -216,10 +218,11 @@ describe('VoucherHub', function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
-            const id = await getVoucherTypeCreatedId(voucherHub);
-            const addEligibleAssetTx = await voucherHub.addEligibleAsset(id, asset);
+            const typeId = await getVoucherTypeCreatedId(voucherHub);
+            const addEligibleAssetTx = await voucherHub.addEligibleAsset(typeId, asset);
             await addEligibleAssetTx.wait();
-            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(id, asset)).to.be.true;
+            expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(typeId, asset)).to.be
+                .true;
             await expect(
                 voucherHub.connect(otherAccount).removeEligibleAsset(0, asset),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
@@ -229,6 +232,6 @@ describe('VoucherHub', function () {
 
 async function getVoucherTypeCreatedId(voucherHub: VoucherHub) {
     const events = await voucherHub.queryFilter(voucherHub.filters.VoucherTypeCreated, -1);
-    const id = Number(events[0].args[0]);
-    return id;
+    const typeId = Number(events[0].args[0]);
+    return typeId;
 }
