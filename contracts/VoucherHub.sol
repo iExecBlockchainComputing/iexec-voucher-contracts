@@ -17,7 +17,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     struct VoucherHubStorage {
         address iexecPoco;
         VoucherType[] voucherTypes;
-        mapping(uint256 => mapping(address => bool)) matchOrdersEligibility;
+        mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
     }
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
