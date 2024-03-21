@@ -11,8 +11,6 @@ const iexecAddress = '0x123456789a123456789b123456789b123456789d'; // random
 const description = 'Early Access';
 const duration = 3600;
 const asset = ethers.Wallet.createRandom().address;
-const newDescription = 'Long Term Duration';
-const newDuration = 7200;
 
 describe('VoucherHub', function () {
     // We define a fixture to reuse the same setup in every test.
@@ -120,6 +118,7 @@ describe('VoucherHub', function () {
     });
 
     describe('Update Voucher Type Description', function () {
+        const newDescription = 'Long Term Duration';
         it('Should modify voucher description correctly', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             await voucherHub.createVoucherType(description, duration);
@@ -146,6 +145,7 @@ describe('VoucherHub', function () {
     });
 
     describe('Update Voucher Type Duration', function () {
+        const newDuration = 7200;
         it('Should modify voucher duration correctly', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             await voucherHub.createVoucherType(description, duration);
