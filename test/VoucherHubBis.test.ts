@@ -30,10 +30,6 @@ describe('VoucherHubBis', function () {
             const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, expiration);
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucherProxy: VoucherProxy = await ethers.getContractAt(
-                'VoucherProxy',
-                voucherAddress,
-            );
             const voucher: IVoucher = await ethers.getContractAt('IVoucher', voucherAddress);
             // Run assertions.
             // Events.
@@ -46,16 +42,18 @@ describe('VoucherHubBis', function () {
                 .withArgs(expiration)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(voucherAddress, voucherOwner1.address);
-            expect(await voucherProxy.implementation(), 'Implementation mismatch').to.equal(
-                await beacon.implementation(),
-            );
+            // Implementation.
+            expect(
+                await getVoucherImplementation(voucherAddress),
+                'Implementation mismatch',
+            ).to.equal(await beacon.implementation());
             // State.
             expect(await voucher.getExpiration(), 'Expiration mismatch').to.equal(expiration);
             expect(await getVoucherOwner(voucherAddress), 'Owner mismatch').to.equal(voucherOwner1);
         });
 
         it('Should create multiple vouchers with the correct config', async () => {
-            const { beacon, voucherHub, owner, voucherOwner1, voucherOwner2 } =
+            const { voucherHub, owner, voucherOwner1, voucherOwner2 } =
                 await loadFixture(deployFixture);
             const expiration1 = expiration;
             const expiration2 = 99999999999999; // random (November 16, 5138)
@@ -63,19 +61,11 @@ describe('VoucherHubBis', function () {
             const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, expiration1);
             await createVoucherTx1.wait();
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
-            const voucherProxy1: VoucherProxy = await ethers.getContractAt(
-                'VoucherProxy',
-                voucherAddress1,
-            );
             const voucher1: IVoucher = await ethers.getContractAt('IVoucher', voucherAddress1);
             // Create voucher2.
             const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, expiration2);
             await createVoucherTx2.wait();
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
-            const voucherProxy2: VoucherProxy = await ethers.getContractAt(
-                'VoucherProxy',
-                voucherAddress2,
-            );
             const voucher2: IVoucher = await ethers.getContractAt('IVoucher', voucherAddress2);
 
             // Events
@@ -87,9 +77,9 @@ describe('VoucherHubBis', function () {
                 .withArgs(voucherAddress2, voucherOwner2.address);
             // Implementation
             expect(
-                await voucherProxy1.implementation(),
+                await getVoucherImplementation(voucherAddress1),
                 'Implementation mismatch between proxies',
-            ).to.equal(await voucherProxy2.implementation());
+            ).to.equal(await getVoucherImplementation(voucherAddress2));
             // State
             expect(
                 await voucher1.getExpiration(),
@@ -122,21 +112,12 @@ describe('VoucherHubBis', function () {
             const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, expiration1);
             await createVoucherTx1.wait();
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
-            const voucherProxy1: VoucherProxy = await ethers.getContractAt(
-                'VoucherProxy',
-                voucherAddress1,
-            );
             // Create voucher2.
             const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, expiration2);
             await createVoucherTx2.wait();
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
-            const voucherProxy2: VoucherProxy = await ethers.getContractAt(
-                'VoucherProxy',
-                voucherAddress2,
-            );
             // Save old implementation.
             const initialImplementation = await beacon.implementation();
-
             // Upgrade beacon.
             const voucherImplV2Factory = await ethers.getContractFactory('VoucherImplV2Mock');
             // Note: upgrades.upgradeBeacon() deploys the new impl contract only if it is
@@ -150,13 +131,14 @@ describe('VoucherHubBis', function () {
             expect(await beacon.implementation(), 'Implementation did not change').to.not.equal(
                 initialImplementation,
             );
-            expect(await voucherProxy1.implementation(), 'New implementation mismatch').to.equal(
-                await beacon.implementation(),
-            );
             expect(
-                await voucherProxy1.implementation(),
+                await getVoucherImplementation(voucherAddress1),
+                'New implementation mismatch',
+            ).to.equal(await beacon.implementation());
+            expect(
+                await getVoucherImplementation(voucherAddress1),
                 'New implementation mismatch between proxies',
-            ).to.equal(await voucherProxy2.implementation());
+            ).to.equal(await getVoucherImplementation(voucherAddress2));
             // Make sure the state did not change
             const voucher1_V2: IVoucher = await ethers.getContractAt('IVoucher', voucherAddress1);
             const voucher2_V2: IVoucher = await ethers.getContractAt('IVoucher', voucherAddress2);
@@ -224,6 +206,11 @@ async function deployBeaconAndInitialImplementation(
     const beacon = beaconContract as UpgradeableBeacon;
     await beacon.waitForDeployment();
     return beacon;
+}
+
+async function getVoucherImplementation(voucherAddress: string) {
+    const voucherProxy: VoucherProxy = await ethers.getContractAt('VoucherProxy', voucherAddress);
+    return await voucherProxy.implementation();
 }
 
 async function getVoucherOwner(voucherAddress: string) {
