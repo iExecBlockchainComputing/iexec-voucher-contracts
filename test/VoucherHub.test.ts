@@ -69,7 +69,7 @@ describe('VoucherHub', function () {
             expect(await voucherHubV2.foo()).to.equal('bar'); // V2
         });
 
-        it('Should not upgrade since unauthorized account', async () => {
+        it('Should not upgrade when account is unauthorized', async () => {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
 
             await expect(
@@ -90,7 +90,7 @@ describe('VoucherHub', function () {
     });
 
     describe('Create voucher type', function () {
-        it('Should allow owner to create a voucher type', async function () {
+        it('Should create a voucher type when the caller is the owner', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
@@ -105,7 +105,7 @@ describe('VoucherHub', function () {
             expect(count).to.equal(1);
         });
 
-        it('Should not allow non-owner to create a voucher type', async function () {
+        it('Should not create a voucher type when the caller is not the owner', async function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
             await expect(
                 voucherHub.connect(otherAccount).createVoucherType(description, duration),
@@ -114,7 +114,7 @@ describe('VoucherHub', function () {
     });
 
     describe('Get voucher type', function () {
-        it('Should revert for an out of bounds voucher type ID', async function () {
+        it('Should not get the voucher type when the voucher type ID is out of bounds', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             await expect(voucherHub.getVoucherType(999)).to.be.revertedWith(
                 'VoucherHub: type index out of bounds',
@@ -124,7 +124,7 @@ describe('VoucherHub', function () {
 
     describe('Update Voucher Type Description', function () {
         const newDescription = 'Long Term Duration';
-        it('Should modify voucher description correctly', async function () {
+        it('Should modify voucher description', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
@@ -138,7 +138,7 @@ describe('VoucherHub', function () {
                 .withArgs(0, newDescription);
         });
 
-        it('Should not allow non-owner to modify voucher description', async function () {
+        it('Should not modify voucher description when the caller is not the owner', async function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
@@ -147,7 +147,7 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
-        it('Should not allow out of bound voucher Id change description', async function () {
+        it('Should not change description when the voucher type ID is out of bounds', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
@@ -159,7 +159,7 @@ describe('VoucherHub', function () {
 
     describe('Update Voucher Type Duration', function () {
         const newDuration = 7200;
-        it('Should modify voucher duration correctly', async function () {
+        it('Should modify voucher duration', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
@@ -170,7 +170,7 @@ describe('VoucherHub', function () {
                 .withArgs(0, newDuration);
         });
 
-        it('Should not allow non-owner to modify voucher duration correctly', async function () {
+        it('Should not modify voucher duration when the caller is not the owner', async function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
             await voucherHub.createVoucherType(description, duration);
             await expect(
@@ -178,7 +178,7 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
-        it('Should not allow out of bound voucher Id to change duration', async function () {
+        it('Should not change duration when the voucher type ID is out of bounds', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             await voucherHub.createVoucherType(description, duration);
             await expect(voucherHub.updateVoucherTypeDuration(999, newDuration)).to.be.revertedWith(
@@ -205,7 +205,7 @@ describe('VoucherHub', function () {
                 .false;
         });
 
-        it('Should not allow non-owner to set asset eligibility', async function () {
+        it('Should not set asset eligibility when the caller is not the owner', async function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
@@ -214,7 +214,7 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
-        it('Should not allow non-owner to unset asset eligibility', async function () {
+        it('Should not unset asset eligibility when the caller is not the owner', async function () {
             const { voucherHub, otherAccount } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
