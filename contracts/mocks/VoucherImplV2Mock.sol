@@ -7,9 +7,26 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {IVoucher} from "../beacon/IVoucher.sol";
 import {VoucherBase} from "../beacon/VoucherBase.sol";
 
-contract VoucherImplV2Mock is Initializable, IVoucher, VoucherBase {
-    // TODO remove
+contract VoucherImplV2Mock is Initializable, IVoucher {
+    /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
+    struct VoucherStorage {
+        uint256 expiration;
+        uint256 newStateVariable;
+    }
+
+    // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
+    // & ~bytes32(uint256(0xff));
+    bytes32 private constant VOUCHER_STORAGE_LOCATION =
+        0xc2e244293dc04d6c7fa946e063317ff8e6770fd48cbaff411a60f1efc8a7e800;
+
+    function _getVoucherStorage() internal pure returns (VoucherStorage storage $) {
+        assembly {
+            $.slot := VOUCHER_STORAGE_LOCATION
+        }
+    }
+
     function getExpiration() external view override returns (uint256) {
-        return _getVoucherStorage().expiration;
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $.expiration;
     }
 }

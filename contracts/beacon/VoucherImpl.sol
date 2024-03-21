@@ -17,11 +17,13 @@ contract VoucherImpl is Initializable, IVoucher, VoucherBase {
      * @param expiration initial expiration.
      */
     function initialize(uint256 expiration) external initializer {
-        _getVoucherStorage().expiration = expiration;
+        VoucherStorage storage $ = _getVoucherStorage();
+        $.expiration = expiration;
         emit ExpirationUpdated(expiration);
     }
 
     function getExpiration() external view override returns (uint) {
-        return _getVoucherStorage().expiration;
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $.expiration;
     }
 }
