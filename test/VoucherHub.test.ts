@@ -8,7 +8,7 @@ import { VoucherHub } from '../typechain-types/contracts';
 import { VoucherHubV2Mock } from '../typechain-types/contracts/mocks';
 
 const iexecAddress = '0x123456789a123456789b123456789b123456789d'; // random
-const beaconAddress = '0xABcdEFABcdEFabcdEfAbCdefabcdeFABcDEFabCD'; // random
+const voucherBeaconAddress = '0xABcdEFABcdEFabcdEfAbCdefabcdeFABcDEFabCD'; // random
 
 describe('VoucherHub', function () {
     // We define a fixture to reuse the same setup in every test.
@@ -26,7 +26,7 @@ describe('VoucherHub', function () {
          */
         const voucherHub: VoucherHub = await upgrades.deployProxy(VoucherHubFactory, [
             iexecAddress,
-            beaconAddress,
+            voucherBeaconAddress,
         ]);
         await voucherHub.waitForDeployment();
 
@@ -39,14 +39,14 @@ describe('VoucherHub', function () {
 
             expect(await voucherHub.owner()).to.equal(owner);
             expect(await voucherHub.getIexecPoco()).to.equal(iexecAddress);
-            expect(await voucherHub.beacon()).to.equal(beaconAddress);
+            expect(await voucherHub.getVouchBeacon()).to.equal(voucherBeaconAddress);
         });
 
         it('Should not initialize twice', async () => {
             const { voucherHub } = await loadFixture(deployFixture);
 
             await expect(
-                voucherHub.initialize(iexecAddress, beaconAddress),
+                voucherHub.initialize(iexecAddress, voucherBeaconAddress),
             ).to.be.revertedWithCustomError(voucherHub, 'InvalidInitialization');
         });
     });

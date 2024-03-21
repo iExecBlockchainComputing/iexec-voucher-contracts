@@ -14,7 +14,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
         address _iexecPoco;
-        address beacon;
+        address voucherBeacon;
         // TODO remove & compute voucher address locally.
         mapping(address => address) voucherByAccount;
     }
@@ -39,7 +39,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;
-        $.beacon = initialBeaconAddress;
+        $.voucherBeacon = initialBeaconAddress;
     }
 
     function getIexecPoco() public view returns (address) {
@@ -47,15 +47,17 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         return $._iexecPoco;
     }
 
-    function setBeacon(address newBeacon) external onlyOwner {
-        _getVoucherHubStorage().beacon = newBeacon;
+    function setVoucherBeacon(address newBeacon) external onlyOwner {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        $.voucherBeacon = newBeacon;
     }
     /**
      * Get voucher beacon address.
      * TODO add update function.
      */
-    function beacon() public view returns (address) {
-        return _getVoucherHubStorage().beacon;
+    function getVouchBeacon() public view returns (address) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $.voucherBeacon;
     }
 
     /**
@@ -74,11 +76,10 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
             VoucherImpl(address(0)).initialize.selector,
             expiration
         );
-        voucherAddress = address(
-            new VoucherProxy(account, _getVoucherHubStorage().beacon, initialization)
-        );
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        voucherAddress = address(new VoucherProxy(account, $.voucherBeacon, initialization));
         // Save voucher address.
-        _getVoucherHubStorage().voucherByAccount[account] = voucherAddress;
+        $.voucherByAccount[account] = voucherAddress;
         emit VoucherCreated(voucherAddress, account);
     }
 
@@ -87,7 +88,8 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * @param account owner address.
      */
     function getVoucher(address account) public view override returns (address voucherAddress) {
-        voucherAddress = _getVoucherHubStorage().voucherByAccount[account];
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        voucherAddress = $.voucherByAccount[account];
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
