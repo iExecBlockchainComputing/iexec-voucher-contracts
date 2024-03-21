@@ -14,14 +14,15 @@ import {VoucherBase} from "./VoucherBase.sol";
 contract VoucherImpl is Initializable, IVoucher, VoucherBase {
     /**
      * Initialize implementation contract.
-     * @param version initial version. TODO remove
+     * @param expiration initial expiration. TODO remove
      */
-    function initialize(uint version) external initializer {
-        _getVoucherStorage().version = version;
+    function initialize(uint256 expiration) external initializer {
+        _getVoucherStorage().expiration = expiration;
+        emit ExpirationUpdated(expiration);
     }
 
     // TODO remove
-    function getVersion() external view override returns (uint) {
-        return _getVoucherStorage().version;
+    function getExpiration() external view override returns (uint) {
+        return _getVoucherStorage().expiration;
     }
 }

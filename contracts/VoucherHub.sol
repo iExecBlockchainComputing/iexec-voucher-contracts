@@ -62,16 +62,16 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * TODO return Voucher structure.
      * Create new voucher for specified account.
      * @param account voucher owner.
-     * @param version voucher version (temporary)
+     * @param expiration voucher expiration
      */
     function createVoucher(
         address account,
-        uint version
+        uint256 expiration
     ) public override onlyOwner returns (address voucherAddress) {
         // Create voucher and call initialize() function.
         bytes memory initialization = abi.encodeWithSelector(
             VoucherImpl(address(0)).initialize.selector,
-            version
+            expiration
         );
         voucherAddress = address(
             new VoucherProxy(account, _getVoucherHubStorage().beacon, initialization)

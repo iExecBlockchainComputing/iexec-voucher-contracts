@@ -7,7 +7,7 @@ import { ethers, upgrades } from 'hardhat';
 import { UpgradeableBeacon, VoucherHub, VoucherImpl, VoucherProxy } from '../typechain-types';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random // TODO remove
-const initialVersion = 1;
+const expiration = 88888888888888; // random (September 5, 2251)
 
 // TODO move tests to VoucherHub.test.ts (this is just to avoid git conflict).
 describe('VoucherHubBis', function () {
@@ -27,7 +27,7 @@ describe('VoucherHubBis', function () {
         it('Should create voucher', async () => {
             const { beacon, voucherHub, owner, voucherOwner1 } = await loadFixture(deployFixture);
             // Create voucher.
-            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, initialVersion);
+            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, expiration);
             createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucherProxy: VoucherProxy = await ethers.getContractAt(
@@ -44,22 +44,24 @@ describe('VoucherHubBis', function () {
                 .withArgs(voucherOwner1.address)
                 .to.emit(voucherHub, 'BeaconUpgraded')
                 .withArgs(await beacon.getAddress())
-                .to.emit(voucherHub, 'VersionUpdated')
-                .withArgs(initialVersion)
+                .to.emit(voucherHub, 'ExpirationUpdated')
+                .withArgs(expiration)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(voucherAddress, voucherOwner1.address);
             expect(await voucherProxy.implementation(), 'Implementation mismatch').to.equal(
                 await beacon.implementation(),
             );
-            expect(await voucherImpl.getVersion(), 'Version mismatch').to.equal(initialVersion);
+            expect(await voucherImpl.getExpiration(), 'Expiration mismatch').to.equal(expiration);
             expect(await voucherProxy.owner(), 'Owner mismatch').to.equal(voucherOwner1);
         });
 
         it('Should create multiple vouchers with the correct config', async () => {
             const { beacon, voucherHub, owner, voucherOwner1, voucherOwner2 } =
                 await loadFixture(deployFixture);
+            const expiration1 = expiration;
+            const expiration2 = 99999999999999; // random (November 16, 5138)
             // Create voucher1.
-            const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, initialVersion);
+            const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, expiration1);
             createVoucherTx1.wait();
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucherProxy1: VoucherProxy = await ethers.getContractAt(
@@ -71,7 +73,7 @@ describe('VoucherHubBis', function () {
                 voucherAddress1,
             );
             // Create voucher2.
-            const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, initialVersion);
+            const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, expiration2);
             createVoucherTx2.wait();
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucherProxy2: VoucherProxy = await ethers.getContractAt(
@@ -94,13 +96,15 @@ describe('VoucherHubBis', function () {
                 await voucherProxy1.implementation(),
                 'Implementation mismatch between proxies',
             ).to.equal(await voucherProxy2.implementation());
-            expect(await voucherImpl1.getVersion(), 'Version mismatch between proxies').to.equal(
-                await voucherImpl2.getVersion(),
-            );
             // Check different config state.
-            expect(await voucherProxy1.owner(), 'Owners should not match').to.not.equal(
-                await voucherProxy2.owner(),
-            );
+            expect(
+                await voucherProxy1.owner(),
+                'Owners should not match between proxies',
+            ).to.not.equal(await voucherProxy2.owner());
+            expect(
+                await voucherImpl1.getExpiration(),
+                'Expiration should not match between proxies',
+            ).to.not.equal(await voucherImpl2.getExpiration());
         });
 
         it('Should not create voucher when not owner', async () => {
@@ -108,17 +112,19 @@ describe('VoucherHubBis', function () {
                 await loadFixture(deployFixture);
             // Create voucher.
             expect(
-                await voucherHub.createVoucher(unprivilegedAccount, initialVersion),
+                await voucherHub.createVoucher(unprivilegedAccount, expiration),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
     });
 
     describe('Upgrade voucher', async function () {
-        it('Should upgrade voucher', async () => {
+        it('Should upgrade all vouchers', async () => {
             const { beacon, voucherHub, owner, voucherOwner1, voucherOwner2 } =
                 await loadFixture(deployFixture);
+            const expiration1 = expiration;
+            const expiration2 = 99999999999999; // random (November 16, 5138)
             // Create voucher1.
-            const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, initialVersion);
+            const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, expiration1);
             createVoucherTx1.wait();
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucherProxy1: VoucherProxy = await ethers.getContractAt(
@@ -126,7 +132,7 @@ describe('VoucherHubBis', function () {
                 voucherAddress1,
             );
             // Create voucher2.
-            const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, initialVersion);
+            const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, expiration2);
             createVoucherTx2.wait();
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucherProxy2: VoucherProxy = await ethers.getContractAt(
@@ -157,30 +163,28 @@ describe('VoucherHubBis', function () {
                 'New implementation mismatch between proxies',
             ).to.equal(await voucherProxy2.implementation());
             // Make sure the state did not change
-            // Check common config state.
             const voucher1ImplV2: VoucherImpl = await ethers.getContractAt(
                 'VoucherImpl',
                 voucherAddress1,
             );
             const voucher2ImplV2: VoucherImpl = await ethers.getContractAt(
                 'VoucherImpl',
-                voucherAddress1,
+                voucherAddress2,
             );
-            expect(
-                await voucher1ImplV2.getVersion(),
-                'New implementation version mismatch',
-            ).to.equal(initialVersion);
-            expect(
-                await voucher1ImplV2.getVersion(),
-                'New implementation version mismatch between proxies',
-            ).to.equal(await voucher2ImplV2.getVersion());
-            // Check different config state.
             expect(await voucherProxy1.owner(), 'New implementation owner mismatch').to.equal(
                 voucherOwner1,
             );
             expect(await voucherProxy2.owner(), 'New implementation owner mismatch').to.equal(
                 voucherOwner2,
             );
+            expect(
+                await voucher1ImplV2.getExpiration(),
+                'New implementation expiration mismatch',
+            ).to.equal(expiration1);
+            expect(
+                await voucher2ImplV2.getExpiration(),
+                'New implementation expiration mismatch',
+            ).to.equal(expiration2);
         });
 
         it('Should not upgrade voucher when unauthorized', async () => {

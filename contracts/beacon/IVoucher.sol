@@ -7,7 +7,7 @@ pragma solidity ^0.8.20;
  * @title Interface of the voucher contract.
  */
 interface IVoucher {
-    event VersionUpdated(uint newVersion);
+    event ExpirationUpdated(uint256 newExpiration);
 
-    function getVersion() external returns (uint);
+    function getExpiration() external returns (uint);
 }

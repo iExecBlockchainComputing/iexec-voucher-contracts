@@ -9,7 +9,7 @@ import {VoucherBase} from "../beacon/VoucherBase.sol";
 
 contract VoucherImplV2Mock is Initializable, IVoucher, VoucherBase {
     // TODO remove
-    function getVersion() external view override returns (uint) {
-        return _getVoucherStorage().version;
+    function getExpiration() external view override returns (uint256) {
+        return _getVoucherStorage().expiration;
     }
 }

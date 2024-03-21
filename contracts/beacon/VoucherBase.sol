@@ -10,7 +10,7 @@ pragma solidity ^0.8.20;
 abstract contract VoucherBase {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
-        uint version;
+        uint256 expiration;
     }
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
