@@ -12,6 +12,10 @@ import {VoucherBase} from "./VoucherBase.sol";
  * @notice Deployed along the Beacon contract using "Upgrades" plugin of OZ.
  */
 contract VoucherImpl is Initializable, IVoucher, VoucherBase {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
     /**
      * Initialize implementation contract.
      * @param expiration initial expiration.

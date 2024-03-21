@@ -19,14 +19,19 @@ contract VoucherImplV2Mock is Initializable, IVoucher {
     bytes32 private constant VOUCHER_STORAGE_LOCATION =
         0xc2e244293dc04d6c7fa946e063317ff8e6770fd48cbaff411a60f1efc8a7e800;
 
-    function _getVoucherStorage() internal pure returns (VoucherStorage storage $) {
-        assembly {
-            $.slot := VOUCHER_STORAGE_LOCATION
-        }
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
 
     function getExpiration() external view override returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $.expiration;
+    }
+
+    function _getVoucherStorage() internal pure returns (VoucherStorage storage $) {
+        assembly {
+            $.slot := VOUCHER_STORAGE_LOCATION
+        }
     }
 }
