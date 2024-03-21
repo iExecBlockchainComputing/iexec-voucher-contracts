@@ -25,10 +25,8 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800;
 
     modifier whenVoucherTypeExists(uint256 id) {
-        require(
-            id < _getVoucherHubStorage().voucherTypes.length,
-            "VoucherHub: type index out of bounds"
-        );
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        require(id < $.voucherTypes.length, "VoucherHub: type index out of bounds");
         _;
     }
 
@@ -46,7 +44,8 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     function initialize(address iexecPoco) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
-        _getVoucherHubStorage().iexecPoco = iexecPoco;
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        $.iexecPoco = iexecPoco;
     }
 
     // TODO: Replace most onlyOwner to onlyVoucherManager
@@ -82,7 +81,8 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     }
 
     function getVoucherTypeCount() public view returns (uint256) {
-        return _getVoucherHubStorage().voucherTypes.length;
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $.voucherTypes.length;
     }
 
     function addEligibleAsset(uint256 voucherTypeId, address asset) external onlyOwner {
@@ -102,7 +102,8 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         uint256 voucherTypeId,
         address asset
     ) public view returns (bool) {
-        return _getVoucherHubStorage().matchOrdersEligibility[voucherTypeId][asset];
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $.matchOrdersEligibility[voucherTypeId][asset];
     }
 
     function getIexecPoco() public view returns (address) {
