@@ -4,7 +4,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
-import { UpgradeableBeacon, VoucherHub, VoucherImpl, VoucherProxy } from '../typechain-types';
+import { IVoucher, UpgradeableBeacon, VoucherHub, VoucherProxy } from '../typechain-types';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random // TODO remove
 const expiration = 88888888888888; // random (September 5, 2251)
@@ -34,10 +34,7 @@ describe('VoucherHubBis', function () {
                 'VoucherProxy',
                 voucherAddress,
             );
-            const voucherImpl: VoucherImpl = await ethers.getContractAt(
-                'VoucherImpl',
-                voucherAddress,
-            );
+            const voucher: IVoucher = await ethers.getContractAt('IVoucher', voucherAddress);
             // Run assertions.
             expect(createVoucherTx)
                 .to.emit(voucherHub, 'OwnershipTransferred')
@@ -51,7 +48,7 @@ describe('VoucherHubBis', function () {
             expect(await voucherProxy.implementation(), 'Implementation mismatch').to.equal(
                 await beacon.implementation(),
             );
-            expect(await voucherImpl.getExpiration(), 'Expiration mismatch').to.equal(expiration);
+            expect(await voucher.getExpiration(), 'Expiration mismatch').to.equal(expiration);
             expect(await voucherProxy.owner(), 'Owner mismatch').to.equal(voucherOwner1);
         });
 
@@ -68,10 +65,7 @@ describe('VoucherHubBis', function () {
                 'VoucherProxy',
                 voucherAddress1,
             );
-            const voucherImpl1: VoucherImpl = await ethers.getContractAt(
-                'VoucherImpl',
-                voucherAddress1,
-            );
+            const voucher1: IVoucher = await ethers.getContractAt('IVoucher', voucherAddress1);
             // Create voucher2.
             const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, expiration2);
             await createVoucherTx2.wait();
@@ -80,10 +74,7 @@ describe('VoucherHubBis', function () {
                 'VoucherProxy',
                 voucherAddress2,
             );
-            const voucherImpl2: VoucherImpl = await ethers.getContractAt(
-                'VoucherImpl',
-                voucherAddress2,
-            );
+            const voucher2: IVoucher = await ethers.getContractAt('IVoucher', voucherAddress2);
 
             // Check common config state.
             expect(createVoucherTx1)
@@ -102,9 +93,9 @@ describe('VoucherHubBis', function () {
                 'Owners should not match between proxies',
             ).to.not.equal(await voucherProxy2.owner());
             expect(
-                await voucherImpl1.getExpiration(),
+                await voucher1.getExpiration(),
                 'Expiration should not match between proxies',
-            ).to.not.equal(await voucherImpl2.getExpiration());
+            ).to.not.equal(await voucher2.getExpiration());
         });
 
         it('Should not create voucher when not owner', async () => {
@@ -163,14 +154,8 @@ describe('VoucherHubBis', function () {
                 'New implementation mismatch between proxies',
             ).to.equal(await voucherProxy2.implementation());
             // Make sure the state did not change
-            const voucher1ImplV2: VoucherImpl = await ethers.getContractAt(
-                'VoucherImpl',
-                voucherAddress1,
-            );
-            const voucher2ImplV2: VoucherImpl = await ethers.getContractAt(
-                'VoucherImpl',
-                voucherAddress2,
-            );
+            const voucher1_V2: IVoucher = await ethers.getContractAt('IVoucher', voucherAddress1);
+            const voucher2_V2: IVoucher = await ethers.getContractAt('IVoucher', voucherAddress2);
             expect(await voucherProxy1.owner(), 'New implementation owner mismatch').to.equal(
                 voucherOwner1,
             );
@@ -178,11 +163,11 @@ describe('VoucherHubBis', function () {
                 voucherOwner2,
             );
             expect(
-                await voucher1ImplV2.getExpiration(),
+                await voucher1_V2.getExpiration(),
                 'New implementation expiration mismatch',
             ).to.equal(expiration1);
             expect(
-                await voucher2ImplV2.getExpiration(),
+                await voucher2_V2.getExpiration(),
                 'New implementation expiration mismatch',
             ).to.equal(expiration2);
         });
