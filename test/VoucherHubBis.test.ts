@@ -18,7 +18,7 @@ describe('VoucherHubBis', function () {
         // Contracts are deployed using the first signer/account by default
         const [owner, voucherOwner1, voucherOwner2, unprivilegedAccount] =
             await ethers.getSigners();
-        const beacon = await deployBeaconAndImplementation(owner.address);
+        const beacon = await deployBeaconAndInitialImplementation(owner.address);
         const voucherHub = await deployVoucherHub(await beacon.getAddress());
         return { beacon, voucherHub, owner, voucherOwner1, voucherOwner2, unprivilegedAccount };
     }
@@ -28,7 +28,7 @@ describe('VoucherHubBis', function () {
             const { beacon, voucherHub, owner, voucherOwner1 } = await loadFixture(deployFixture);
             // Create voucher.
             const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, expiration);
-            createVoucherTx.wait();
+            await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucherProxy: VoucherProxy = await ethers.getContractAt(
                 'VoucherProxy',
@@ -62,7 +62,7 @@ describe('VoucherHubBis', function () {
             const expiration2 = 99999999999999; // random (November 16, 5138)
             // Create voucher1.
             const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, expiration1);
-            createVoucherTx1.wait();
+            await createVoucherTx1.wait();
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucherProxy1: VoucherProxy = await ethers.getContractAt(
                 'VoucherProxy',
@@ -74,7 +74,7 @@ describe('VoucherHubBis', function () {
             );
             // Create voucher2.
             const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, expiration2);
-            createVoucherTx2.wait();
+            await createVoucherTx2.wait();
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucherProxy2: VoucherProxy = await ethers.getContractAt(
                 'VoucherProxy',
@@ -125,7 +125,7 @@ describe('VoucherHubBis', function () {
             const expiration2 = 99999999999999; // random (November 16, 5138)
             // Create voucher1.
             const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, expiration1);
-            createVoucherTx1.wait();
+            await createVoucherTx1.wait();
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucherProxy1: VoucherProxy = await ethers.getContractAt(
                 'VoucherProxy',
@@ -133,7 +133,7 @@ describe('VoucherHubBis', function () {
             );
             // Create voucher2.
             const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, expiration2);
-            createVoucherTx2.wait();
+            await createVoucherTx2.wait();
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucherProxy2: VoucherProxy = await ethers.getContractAt(
                 'VoucherProxy',
@@ -219,7 +219,9 @@ async function deployVoucherHub(beacon: string): Promise<VoucherHub> {
     return await voucherHub.waitForDeployment();
 }
 
-async function deployBeaconAndImplementation(beaconOwner: string): Promise<UpgradeableBeacon> {
+async function deployBeaconAndInitialImplementation(
+    beaconOwner: string,
+): Promise<UpgradeableBeacon> {
     const voucherImplFactory = await ethers.getContractFactory('VoucherImpl');
     // upgrades.deployBeacon() does the following:
     // 1. Deploys the implementation contract.
