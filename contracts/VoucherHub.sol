@@ -15,6 +15,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     struct VoucherHubStorage {
         address _iexecPoco;
         address beacon;
+        // TODO remove & compute voucher address locally.
         mapping(address => address) voucherByAccount;
     }
 
