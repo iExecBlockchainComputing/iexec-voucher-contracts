@@ -15,7 +15,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     struct VoucherHubStorage {
         address _iexecPoco;
         address voucherBeacon;
-        // TODO remove & compute voucher address locally.
+        // TODO remove & compute voucher address.
         mapping(address => address) voucherByAccount;
     }
 
@@ -74,10 +74,11 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         // Create voucher and call initialize() function.
         bytes memory initialization = abi.encodeWithSelector(
             VoucherImpl(address(0)).initialize.selector,
+            account,
             expiration
         );
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        voucherAddress = address(new VoucherProxy(account, $.voucherBeacon, initialization));
+        voucherAddress = address(new VoucherProxy($.voucherBeacon, initialization));
         // Save voucher address.
         $.voucherByAccount[account] = voucherAddress;
         emit VoucherCreated(voucherAddress, account);

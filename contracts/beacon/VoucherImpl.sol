@@ -3,14 +3,14 @@
 
 pragma solidity ^0.8.20;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IVoucher} from "./IVoucher.sol";
 
 /**
  * @title Implementation of the voucher contract.
  * @notice Deployed along the Beacon contract using "Upgrades" plugin of OZ.
  */
-contract VoucherImpl is Initializable, IVoucher {
+contract VoucherImpl is OwnableUpgradeable, IVoucher {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
         uint256 expiration;
@@ -30,7 +30,8 @@ contract VoucherImpl is Initializable, IVoucher {
      * Initialize implementation contract.
      * @param expiration initial expiration.
      */
-    function initialize(uint256 expiration) external initializer {
+    function initialize(address owner, uint256 expiration) external initializer {
+        __Ownable_init(owner);
         VoucherStorage storage $ = _getVoucherStorage();
         $.expiration = expiration;
         emit ExpirationUpdated(expiration);
