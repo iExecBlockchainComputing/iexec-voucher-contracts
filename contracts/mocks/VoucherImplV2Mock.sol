@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IVoucher} from "../beacon/IVoucher.sol";
-import {VoucherBase} from "../beacon/VoucherBase.sol";
+import {VoucherStorageAbstract} from "../beacon/VoucherStorageAbstract.sol";
 
 contract VoucherImplV2Mock is Initializable, IVoucher {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher

@@ -7,7 +7,7 @@ pragma solidity ^0.8.20;
  * @title Storage of the voucher proxy contract.
  * @notice Extracted here to be shared with the implementation contract.
  */
-abstract contract VoucherBase {
+abstract contract VoucherStorageAbstract {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
         uint256 expiration;

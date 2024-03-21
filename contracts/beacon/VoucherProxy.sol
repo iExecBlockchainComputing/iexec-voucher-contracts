@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {VoucherBase} from "./VoucherBase.sol";
+import {VoucherStorageAbstract} from "./VoucherStorageAbstract.sol";
 
 /**
  * @title Beacon proxy contract instance that is deployed per user.
@@ -13,7 +13,7 @@ import {VoucherBase} from "./VoucherBase.sol";
  * @dev TODO use oz/OwnableUpgradeable if compatible to benefit from erc7201 storage
  * (openzeppelin.storage.Ownable).
  */
-contract VoucherProxy is Ownable, BeaconProxy, VoucherBase {
+contract VoucherProxy is Ownable, BeaconProxy, VoucherStorageAbstract {
     constructor(
         address ownerAddress,
         address beaconAddress,
