@@ -21,7 +21,9 @@ contract VoucherProxy is BeaconProxy {
      * "This contract has a payable fallback function, but no receive
      * ether function. Consider adding a receive ether function"
      */
-    receive() external payable {}
+    receive() external payable {
+        revert("VoucherProxy: Receive function not supported");
+    }
 
     /**
      * Get beacon address.
