@@ -246,8 +246,7 @@ describe('VoucherHub', function () {
         });
 
         it('Should create multiple vouchers with the correct config', async () => {
-            const { voucherHub, owner, voucherOwner1, voucherOwner2 } =
-                await loadFixture(deployFixture);
+            const { voucherHub, voucherOwner1, voucherOwner2 } = await loadFixture(deployFixture);
             const expiration1 = expiration;
             const expiration2 = 99999999999999; // random (November 16, 5138)
             // Create voucher1.
@@ -255,11 +254,13 @@ describe('VoucherHub', function () {
             await createVoucherTx1.wait();
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucher1 = await getVoucher(voucherAddress1);
+            const voucherAsProxy1 = await getVoucherAsProxy(voucherAddress1);
             // Create voucher2.
             const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, expiration2);
             await createVoucherTx2.wait();
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucher2 = await getVoucher(voucherAddress2);
+            const voucherAsProxy2 = await getVoucherAsProxy(voucherAddress2);
 
             // Events
             await expect(createVoucherTx1)
@@ -268,17 +269,16 @@ describe('VoucherHub', function () {
             await expect(createVoucherTx2)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(voucherAddress2, voucherOwner2.address, expiration2);
-            // Implementation
+            // Voucher as proxy
             expect(
-                await getVoucherImplementation(voucherAddress1),
+                await voucherAsProxy1.implementation(),
                 'Implementation mismatch between proxies',
-            ).to.equal(await getVoucherImplementation(voucherAddress2));
-            // State
+            ).to.equal(await voucherAsProxy2.implementation());
+            // Voucher
             expect(
                 await voucher1.getExpiration(),
                 'Expiration should not match between proxies',
             ).to.not.equal(await voucher2.getExpiration());
-            // Owner
             expect(await voucher1.owner(), 'Owners should not match between proxies').to.not.equal(
                 voucher2.owner(),
             );
@@ -303,10 +303,12 @@ describe('VoucherHub', function () {
             const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, expiration1);
             await createVoucherTx1.wait();
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
+            const voucherAsProxy1 = await getVoucherAsProxy(voucherAddress1);
             // Create voucher2.
             const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, expiration2);
             await createVoucherTx2.wait();
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
+            const voucherAsProxy2 = await getVoucherAsProxy(voucherAddress2);
             // Save old implementation.
             const initialImplementation = await beacon.implementation();
             // Upgrade beacon.
@@ -322,14 +324,13 @@ describe('VoucherHub', function () {
             expect(await beacon.implementation(), 'Implementation did not change').to.not.equal(
                 initialImplementation,
             );
+            expect(await voucherAsProxy1.implementation(), 'New implementation mismatch').to.equal(
+                await beacon.implementation(),
+            );
             expect(
-                await getVoucherImplementation(voucherAddress1),
-                'New implementation mismatch',
-            ).to.equal(await beacon.implementation());
-            expect(
-                await getVoucherImplementation(voucherAddress1),
+                await voucherAsProxy1.implementation(),
                 'New implementation mismatch between proxies',
-            ).to.equal(await getVoucherImplementation(voucherAddress2));
+            ).to.equal(await voucherAsProxy2.implementation());
             // Make sure the state did not change
             const voucher1_V2 = await getVoucher(voucherAddress1);
             const voucher2_V2 = await getVoucher(voucherAddress2);
@@ -403,11 +404,6 @@ async function getVoucherTypeCreatedId(voucherHub: VoucherHub) {
     const events = await voucherHub.queryFilter(voucherHub.filters.VoucherTypeCreated, -1);
     const typeId = Number(events[0].args[0]);
     return typeId;
-}
-
-async function getVoucherImplementation(voucherAddress: string) {
-    const voucherProxy: VoucherProxy = await getVoucherAsProxy(voucherAddress);
-    return await voucherProxy.implementation();
 }
 
 async function getVoucher(voucherAddress: string): Promise<VoucherImpl> {
