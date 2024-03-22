@@ -65,7 +65,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     function createVoucher(
         address account,
         uint256 expiration
-    ) public override onlyOwner returns (address voucherAddress) {
+    ) external override onlyOwner returns (address voucherAddress) {
         // Create voucher and call initialize() function.
         bytes memory initialization = abi.encodeWithSelector(
             VoucherImpl(address(0)).initialize.selector,
