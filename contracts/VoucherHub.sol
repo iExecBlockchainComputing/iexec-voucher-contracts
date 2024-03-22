@@ -34,12 +34,12 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         _disableInitializers();
     }
 
-    function initialize(address iexecPoco, address initialBeaconAddress) public initializer {
+    function initialize(address iexecPoco, address voucherBeacon) external initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;
-        $.voucherBeacon = initialBeaconAddress;
+        $.voucherBeacon = voucherBeacon;
     }
 
     function getIexecPoco() public view returns (address) {
