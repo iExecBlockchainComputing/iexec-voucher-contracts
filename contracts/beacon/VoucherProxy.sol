@@ -20,13 +20,6 @@ contract VoucherProxy is BeaconProxy {
     }
 
     /**
-     * Get beacon address.
-     */
-    function beacon() external view returns (address) {
-        return _getBeacon();
-    }
-
-    /**
      * Get implementation address.
      * @dev Used in tests.
      */
