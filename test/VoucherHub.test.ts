@@ -225,10 +225,10 @@ describe('VoucherHub', function () {
             // Run assertions.
             // Events.
             await expect(createVoucherTx)
-                .to.emit(voucher, 'OwnershipTransferred')
-                .withArgs(ethers.ZeroAddress, voucherOwner1.address)
                 .to.emit(voucherAsProxy, 'BeaconUpgraded')
                 .withArgs(await beacon.getAddress())
+                .to.emit(voucher, 'OwnershipTransferred')
+                .withArgs(ethers.ZeroAddress, voucherOwner1.address)
                 .to.emit(voucher, 'ExpirationUpdated')
                 .withArgs(expiration)
                 .to.emit(voucherHub, 'VoucherCreated')
