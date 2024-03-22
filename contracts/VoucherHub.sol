@@ -50,7 +50,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     /**
      * Get voucher beacon address.
      */
-    function getVouchBeacon() public view returns (address) {
+    function getVoucherBeacon() public view returns (address) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $._voucherBeacon;
     }

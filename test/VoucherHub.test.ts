@@ -39,7 +39,7 @@ describe('VoucherHub', function () {
 
             expect(await voucherHub.owner()).to.equal(owner);
             expect(await voucherHub.getIexecPoco()).to.equal(iexecAddress);
-            expect(await voucherHub.getVouchBeacon()).to.equal(voucherBeaconAddress);
+            expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
         });
 
         it('Should not initialize twice', async () => {
