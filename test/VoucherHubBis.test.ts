@@ -4,7 +4,13 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
-import { IVoucher, UpgradeableBeacon, VoucherHub, VoucherProxy } from '../typechain-types';
+import {
+    IVoucher,
+    UpgradeableBeacon,
+    VoucherHub,
+    VoucherImpl,
+    VoucherProxy,
+} from '../typechain-types';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random // TODO remove
 const expiration = 88888888888888; // random (September 5, 2251)
@@ -33,15 +39,15 @@ describe('VoucherHubBis', function () {
             const voucher: IVoucher = await ethers.getContractAt('IVoucher', voucherAddress);
             // Run assertions.
             // Events.
-            expect(createVoucherTx)
-                .to.emit(voucherHub, 'OwnershipTransferred')
-                .withArgs(voucherOwner1.address)
-                .to.emit(voucherHub, 'BeaconUpgraded')
+            await expect(createVoucherTx)
+                .to.emit(await voucherImplAbi(voucherAddress), 'OwnershipTransferred')
+                .withArgs(ethers.ZeroAddress, voucherOwner1.address)
+                .to.emit(await voucherProxyAbi(voucherAddress), 'BeaconUpgraded')
                 .withArgs(await beacon.getAddress())
-                .to.emit(voucherHub, 'ExpirationUpdated')
+                .to.emit(voucher, 'ExpirationUpdated')
                 .withArgs(expiration)
                 .to.emit(voucherHub, 'VoucherCreated')
-                .withArgs(voucherAddress, voucherOwner1.address);
+                .withArgs(voucherAddress, voucherOwner1.address, expiration);
             // Implementation.
             expect(
                 await getVoucherImplementation(voucherAddress),
@@ -69,12 +75,12 @@ describe('VoucherHubBis', function () {
             const voucher2: IVoucher = await ethers.getContractAt('IVoucher', voucherAddress2);
 
             // Events
-            expect(createVoucherTx1)
+            await expect(createVoucherTx1)
                 .to.emit(voucherHub, 'VoucherCreated')
-                .withArgs(voucherAddress1, voucherOwner1.address);
-            expect(createVoucherTx2)
+                .withArgs(voucherAddress1, voucherOwner1.address, expiration1);
+            await expect(createVoucherTx2)
                 .to.emit(voucherHub, 'VoucherCreated')
-                .withArgs(voucherAddress2, voucherOwner2.address);
+                .withArgs(voucherAddress2, voucherOwner2.address, expiration2);
             // Implementation
             expect(
                 await getVoucherImplementation(voucherAddress1),
@@ -217,4 +223,12 @@ async function getVoucherOwner(voucherAddress: string) {
     // IVoucher does not have owner() function.
     const ownable = await ethers.getContractAt('OwnableUpgradeable', voucherAddress);
     return await ownable.owner();
+}
+
+async function voucherImplAbi(voucherAddress: string): Promise<VoucherImpl> {
+    return await ethers.getContractAt('VoucherImpl', voucherAddress);
+}
+
+async function voucherProxyAbi(voucherAddress: string): Promise<VoucherProxy> {
+    return await ethers.getContractAt('VoucherProxy', voucherAddress);
 }

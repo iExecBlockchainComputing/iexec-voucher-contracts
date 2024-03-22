@@ -81,7 +81,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         voucherAddress = address(new VoucherProxy($.voucherBeacon, initialization));
         // Save voucher address.
         $.voucherByAccount[account] = voucherAddress;
-        emit VoucherCreated(voucherAddress, account);
+        emit VoucherCreated(voucherAddress, account, expiration);
     }
 
     /**

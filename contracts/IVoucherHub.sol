@@ -4,7 +4,7 @@
 pragma solidity ^0.8.20;
 
 interface IVoucherHub {
-    event VoucherCreated(address voucher, address owner);
+    event VoucherCreated(address voucher, address owner, uint256 expiration);
 
     function createVoucher(
         address account,
