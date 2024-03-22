@@ -47,13 +47,8 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         return $._iexecPoco;
     }
 
-    function setVoucherBeacon(address newBeacon) external onlyOwner {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.voucherBeacon = newBeacon;
-    }
     /**
      * Get voucher beacon address.
-     * TODO add update function.
      */
     function getVouchBeacon() public view returns (address) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
