@@ -285,10 +285,11 @@ describe('VoucherHub', function () {
         });
 
         it('Should not create voucher when not owner', async () => {
-            const { beacon, voucherHub, unprivilegedAccount } = await loadFixture(deployFixture);
+            const { beacon, voucherHub, voucherOwner1, unprivilegedAccount } =
+                await loadFixture(deployFixture);
             // Create voucher.
-            expect(
-                await voucherHub.createVoucher(unprivilegedAccount, expiration),
+            await expect(
+                voucherHub.connect(unprivilegedAccount).createVoucher(voucherOwner1, expiration),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
     });
