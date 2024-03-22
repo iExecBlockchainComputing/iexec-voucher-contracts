@@ -14,7 +14,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
         address _iexecPoco;
-        address voucherBeacon;
+        address _voucherBeacon;
         // TODO remove & compute voucher address.
         mapping(address => address) voucherByAccount;
     }
@@ -39,7 +39,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;
-        $.voucherBeacon = voucherBeacon;
+        $._voucherBeacon = voucherBeacon;
     }
 
     function getIexecPoco() public view returns (address) {
@@ -52,7 +52,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      */
     function getVouchBeacon() public view returns (address) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.voucherBeacon;
+        return $._voucherBeacon;
     }
 
     /**
@@ -73,7 +73,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
             expiration
         );
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        voucherAddress = address(new VoucherProxy($.voucherBeacon, initialization));
+        voucherAddress = address(new VoucherProxy($._voucherBeacon, initialization));
         // Save voucher address.
         $.voucherByAccount[account] = voucherAddress;
         emit VoucherCreated(voucherAddress, account, expiration);

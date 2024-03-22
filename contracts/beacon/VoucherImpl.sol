@@ -13,7 +13,7 @@ import {IVoucher} from "./IVoucher.sol";
 contract VoucherImpl is OwnableUpgradeable, IVoucher {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
-        uint256 expiration;
+        uint256 _expiration;
     }
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
@@ -33,13 +33,13 @@ contract VoucherImpl is OwnableUpgradeable, IVoucher {
     function initialize(address owner, uint256 expiration) external initializer {
         __Ownable_init(owner);
         VoucherStorage storage $ = _getVoucherStorage();
-        $.expiration = expiration;
+        $._expiration = expiration;
         emit ExpirationUpdated(expiration);
     }
 
     function getExpiration() external view override returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
-        return $.expiration;
+        return $._expiration;
     }
 
     function _getVoucherStorage() internal pure returns (VoucherStorage storage $) {

@@ -9,8 +9,8 @@ import {IVoucher} from "../beacon/IVoucher.sol";
 contract VoucherImplV2Mock is OwnableUpgradeable, IVoucher {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
-        uint256 expiration;
-        uint256 newStateVariable;
+        uint256 _expiration;
+        uint256 _newStateVariable;
     }
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
@@ -29,12 +29,12 @@ contract VoucherImplV2Mock is OwnableUpgradeable, IVoucher {
      */
     function initialize(uint256 newStateVariable) external reinitializer(2) {
         VoucherStorage storage $ = _getVoucherStorage();
-        $.newStateVariable = newStateVariable;
+        $._newStateVariable = newStateVariable;
     }
 
     function getExpiration() external view override returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
-        return $.expiration;
+        return $._expiration;
     }
 
     function _getVoucherStorage() internal pure returns (VoucherStorage storage $) {
