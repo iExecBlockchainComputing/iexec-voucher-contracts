@@ -42,7 +42,7 @@ contract VoucherImpl is OwnableUpgradeable, IVoucher {
         return $._expiration;
     }
 
-    function _getVoucherStorage() internal pure returns (VoucherStorage storage $) {
+    function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
         assembly {
             $.slot := VOUCHER_STORAGE_LOCATION
         }
