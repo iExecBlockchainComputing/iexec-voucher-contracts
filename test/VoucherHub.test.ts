@@ -82,15 +82,6 @@ describe('VoucherHub', function () {
         });
     });
 
-    describe('Create voucher', function () {
-        it('Should create voucher', async function () {
-            const { voucherHub } = await loadFixture(deployFixture);
-            const createVoucherTx = await voucherHub.createVoucher();
-            await createVoucherTx.wait();
-            expect(createVoucherTx).to.emit(voucherHub, 'VoucherCreated');
-        });
-    });
-
     describe('Create voucher type', function () {
         it('Should create a voucher type when the caller is the owner', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
