@@ -15,12 +15,6 @@ contract VoucherProxy is BeaconProxy {
         bytes memory initialization
     ) BeaconProxy(beaconAddress, initialization) {}
 
-    /**
-     * TODO
-     * @dev Removes warning:
-     * "This contract has a payable fallback function, but no receive
-     * ether function. Consider adding a receive ether function"
-     */
     receive() external payable {
         revert("VoucherProxy: Receive function not supported");
     }

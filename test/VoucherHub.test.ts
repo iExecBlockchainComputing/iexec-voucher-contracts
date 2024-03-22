@@ -6,7 +6,7 @@ import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { UpgradeableBeacon, VoucherImpl, VoucherProxy } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
-import { VoucherHubV2Mock } from '../typechain-types/contracts/mocks';
+import { VoucherHubV2Mock, VoucherImplV2Mock } from '../typechain-types/contracts/mocks';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
 const expiration = 88888888888888; // random (September 5, 2251)
@@ -319,6 +319,11 @@ describe('VoucherHub', function () {
             await upgrades
                 .upgradeBeacon(beacon, voucherImplV2Factory)
                 .then((contract) => contract.waitForDeployment());
+            const voucher1_V2 = await getVoucherV2(voucherAddress1);
+            const voucher2_V2 = await getVoucherV2(voucherAddress2);
+            // Initialize new implementations.
+            await voucher1_V2.initialize(1);
+            await voucher2_V2.initialize(2);
 
             // Make sure the implementation has changed.
             expect(await beacon.implementation(), 'Implementation did not change').to.not.equal(
@@ -332,8 +337,6 @@ describe('VoucherHub', function () {
                 'New implementation mismatch between proxies',
             ).to.equal(await voucherAsProxy2.implementation());
             // Make sure the state did not change
-            const voucher1_V2 = await getVoucher(voucherAddress1);
-            const voucher2_V2 = await getVoucher(voucherAddress2);
             expect(await voucher1_V2.owner(), 'New implementation owner mismatch').to.equal(
                 voucherOwner1,
             );
@@ -348,6 +351,9 @@ describe('VoucherHub', function () {
                 await voucher2_V2.getExpiration(),
                 'New implementation expiration mismatch',
             ).to.equal(expiration2);
+            // Check new state variable.
+            expect(await voucher1_V2.getNewStateVariable()).to.equal(1);
+            expect(await voucher2_V2.getNewStateVariable()).to.equal(2);
         });
 
         it('Should not upgrade voucher when unauthorized', async () => {
@@ -408,6 +414,10 @@ async function getVoucherTypeCreatedId(voucherHub: VoucherHub) {
 
 async function getVoucher(voucherAddress: string): Promise<VoucherImpl> {
     return await ethers.getContractAt('VoucherImpl', voucherAddress);
+}
+
+async function getVoucherV2(voucherAddress: string): Promise<VoucherImplV2Mock> {
+    return await ethers.getContractAt('VoucherImplV2Mock', voucherAddress);
 }
 
 async function getVoucherAsProxy(voucherAddress: string): Promise<VoucherProxy> {

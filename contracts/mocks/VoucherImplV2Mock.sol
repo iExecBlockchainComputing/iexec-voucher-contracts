@@ -37,6 +37,11 @@ contract VoucherImplV2Mock is OwnableUpgradeable, IVoucher {
         return $._expiration;
     }
 
+    function getNewStateVariable() external view returns (uint256) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._newStateVariable;
+    }
+
     function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
         assembly {
             $.slot := VOUCHER_STORAGE_LOCATION
