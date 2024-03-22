@@ -9,5 +9,5 @@ pragma solidity ^0.8.20;
 interface IVoucher {
     event ExpirationUpdated(uint256 newExpiration);
 
-    function getExpiration() external view returns (uint);
+    function getExpiration() external view returns (uint256);
 }
