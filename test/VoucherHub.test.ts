@@ -20,11 +20,10 @@ describe('VoucherHub', function () {
     // and reset Hardhat Network to that snapshot in every test.
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
-        const [owner, voucherOwner1, voucherOwner2, unprivilegedAccount] =
-            await ethers.getSigners();
+        const [owner, voucherOwner1, voucherOwner2, anyone] = await ethers.getSigners();
         const beacon = await deployBeaconAndInitialImplementation(owner.address);
         const voucherHub = await deployVoucherHub(await beacon.getAddress());
-        return { beacon, voucherHub, owner, voucherOwner1, voucherOwner2, unprivilegedAccount };
+        return { beacon, voucherHub, owner, voucherOwner1, voucherOwner2, anyone };
     }
 
     describe('Initialize', function () {
@@ -64,11 +63,11 @@ describe('VoucherHub', function () {
         });
 
         it('Should not upgrade when account is unauthorized', async () => {
-            const { voucherHub, unprivilegedAccount } = await loadFixture(deployFixture);
+            const { voucherHub, anyone } = await loadFixture(deployFixture);
 
             await expect(
                 voucherHub
-                    .connect(unprivilegedAccount)
+                    .connect(anyone)
                     .upgradeToAndCall(ethers.Wallet.createRandom().address, '0x'),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
@@ -91,9 +90,9 @@ describe('VoucherHub', function () {
         });
 
         it('Should not create a voucher type when the caller is not the owner', async function () {
-            const { voucherHub, unprivilegedAccount } = await loadFixture(deployFixture);
+            const { voucherHub, anyone } = await loadFixture(deployFixture);
             await expect(
-                voucherHub.connect(unprivilegedAccount).createVoucherType(description, duration),
+                voucherHub.connect(anyone).createVoucherType(description, duration),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
     });
@@ -124,13 +123,11 @@ describe('VoucherHub', function () {
         });
 
         it('Should not modify voucher description when the caller is not the owner', async function () {
-            const { voucherHub, unprivilegedAccount } = await loadFixture(deployFixture);
+            const { voucherHub, anyone } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
             await expect(
-                voucherHub
-                    .connect(unprivilegedAccount)
-                    .updateVoucherTypeDescription(0, newDescription),
+                voucherHub.connect(anyone).updateVoucherTypeDescription(0, newDescription),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
@@ -158,10 +155,10 @@ describe('VoucherHub', function () {
         });
 
         it('Should not modify voucher duration when the caller is not the owner', async function () {
-            const { voucherHub, unprivilegedAccount } = await loadFixture(deployFixture);
+            const { voucherHub, anyone } = await loadFixture(deployFixture);
             await voucherHub.createVoucherType(description, duration);
             await expect(
-                voucherHub.connect(unprivilegedAccount).updateVoucherTypeDuration(0, newDuration),
+                voucherHub.connect(anyone).updateVoucherTypeDuration(0, newDuration),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
@@ -193,16 +190,16 @@ describe('VoucherHub', function () {
         });
 
         it('Should not set asset eligibility when the caller is not the owner', async function () {
-            const { voucherHub, unprivilegedAccount } = await loadFixture(deployFixture);
+            const { voucherHub, anyone } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
             await expect(
-                voucherHub.connect(unprivilegedAccount).addEligibleAsset(0, asset),
+                voucherHub.connect(anyone).addEligibleAsset(0, asset),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
         it('Should not unset asset eligibility when the caller is not the owner', async function () {
-            const { voucherHub, unprivilegedAccount } = await loadFixture(deployFixture);
+            const { voucherHub, anyone } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
             const typeId = await getVoucherTypeCreatedId(voucherHub);
@@ -211,7 +208,7 @@ describe('VoucherHub', function () {
             expect(await voucherHub.isAssetEligibleToMatchOrdersSponsoring(typeId, asset)).to.be
                 .true;
             await expect(
-                voucherHub.connect(unprivilegedAccount).removeEligibleAsset(0, asset),
+                voucherHub.connect(anyone).removeEligibleAsset(0, asset),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
     });
@@ -285,11 +282,10 @@ describe('VoucherHub', function () {
         });
 
         it('Should not create voucher when not owner', async () => {
-            const { beacon, voucherHub, voucherOwner1, unprivilegedAccount } =
-                await loadFixture(deployFixture);
+            const { beacon, voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
             // Create voucher.
             await expect(
-                voucherHub.connect(unprivilegedAccount).createVoucher(voucherOwner1, expiration),
+                voucherHub.connect(anyone).createVoucher(voucherOwner1, expiration),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
     });
