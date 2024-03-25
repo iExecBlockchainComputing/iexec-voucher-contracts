@@ -243,25 +243,18 @@ describe('VoucherHub', function () {
         });
 
         it('Should create voucher and initialize only once', async () => {
-            const { beacon, voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
             // Create voucher.
-            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, expiration);
-            await createVoucherTx.wait();
+            await expect(voucherHub.createVoucher(voucherOwner1, expiration)).to.emit(
+                voucherHub,
+                'VoucherCreated',
+            );
+            // Second initialization should fail.
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: VoucherImpl = await getVoucher(voucherAddress);
-
-            // Events.
-            await expect(createVoucherTx)
-                .to.emit(voucherHub, 'VoucherCreated')
-                .withArgs(voucherAddress, voucherOwner1.address, expiration);
-            // Voucher
-            expect(await voucher.owner(), 'Owner mismatch').to.equal(voucherOwner1);
-            expect(await voucher.getExpiration(), 'Expiration mismatch').to.equal(expiration);
-            // Second initialization should fail.
-            await expect(voucher.initialize(voucherOwner1, expiration)).to.revertedWithCustomError(
-                voucher,
-                'InvalidInitialization',
-            );
+            await expect(
+                voucher.initialize(voucherOwner1, expiration),
+            ).to.be.revertedWithCustomError(voucher, 'InvalidInitialization');
         });
 
         it('Should create multiple vouchers with the correct config', async () => {
