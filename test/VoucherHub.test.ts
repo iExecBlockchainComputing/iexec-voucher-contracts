@@ -4,9 +4,9 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
-import { UpgradeableBeacon, VoucherImpl, VoucherProxy } from '../typechain-types';
+import { UpgradeableBeacon, Voucher, VoucherProxy } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
-import { VoucherHubV2Mock, VoucherImplV2Mock } from '../typechain-types/contracts/mocks';
+import { VoucherHubV2Mock, VoucherV2Mock } from '../typechain-types/contracts/mocks';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
 const expiration = 88888888888888; // random (September 5, 2251)
@@ -220,7 +220,7 @@ describe('VoucherHub', function () {
             const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, expiration);
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: VoucherImpl = await getVoucher(voucherAddress);
+            const voucher: Voucher = await getVoucher(voucherAddress);
             const voucherAsProxy: VoucherProxy = await getVoucherAsProxy(voucherAddress);
             // Run assertions.
             // Events.
@@ -251,7 +251,7 @@ describe('VoucherHub', function () {
             );
             // Second initialization should fail.
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: VoucherImpl = await getVoucher(voucherAddress);
+            const voucher: Voucher = await getVoucher(voucherAddress);
             await expect(
                 voucher.initialize(voucherOwner1, expiration),
             ).to.be.revertedWithCustomError(voucher, 'InvalidInitialization');
@@ -324,12 +324,12 @@ describe('VoucherHub', function () {
             // Save old implementation.
             const initialImplementation = await beacon.implementation();
             // Upgrade beacon.
-            const voucherImplV2Factory = await ethers.getContractFactory('VoucherImplV2Mock');
+            const voucherV2Factory = await ethers.getContractFactory('VoucherV2Mock');
             // Note: upgrades.upgradeBeacon() deploys the new impl contract only if it is
             // different from the old implementation. To override the default config 'onchange'
             // use the option (redeployImplementation: 'always').
             await upgrades
-                .upgradeBeacon(beacon, voucherImplV2Factory)
+                .upgradeBeacon(beacon, voucherV2Factory)
                 .then((contract) => contract.waitForDeployment());
             const voucher1_V2 = await getVoucherV2(voucherAddress1);
             const voucher2_V2 = await getVoucherV2(voucherAddress2);
@@ -376,10 +376,7 @@ describe('VoucherHub', function () {
             await beacon.transferOwnership(ethers.Wallet.createRandom().address);
             // Try to upgrade beacon.
             expect(
-                upgrades.upgradeBeacon(
-                    beacon,
-                    await ethers.getContractFactory('VoucherImplV2Mock'),
-                ),
+                upgrades.upgradeBeacon(beacon, await ethers.getContractFactory('VoucherV2Mock')),
             ).to.revertedWithCustomError(beacon, 'OwnableUnauthorizedAccount');
             // Check implementation did not change.
             expect(await beacon.implementation(), 'Implementation has changed').to.equal(
@@ -405,12 +402,12 @@ async function deployVoucherHub(beacon: string): Promise<VoucherHub> {
 async function deployBeaconAndInitialImplementation(
     beaconOwner: string,
 ): Promise<UpgradeableBeacon> {
-    const voucherImplFactory = await ethers.getContractFactory('VoucherImpl');
+    const voucherFactory = await ethers.getContractFactory('Voucher');
     // upgrades.deployBeacon() does the following:
     // 1. Deploys the implementation contract.
     // 2. Deploys an instance of oz/UpgradeableBeacon contract.
     // 3. Links the implementation in the beacon contract.
-    const beaconContract = (await upgrades.deployBeacon(voucherImplFactory, {
+    const beaconContract = (await upgrades.deployBeacon(voucherFactory, {
         initialOwner: beaconOwner,
     })) as unknown; // Workaround openzeppelin-upgrades/pull/535;
     const beacon = beaconContract as UpgradeableBeacon;
@@ -424,12 +421,12 @@ async function getVoucherTypeCreatedId(voucherHub: VoucherHub) {
     return typeId;
 }
 
-async function getVoucher(voucherAddress: string): Promise<VoucherImpl> {
-    return await ethers.getContractAt('VoucherImpl', voucherAddress);
+async function getVoucher(voucherAddress: string): Promise<Voucher> {
+    return await ethers.getContractAt('Voucher', voucherAddress);
 }
 
-async function getVoucherV2(voucherAddress: string): Promise<VoucherImplV2Mock> {
-    return await ethers.getContractAt('VoucherImplV2Mock', voucherAddress);
+async function getVoucherV2(voucherAddress: string): Promise<VoucherV2Mock> {
+    return await ethers.getContractAt('VoucherV2Mock', voucherAddress);
 }
 
 async function getVoucherAsProxy(voucherAddress: string): Promise<VoucherProxy> {

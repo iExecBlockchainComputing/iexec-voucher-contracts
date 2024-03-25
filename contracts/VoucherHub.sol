@@ -6,7 +6,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 
 import {IVoucherHub} from "./IVoucherHub.sol";
 import {VoucherProxy} from "./beacon/VoucherProxy.sol";
-import {VoucherImpl} from "./beacon/VoucherImpl.sol";
+import {Voucher} from "./beacon/Voucher.sol";
 
 pragma solidity ^0.8.20;
 
@@ -140,7 +140,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     ) external override onlyOwner returns (address voucherAddress) {
         // Create voucher and call initialize() function.
         bytes memory initialization = abi.encodeWithSelector(
-            VoucherImpl(address(0)).initialize.selector,
+            Voucher(address(0)).initialize.selector,
             account,
             expiration
         );
