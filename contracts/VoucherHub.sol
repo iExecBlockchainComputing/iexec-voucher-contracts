@@ -5,6 +5,8 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {IVoucherHub} from "./IVoucherHub.sol";
+import {VoucherProxy} from "./beacon/VoucherProxy.sol";
+import {VoucherImpl} from "./beacon/VoucherImpl.sol";
 
 pragma solidity ^0.8.20;
 
@@ -15,9 +17,12 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     }
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
-        address iexecPoco;
+        address _iexecPoco;
+        address _voucherBeacon;
         VoucherType[] voucherTypes;
         mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
+        // TODO remove & compute voucher address.
+        mapping(address => address) voucherByAccount;
     }
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
@@ -41,11 +46,12 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         _disableInitializers();
     }
 
-    function initialize(address iexecPoco) public initializer {
+    function initialize(address iexecPoco, address voucherBeacon) external initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.iexecPoco = iexecPoco;
+        $._iexecPoco = iexecPoco;
+        $._voucherBeacon = voucherBeacon;
     }
 
     // TODO: Replace most onlyOwner to onlyVoucherManager
@@ -110,11 +116,48 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
 
     function getIexecPoco() public view returns (address) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.iexecPoco;
+        return $._iexecPoco;
     }
 
-    function createVoucher() public {
-        emit VoucherCreated();
+    /**
+     * Get voucher beacon address.
+     */
+    function getVoucherBeacon() public view returns (address) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $._voucherBeacon;
+    }
+
+    /**
+     * TODO add checks.
+     * TODO return Voucher structure.
+     * Create new voucher for specified account.
+     * @param account voucher owner.
+     * @param expiration voucher expiration
+     */
+    function createVoucher(
+        address account,
+        uint256 expiration
+    ) external override onlyOwner returns (address voucherAddress) {
+        // Create voucher and call initialize() function.
+        bytes memory initialization = abi.encodeWithSelector(
+            VoucherImpl(address(0)).initialize.selector,
+            account,
+            expiration
+        );
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        voucherAddress = address(new VoucherProxy($._voucherBeacon, initialization));
+        // Save voucher address.
+        $.voucherByAccount[account] = voucherAddress;
+        emit VoucherCreated(voucherAddress, account, expiration);
+    }
+
+    /**
+     * Get voucher address of a given account.
+     * @param account owner address.
+     */
+    function getVoucher(address account) public view override returns (address voucherAddress) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        voucherAddress = $.voucherByAccount[account];
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
