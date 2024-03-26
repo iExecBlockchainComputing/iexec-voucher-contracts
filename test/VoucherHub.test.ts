@@ -4,7 +4,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
-import { deployVoucherBeaconAndImplementation } from '../scripts/deploy-beacon';
+import { deployVoucherBeaconAndImplementation, upgradeBeacon } from '../scripts/deploy-beacon';
 import { Voucher, VoucherProxy } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 import { VoucherHubV2Mock, VoucherV2Mock } from '../typechain-types/contracts/mocks';
@@ -387,12 +387,7 @@ describe('VoucherHub', function () {
             const initialImplementation = await beacon.implementation();
             // Upgrade beacon.
             const voucherV2Factory = await ethers.getContractFactory('VoucherV2Mock');
-            // Note: upgrades.upgradeBeacon() deploys the new impl contract only if it is
-            // different from the old implementation. To override the default config 'onchange'
-            // use the option (redeployImplementation: 'always').
-            await upgrades
-                .upgradeBeacon(beacon, voucherV2Factory)
-                .then((contract) => contract.waitForDeployment());
+            await upgradeBeacon(beacon, voucherV2Factory);
             const voucher1_V2 = await getVoucherV2(voucherAddress1);
             const voucher2_V2 = await getVoucherV2(voucherAddress2);
             // Initialize new implementations.
