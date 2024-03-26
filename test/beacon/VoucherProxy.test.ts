@@ -4,7 +4,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { deployVoucherBeaconAndImplementation } from '../../scripts/deploy-beacon';
+import * as voucher from '../../scripts/voucher';
 
 describe('VoucherProxy', function () {
     // We define a fixture to reuse the same setup in every test.
@@ -13,7 +13,7 @@ describe('VoucherProxy', function () {
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
         const [owner] = await ethers.getSigners();
-        const beacon = await deployVoucherBeaconAndImplementation(owner.address);
+        const beacon = await voucher.deployBeaconAndImplementation(owner.address);
         const voucherProxyFactory = await ethers.getContractFactory('VoucherProxy');
         const voucherProxy = await voucherProxyFactory.deploy(await beacon.getAddress());
         voucherProxy.waitForDeployment();

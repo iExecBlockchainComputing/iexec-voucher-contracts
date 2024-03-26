@@ -5,7 +5,7 @@ import { ContractFactory } from 'ethers';
 import { ethers, upgrades } from 'hardhat';
 import { UpgradeableBeacon } from '../typechain-types';
 
-export async function deployVoucherBeaconAndImplementation(
+export async function deployBeaconAndImplementation(
     beaconOwner: string,
 ): Promise<UpgradeableBeacon> {
     const voucherFactory = await ethers.getContractFactory('Voucher');

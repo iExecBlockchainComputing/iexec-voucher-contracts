@@ -4,7 +4,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
-import { deployVoucherBeaconAndImplementation, upgradeBeacon } from '../scripts/deploy-beacon';
+import * as voucher from '../scripts/voucher';
 import { Voucher, VoucherProxy } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 import { VoucherHubV2Mock, VoucherV2Mock } from '../typechain-types/contracts/mocks';
@@ -22,7 +22,7 @@ describe('VoucherHub', function () {
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
         const [owner, voucherOwner1, voucherOwner2, anyone] = await ethers.getSigners();
-        const beacon = await deployVoucherBeaconAndImplementation(owner.address);
+        const beacon = await voucher.deployBeaconAndImplementation(owner.address);
         const voucherHub = await deployVoucherHub(await beacon.getAddress());
         return { beacon, voucherHub, owner, voucherOwner1, voucherOwner2, anyone };
     }
@@ -387,7 +387,7 @@ describe('VoucherHub', function () {
             const initialImplementation = await beacon.implementation();
             // Upgrade beacon.
             const voucherV2Factory = await ethers.getContractFactory('VoucherV2Mock');
-            await upgradeBeacon(beacon, voucherV2Factory);
+            await voucher.upgradeBeacon(beacon, voucherV2Factory);
             const voucher1_V2 = await getVoucherV2(voucherAddress1);
             const voucher2_V2 = await getVoucherV2(voucherAddress2);
             // Initialize new implementations.
