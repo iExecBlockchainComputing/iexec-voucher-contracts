@@ -128,7 +128,6 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
 
     /**
      * TODO add checks.
-     * TODO return Voucher structure.
      *
      * Create new voucher for the specified account and call initialize function.
      * Only 1 voucher is allowed by wallet. This is guaranteed by "create2" mechanism
@@ -152,12 +151,13 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         (bool success, ) = voucherAddress.call(
             abi.encodeCall(Voucher.initialize, (owner, expiration))
         );
-        // TODO try Voucher(voucherAddress).initialize(owner, expiration) {} catch  {}
         require(success, "VoucherHub: Voucher initialization failed");
         emit VoucherCreated(voucherAddress, owner, expiration);
     }
 
     /**
+     * TODO return Voucher structure.
+     *
      * Get voucher address of a given account.
      * Returnss address(0) if not voucher is found.
      * @param account owner address.
