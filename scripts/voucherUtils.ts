@@ -13,10 +13,11 @@ export async function deployBeaconAndImplementation(
     // 1. Deploys the implementation contract.
     // 2. Deploys an instance of oz/UpgradeableBeacon contract.
     // 3. Links the implementation in the beacon contract.
-    const beaconContract = (await upgrades.deployBeacon(voucherFactory, {
+    const contract: unknown = await upgrades.deployBeacon(voucherFactory, {
         initialOwner: beaconOwner,
-    })) as unknown; // Workaround openzeppelin-upgrades/pull/535;
-    const beacon = beaconContract as UpgradeableBeacon;
+    });
+    // Workaround openzeppelin-upgrades/pull/535;
+    const beacon = contract as UpgradeableBeacon;
     await beacon.waitForDeployment();
     return beacon;
 }
@@ -28,10 +29,10 @@ export async function upgradeBeacon(
     // Note: upgrades.upgradeBeacon() deploys the new impl contract only if it is
     // different from the old implementation. To override the default config 'onchange'
     // use the option (redeployImplementation: 'always').
-    const upgradedBeaconContract = (await upgrades.upgradeBeacon(
+    const contractUpgrade: unknown = await upgrades.upgradeBeacon(
         beacon,
         newVoucherImplementationFactory,
-    )) as unknown;
-    const upgradedBeacon = upgradedBeaconContract as UpgradeableBeacon;
-    return await upgradedBeacon.waitForDeployment();
+    );
+    const beaconUpgrade = contractUpgrade as UpgradeableBeacon;
+    return await beaconUpgrade.waitForDeployment();
 }

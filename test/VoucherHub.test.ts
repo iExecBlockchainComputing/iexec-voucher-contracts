@@ -3,12 +3,12 @@
 
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
+import { ethers } from 'hardhat';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import { Voucher, VoucherProxy } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
-import { VoucherHubV2Mock, VoucherV2Mock } from '../typechain-types/contracts/mocks';
+import { VoucherV2Mock } from '../typechain-types/contracts/mocks';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
 const expiration = 88888888888888; // random (September 5, 2251)
@@ -52,11 +52,8 @@ describe('VoucherHub', function () {
             const voucherHubAddress = await voucherHub.getAddress();
             const VoucherHubV2Factory = await ethers.getContractFactory('VoucherHubV2Mock');
             // Next line should throw if new storage schema is not compatible with previous one
-            const voucherHubV2Contract: unknown = await upgrades.upgradeProxy(
-                voucherHubAddress,
-                VoucherHubV2Factory,
-            );
-            const voucherHubV2 = voucherHubV2Contract as VoucherHubV2Mock;
+            await voucherHubUtils.upgradeProxy(voucherHubAddress, VoucherHubV2Factory);
+            const voucherHubV2 = await ethers.getContractAt('VoucherHubV2Mock', voucherHubAddress);
             await voucherHubV2.initializeV2('bar');
 
             expect(await voucherHubV2.getAddress()).to.equal(voucherHubAddress);
@@ -433,8 +430,11 @@ describe('VoucherHub', function () {
             // Change beacon owner.
             await beacon.transferOwnership(ethers.Wallet.createRandom().address);
             // Try to upgrade beacon.
-            expect(
-                upgrades.upgradeBeacon(beacon, await ethers.getContractFactory('VoucherV2Mock')),
+            await expect(
+                voucherUtils.upgradeBeacon(
+                    beacon,
+                    await ethers.getContractFactory('VoucherV2Mock'),
+                ),
             ).to.revertedWithCustomError(beacon, 'OwnableUnauthorizedAccount');
             // Check implementation did not change.
             expect(await beacon.implementation(), 'Implementation has changed').to.equal(
