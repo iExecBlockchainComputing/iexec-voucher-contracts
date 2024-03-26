@@ -5,13 +5,9 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { deployVoucherBeaconAndImplementation } from '../scripts/deploy-beacon';
-import { Voucher } from '../typechain-types';
+import { Voucher, VoucherProxy } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
-import {
-    VoucherHubV2Mock,
-    VoucherProxyMock,
-    VoucherV2Mock,
-} from '../typechain-types/contracts/mocks';
+import { VoucherHubV2Mock, VoucherV2Mock } from '../typechain-types/contracts/mocks';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
 const expiration = 88888888888888; // random (September 5, 2251)
@@ -226,7 +222,7 @@ describe('VoucherHub', function () {
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await getVoucher(voucherAddress);
-            const voucherAsProxy = await getVoucherAsProxy(voucherAddress);
+            const voucherAsProxy: VoucherProxy = await getVoucherAsProxy(voucherAddress);
             // Run assertions.
             // Events.
             await expect(createVoucherTx)
@@ -479,6 +475,6 @@ async function getVoucherV2(voucherAddress: string): Promise<VoucherV2Mock> {
     return await ethers.getContractAt('VoucherV2Mock', voucherAddress);
 }
 
-async function getVoucherAsProxy(voucherAddress: string): Promise<VoucherProxyMock> {
-    return await ethers.getContractAt('VoucherProxyMock', voucherAddress);
+async function getVoucherAsProxy(voucherAddress: string): Promise<VoucherProxy> {
+    return await ethers.getContractAt('VoucherProxy', voucherAddress);
 }

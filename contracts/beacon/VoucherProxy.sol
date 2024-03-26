@@ -38,4 +38,12 @@ contract VoucherProxy is BeaconProxy {
     receive() external payable {
         revert("VoucherProxy: Receive function not supported");
     }
+
+    /**
+     * Get implementation address.
+     * @dev Used in tests.
+     */
+    function implementation() external view returns (address) {
+        return _implementation();
+    }
 }
