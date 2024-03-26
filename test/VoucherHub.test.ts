@@ -4,7 +4,8 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
-import { UpgradeableBeacon, Voucher, VoucherProxy } from '../typechain-types';
+import { deployVoucherBeaconAndImplementation } from '../scripts/deploy-beacon';
+import { Voucher, VoucherProxy } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 import { VoucherHubV2Mock, VoucherV2Mock } from '../typechain-types/contracts/mocks';
 
@@ -21,7 +22,7 @@ describe('VoucherHub', function () {
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
         const [owner, voucherOwner1, voucherOwner2, anyone] = await ethers.getSigners();
-        const beacon = await deployBeaconAndInitialImplementation(owner.address);
+        const beacon = await deployVoucherBeaconAndImplementation(owner.address);
         const voucherHub = await deployVoucherHub(await beacon.getAddress());
         return { beacon, voucherHub, owner, voucherOwner1, voucherOwner2, anyone };
     }
@@ -458,22 +459,6 @@ async function deployVoucherHub(beacon: string): Promise<VoucherHub> {
     ])) as unknown; // Workaround openzeppelin-upgrades/pull/535;
     const voucherHub = voucherHubContract as VoucherHub;
     return await voucherHub.waitForDeployment();
-}
-
-async function deployBeaconAndInitialImplementation(
-    beaconOwner: string,
-): Promise<UpgradeableBeacon> {
-    const voucherFactory = await ethers.getContractFactory('Voucher');
-    // upgrades.deployBeacon() does the following:
-    // 1. Deploys the implementation contract.
-    // 2. Deploys an instance of oz/UpgradeableBeacon contract.
-    // 3. Links the implementation in the beacon contract.
-    const beaconContract = (await upgrades.deployBeacon(voucherFactory, {
-        initialOwner: beaconOwner,
-    })) as unknown; // Workaround openzeppelin-upgrades/pull/535;
-    const beacon = beaconContract as UpgradeableBeacon;
-    await beacon.waitForDeployment();
-    return beacon;
 }
 
 async function getVoucherTypeCreatedId(voucherHub: VoucherHub) {
