@@ -6,10 +6,12 @@ import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { UpgradeableBeacon, VoucherImpl, VoucherProxy } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
-import { VoucherHubV2Mock, VoucherImplV2Mock } from '../typechain-types/contracts/mocks';
+import { VoucherHubV2Mock } from '../typechain-types/contracts/mocks';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
 const expiration = 88888888888888; // random (September 5, 2251)
+const voucherType = 1;
+const voucherCredit = 50;
 const description = 'Early Access';
 const duration = 3600;
 const asset = ethers.Wallet.createRandom().address;
@@ -217,7 +219,12 @@ describe('VoucherHub', function () {
         it('Should create voucher', async () => {
             const { beacon, voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
             // Create voucher.
-            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, expiration);
+            const createVoucherTx = await voucherHub.createVoucher(
+                voucherOwner1,
+                voucherType,
+                voucherCredit,
+                expiration,
+            );
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: VoucherImpl = await getVoucher(voucherAddress);
@@ -245,15 +252,14 @@ describe('VoucherHub', function () {
         it('Should create voucher and initialize only once', async () => {
             const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
             // Create voucher.
-            await expect(voucherHub.createVoucher(voucherOwner1, expiration)).to.emit(
-                voucherHub,
-                'VoucherCreated',
-            );
+            await expect(
+                voucherHub.createVoucher(voucherOwner1, voucherType, voucherCredit, expiration),
+            ).to.emit(voucherHub, 'VoucherCreated');
             // Second initialization should fail.
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: VoucherImpl = await getVoucher(voucherAddress);
             await expect(
-                voucher.initialize(voucherOwner1, expiration),
+                voucher.initialize(voucherOwner1, voucherType, voucherCredit, expiration),
             ).to.be.revertedWithCustomError(voucher, 'InvalidInitialization');
         });
 
@@ -261,14 +267,26 @@ describe('VoucherHub', function () {
             const { voucherHub, voucherOwner1, voucherOwner2 } = await loadFixture(deployFixture);
             const expiration1 = expiration;
             const expiration2 = 99999999999999; // random (November 16, 5138)
+            const voucherType2 = 2;
+            const voucherCredit2 = 100;
             // Create voucher1.
-            const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, expiration1);
+            const createVoucherTx1 = await voucherHub.createVoucher(
+                voucherOwner1,
+                voucherType,
+                voucherCredit,
+                expiration,
+            );
             await createVoucherTx1.wait();
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucher1 = await getVoucher(voucherAddress1);
             const voucherAsProxy1 = await getVoucherAsProxy(voucherAddress1);
             // Create voucher2.
-            const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, expiration2);
+            const createVoucherTx2 = await voucherHub.createVoucher(
+                voucherOwner2,
+                voucherType2,
+                voucherCredit2,
+                expiration2,
+            );
             await createVoucherTx2.wait();
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucher2 = await getVoucher(voucherAddress2);
@@ -300,91 +318,10 @@ describe('VoucherHub', function () {
             const { beacon, voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
             // Create voucher.
             await expect(
-                voucherHub.connect(anyone).createVoucher(voucherOwner1, expiration),
+                voucherHub
+                    .connect(anyone)
+                    .createVoucher(voucherOwner1, voucherType, voucherCredit, expiration),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
-        });
-    });
-
-    describe('Upgrade voucher', async function () {
-        it('Should upgrade all vouchers', async () => {
-            const { beacon, voucherHub, voucherOwner1, voucherOwner2 } =
-                await loadFixture(deployFixture);
-            const expiration1 = expiration;
-            const expiration2 = 99999999999999; // random (November 16, 5138)
-            // Create voucher1.
-            const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, expiration1);
-            await createVoucherTx1.wait();
-            const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
-            const voucherAsProxy1 = await getVoucherAsProxy(voucherAddress1);
-            // Create voucher2.
-            const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, expiration2);
-            await createVoucherTx2.wait();
-            const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
-            const voucherAsProxy2 = await getVoucherAsProxy(voucherAddress2);
-            // Save old implementation.
-            const initialImplementation = await beacon.implementation();
-            // Upgrade beacon.
-            const voucherImplV2Factory = await ethers.getContractFactory('VoucherImplV2Mock');
-            // Note: upgrades.upgradeBeacon() deploys the new impl contract only if it is
-            // different from the old implementation. To override the default config 'onchange'
-            // use the option (redeployImplementation: 'always').
-            await upgrades
-                .upgradeBeacon(beacon, voucherImplV2Factory)
-                .then((contract) => contract.waitForDeployment());
-            const voucher1_V2 = await getVoucherV2(voucherAddress1);
-            const voucher2_V2 = await getVoucherV2(voucherAddress2);
-            // Initialize new implementations.
-            await voucher1_V2.initialize(1);
-            await voucher2_V2.initialize(2);
-
-            // Make sure the implementation has changed.
-            expect(await beacon.implementation(), 'Implementation did not change').to.not.equal(
-                initialImplementation,
-            );
-            expect(await voucherAsProxy1.implementation(), 'New implementation mismatch').to.equal(
-                await beacon.implementation(),
-            );
-            expect(
-                await voucherAsProxy1.implementation(),
-                'New implementation mismatch between proxies',
-            ).to.equal(await voucherAsProxy2.implementation());
-            // Make sure the state did not change
-            expect(await voucher1_V2.owner(), 'New implementation owner mismatch').to.equal(
-                voucherOwner1,
-            );
-            expect(await voucher2_V2.owner(), 'New implementation owner mismatch').to.equal(
-                voucherOwner2,
-            );
-            expect(
-                await voucher1_V2.getExpiration(),
-                'New implementation expiration mismatch',
-            ).to.equal(expiration1);
-            expect(
-                await voucher2_V2.getExpiration(),
-                'New implementation expiration mismatch',
-            ).to.equal(expiration2);
-            // Check new state variable.
-            expect(await voucher1_V2.getNewStateVariable()).to.equal(1);
-            expect(await voucher2_V2.getNewStateVariable()).to.equal(2);
-        });
-
-        it('Should not upgrade voucher when unauthorized', async () => {
-            const { beacon } = await loadFixture(deployFixture);
-            // Save implementation.
-            const initialImplementation = await beacon.implementation();
-            // Change beacon owner.
-            await beacon.transferOwnership(ethers.Wallet.createRandom().address);
-            // Try to upgrade beacon.
-            expect(
-                upgrades.upgradeBeacon(
-                    beacon,
-                    await ethers.getContractFactory('VoucherImplV2Mock'),
-                ),
-            ).to.revertedWithCustomError(beacon, 'OwnableUnauthorizedAccount');
-            // Check implementation did not change.
-            expect(await beacon.implementation(), 'Implementation has changed').to.equal(
-                initialImplementation,
-            );
         });
     });
 });
@@ -426,10 +363,6 @@ async function getVoucherTypeCreatedId(voucherHub: VoucherHub) {
 
 async function getVoucher(voucherAddress: string): Promise<VoucherImpl> {
     return await ethers.getContractAt('VoucherImpl', voucherAddress);
-}
-
-async function getVoucherV2(voucherAddress: string): Promise<VoucherImplV2Mock> {
-    return await ethers.getContractAt('VoucherImplV2Mock', voucherAddress);
 }
 
 async function getVoucherAsProxy(voucherAddress: string): Promise<VoucherProxy> {

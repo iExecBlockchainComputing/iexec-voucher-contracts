@@ -9,7 +9,10 @@ import {IVoucher} from "../beacon/IVoucher.sol";
 contract VoucherImplV2Mock is OwnableUpgradeable, IVoucher {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
+        uint256 _creditBalance;
         uint256 _expiration;
+        uint256 _type;
+        mapping(address => bool) _authorizedAccounts;
         uint256 _newStateVariable;
     }
 

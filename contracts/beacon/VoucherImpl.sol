@@ -13,13 +13,22 @@ import {IVoucher} from "./IVoucher.sol";
 contract VoucherImpl is OwnableUpgradeable, IVoucher {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
+        uint256 _creditBalance;
         uint256 _expiration;
+        uint256 _type;
+        mapping(address => bool) _authorizedAccounts;
     }
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
     // & ~bytes32(uint256(0xff));
     bytes32 private constant VOUCHER_STORAGE_LOCATION =
         0xc2e244293dc04d6c7fa946e063317ff8e6770fd48cbaff411a60f1efc8a7e800;
+
+    function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
+        assembly {
+            $.slot := VOUCHER_STORAGE_LOCATION
+        }
+    }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -30,11 +39,24 @@ contract VoucherImpl is OwnableUpgradeable, IVoucher {
      * Initialize implementation contract.
      * @param expiration initial expiration.
      */
-    function initialize(address owner, uint256 expiration) external initializer {
+    function initialize(
+        address owner,
+        uint256 vtype,
+        uint256 creditBalance,
+        uint256 expiration
+    ) external initializer {
         __Ownable_init(owner);
         VoucherStorage storage $ = _getVoucherStorage();
+        $._type = vtype;
+        $._creditBalance = creditBalance;
         $._expiration = expiration;
+        // deposit
         emit ExpirationUpdated(expiration);
+    }
+
+    function getCreditBalance() external view returns (uint256) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._creditBalance;
     }
 
     function getExpiration() external view override returns (uint256) {
@@ -42,9 +64,8 @@ contract VoucherImpl is OwnableUpgradeable, IVoucher {
         return $._expiration;
     }
 
-    function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
-        assembly {
-            $.slot := VOUCHER_STORAGE_LOCATION
-        }
+    function getType() external view returns (uint256) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._type;
     }
 }

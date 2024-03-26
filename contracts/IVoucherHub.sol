@@ -13,6 +13,8 @@ interface IVoucherHub {
 
     function createVoucher(
         address account,
+        uint256 voucherType,
+        uint256 creditBalance,
         uint256 expiration
     ) external returns (address voucherAddress);
     function getVoucher(address account) external view returns (address voucherAddress);
