@@ -214,7 +214,7 @@ describe('VoucherHub', function () {
     });
 
     describe('Create voucher', async function () {
-        it('Should create voucher', async () => {
+        it('Should create and initialize voucher', async () => {
             const { beacon, voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
             // Create voucher.
             const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, expiration);
@@ -242,19 +242,26 @@ describe('VoucherHub', function () {
             expect(await voucher.getExpiration(), 'Expiration mismatch').to.equal(expiration);
         });
 
-        it('Should create voucher and initialize only once', async () => {
-            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
-            // Create voucher.
+        it('Should create different vouchers for different accounts with the same config', async () => {
+            const { voucherHub, voucherOwner1, voucherOwner2 } = await loadFixture(deployFixture);
+            // Create voucher1
             await expect(voucherHub.createVoucher(voucherOwner1, expiration)).to.emit(
                 voucherHub,
                 'VoucherCreated',
             );
-            // Second initialization should fail.
-            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: Voucher = await getVoucher(voucherAddress);
-            await expect(
-                voucher.initialize(voucherOwner1, expiration),
-            ).to.be.revertedWithCustomError(voucher, 'InvalidInitialization');
+            const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
+            const voucher1: Voucher = await getVoucher(voucherAddress1);
+            // Create voucher2
+            await expect(voucherHub.createVoucher(voucherOwner2, expiration)).to.emit(
+                voucherHub,
+                'VoucherCreated',
+            );
+            const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
+            const voucher2: Voucher = await getVoucher(voucherAddress2);
+
+            expect(voucherAddress1).is.not.equal(voucherAddress2);
+            expect(await voucher1.owner()).to.not.equal(await voucher2.owner());
+            expect(await voucher1.getExpiration()).to.equal(await voucher2.getExpiration());
         });
 
         it('Should create multiple vouchers with the correct config', async () => {
@@ -287,6 +294,7 @@ describe('VoucherHub', function () {
                 'Implementation mismatch between proxies',
             ).to.equal(await voucherAsProxy2.implementation());
             // Voucher
+            expect(voucherAddress1).is.not.equal(voucherAddress2);
             expect(
                 await voucher1.getExpiration(),
                 'Expiration should not match between proxies',
@@ -294,6 +302,48 @@ describe('VoucherHub', function () {
             expect(await voucher1.owner(), 'Owners should not match between proxies').to.not.equal(
                 voucher2.owner(),
             );
+        });
+
+        it('Should not create more than 1 voucher for the same account', async () => {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            // Create voucher.
+            await expect(voucherHub.createVoucher(voucherOwner1, expiration)).to.emit(
+                voucherHub,
+                'VoucherCreated',
+            );
+            // Second creation should fail.
+            await expect(
+                voucherHub.createVoucher(voucherOwner1, expiration),
+            ).to.be.revertedWithCustomError(voucherHub, 'Create2FailedDeployment');
+        });
+
+        it('Should not create more than 1 voucher for the same account with different config', async () => {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            // Create voucher.
+            await expect(voucherHub.createVoucher(voucherOwner1, expiration)).to.emit(
+                voucherHub,
+                'VoucherCreated',
+            );
+            // Second creation should fail.
+            const differentExpiration = expiration + 1;
+            await expect(
+                voucherHub.createVoucher(voucherOwner1, differentExpiration),
+            ).to.be.revertedWithCustomError(voucherHub, 'Create2FailedDeployment');
+        });
+
+        it('Should not initialize voucher more than once', async () => {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            // Create voucher.
+            await expect(voucherHub.createVoucher(voucherOwner1, expiration)).to.emit(
+                voucherHub,
+                'VoucherCreated',
+            );
+            // Second initialization should fail.
+            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
+            const voucher: Voucher = await getVoucher(voucherAddress);
+            await expect(
+                voucher.initialize(voucherOwner1, expiration),
+            ).to.be.revertedWithCustomError(voucher, 'InvalidInitialization');
         });
 
         it('Should not create voucher when not owner', async () => {

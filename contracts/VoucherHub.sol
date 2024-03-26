@@ -131,8 +131,8 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * TODO return Voucher structure.
      *
      * Create new voucher for the specified account and call initialize function.
-     * Creation uses "create2" mechanism. The owner address is used as salt so
-     * only 1 voucher is allowed by wallet.
+     * Only 1 voucher is allowed by wallet. This is guaranteed by "create2" mechanism
+     * and using the wallet address as salt.
      * @param owner voucher owner
      * @param expiration voucher expiration
      */
