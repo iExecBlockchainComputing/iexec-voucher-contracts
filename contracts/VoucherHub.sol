@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
+import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
@@ -21,8 +22,6 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         address _voucherBeacon;
         VoucherType[] voucherTypes;
         mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
-        // TODO remove & compute voucher address.
-        mapping(address => address) voucherByAccount;
     }
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
@@ -130,35 +129,61 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     /**
      * TODO add checks.
      * TODO return Voucher structure.
-     * Create new voucher for specified account.
-     * @param owner voucher owner.
+     *
+     * Create new voucher for the specified account and call initialize function.
+     * Creation uses "create2" mechanism. The owner address is used as salt so
+     * only 1 voucher is allowed by wallet.
+     * @param owner voucher owner
      * @param expiration voucher expiration
      */
     function createVoucher(
         address owner,
         uint256 expiration
     ) external override onlyOwner returns (address voucherAddress) {
-        // Create voucher and call initialize() function.
-        bytes memory initialization = abi.encodeWithSelector(
-            Voucher(address(0)).initialize.selector,
-            owner,
-            expiration
-        );
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        voucherAddress = address(new VoucherProxy($._voucherBeacon, initialization));
-        // Save voucher address.
-        $.voucherByAccount[owner] = voucherAddress;
+        voucherAddress = Create2.deploy(
+            0, // value amount
+            bytes32(uint256(uint160(owner))), // salt
+            _computeVoucherCreationCode($._voucherBeacon) // bytecode
+        );
+        // Initialize the created proxy contract. The contract does a delegatecall
+        // to its implementation.
+        // Re-Entrancy safe because the target contract is controlled.
+        (bool success, ) = voucherAddress.call(
+            abi.encodeCall(Voucher.initialize, (owner, expiration))
+        );
+        // TODO try Voucher(voucherAddress).initialize(owner, expiration) {} catch  {}
+        require(success, "VoucherHub: Voucher initialization failed");
         emit VoucherCreated(voucherAddress, owner, expiration);
     }
 
     /**
      * Get voucher address of a given account.
+     * Returnss address(0) if not voucher is found.
      * @param account owner address.
      */
     function getVoucher(address account) public view override returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        voucherAddress = $.voucherByAccount[account];
+        voucherAddress = Create2.computeAddress(
+            bytes32(uint256(uint160(account))), // salt
+            keccak256(_computeVoucherCreationCode($._voucherBeacon)) // bytecode hash
+        );
+        return voucherAddress.code.length > 0 ? voucherAddress : address(0);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    /**
+     * Compute the creation code (bytecode + constructorArgs) of the VoucherProxy contract.
+     * @param voucherBeacon address of the beacon
+     */
+    function _computeVoucherCreationCode(
+        address voucherBeacon
+    ) private pure returns (bytes memory) {
+        return
+            abi.encodePacked(
+                type(VoucherProxy).creationCode, // bytecode
+                abi.encode(voucherBeacon) // constructor args
+            );
+    }
 }
