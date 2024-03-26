@@ -331,6 +331,10 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'Create2FailedDeployment');
         });
 
+        it('Should not create voucher when initialization fails', async () => {
+            // TODO
+        });
+
         it('Should not initialize voucher more than once', async () => {
             const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
             // Create voucher.
@@ -352,6 +356,13 @@ describe('VoucherHub', function () {
             await expect(
                 voucherHub.connect(anyone).createVoucher(voucherOwner1, expiration),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
+        });
+    });
+
+    describe('Get voucher', async function () {
+        it('Should return zero address when voucher not created yet', async function () {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            expect(await voucherHub.getVoucher(voucherOwner1)).to.equal(ethers.ZeroAddress);
         });
     });
 
