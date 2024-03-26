@@ -4,7 +4,8 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
-import * as voucher from '../scripts/voucher';
+import * as voucherHubUtils from '../scripts/voucherHubUtils';
+import * as voucherUtils from '../scripts/voucherUtils';
 import { Voucher, VoucherProxy } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 import { VoucherHubV2Mock, VoucherV2Mock } from '../typechain-types/contracts/mocks';
@@ -22,8 +23,8 @@ describe('VoucherHub', function () {
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
         const [owner, voucherOwner1, voucherOwner2, anyone] = await ethers.getSigners();
-        const beacon = await voucher.deployBeaconAndImplementation(owner.address);
-        const voucherHub = await deployVoucherHub(await beacon.getAddress());
+        const beacon = await voucherUtils.deployBeaconAndImplementation(owner.address);
+        const voucherHub = await voucherHubUtils.deployHub(iexecPoco, await beacon.getAddress());
         return { beacon, voucherHub, owner, voucherOwner1, voucherOwner2, anyone };
     }
 
@@ -387,7 +388,7 @@ describe('VoucherHub', function () {
             const initialImplementation = await beacon.implementation();
             // Upgrade beacon.
             const voucherV2Factory = await ethers.getContractFactory('VoucherV2Mock');
-            await voucher.upgradeBeacon(beacon, voucherV2Factory);
+            await voucherUtils.upgradeBeacon(beacon, voucherV2Factory);
             const voucher1_V2 = await getVoucherV2(voucherAddress1);
             const voucher2_V2 = await getVoucherV2(voucherAddress2);
             // Initialize new implementations.
@@ -442,19 +443,6 @@ describe('VoucherHub', function () {
         });
     });
 });
-
-async function deployVoucherHub(beacon: string): Promise<VoucherHub> {
-    const VoucherHubFactory = await ethers.getContractFactory('VoucherHub');
-    // @dev Type declaration produces a warning until feature is supported by
-    // openzeppelin plugin. See "Support TypeChain in deployProxy function":
-    // https://github.com/OpenZeppelin/openzeppelin-upgrades/pull/535
-    const voucherHubContract = (await upgrades.deployProxy(VoucherHubFactory, [
-        iexecPoco,
-        beacon,
-    ])) as unknown; // Workaround openzeppelin-upgrades/pull/535;
-    const voucherHub = voucherHubContract as VoucherHub;
-    return await voucherHub.waitForDeployment();
-}
 
 async function getVoucherTypeCreatedId(voucherHub: VoucherHub) {
     const events = await voucherHub.queryFilter(voucherHub.filters.VoucherTypeCreated, -1);
