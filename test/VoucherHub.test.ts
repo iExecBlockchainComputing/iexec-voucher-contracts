@@ -222,7 +222,7 @@ describe('VoucherHub', function () {
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await getVoucher(voucherAddress);
-            const voucherAsProxy: VoucherProxy = await getVoucherAsProxy(voucherAddress);
+            const voucherAsProxy = await getVoucherAsProxy(voucherAddress);
             // Run assertions.
             // Events.
             await expect(createVoucherTx)
