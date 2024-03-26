@@ -16,7 +16,7 @@ async function main() {
     console.log(`Voucher implementation deployed at: ${await beacon.implementation()}`);
     // Deploy VoucherHub.
     const voucherHub = await voucherHubUtils.deployHub(iexecPoco, beaconAddress);
-    console.log('VoucherHub deployed to:', await voucherHub.getAddress());
+    console.log(`VoucherHub deployed to: ${await voucherHub.getAddress()}`);
     // Check
     if ((await voucherHub.getVoucherBeacon()) !== beaconAddress) {
         throw new Error('Deployment error');
