@@ -5,9 +5,9 @@ import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import {IVoucherHub} from "./IVoucherHub.sol";
-import {VoucherProxy} from "./beacon/VoucherProxy.sol";
 import {Voucher} from "./beacon/Voucher.sol";
+import {VoucherProxy} from "./beacon/VoucherProxy.sol";
+import {IVoucherHub} from "./IVoucherHub.sol";
 
 pragma solidity ^0.8.20;
 
