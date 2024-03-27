@@ -23,6 +23,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
         // TODO remove & compute voucher address.
         mapping(address => address) voucherByAccount;
+        address voucherCredit; // future address of the Voucher erc20 credit.
     }
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
@@ -46,12 +47,17 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         _disableInitializers();
     }
 
-    function initialize(address iexecPoco, address voucherBeacon) external initializer {
+    function initialize(
+        address iexecPoco,
+        address voucherBeacon,
+        address voucherCredit
+    ) external initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;
         $._voucherBeacon = voucherBeacon;
+        $.voucherCredit = voucherCredit;
     }
 
     // TODO: Replace most onlyOwner to onlyVoucherManager
@@ -132,27 +138,28 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * TODO return Voucher structure.
      * Create new voucher for specified account.
      * @param account voucher owner.
-     * @param expiration voucher expiration
+     * @param voucherType voucher expiration
      */
     function createVoucher(
         address account,
-        uint256 voucherType,
-        uint256 creditBalance,
-        uint256 expiration
+        uint256 voucherType
     ) external override onlyOwner returns (address voucherAddress) {
         // Create voucher and call initialize() function.
+        // IERC20(creditERC20).mint(creditedBalance)
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        uint256 voucherExpiration = getVoucherType(voucherType).duration + block.timestamp;
+
         bytes memory initialization = abi.encodeWithSelector(
             VoucherImpl(address(0)).initialize.selector,
             account,
             voucherType,
-            creditBalance,
-            expiration
+            voucherExpiration,
+            $.voucherCredit
         );
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
         voucherAddress = address(new VoucherProxy($._voucherBeacon, initialization));
         // Save voucher address.
         $.voucherByAccount[account] = voucherAddress;
-        emit VoucherCreated(voucherAddress, account, expiration);
+        emit VoucherCreated(voucherAddress, account, voucherExpiration);
     }
 
     /**

@@ -13,7 +13,7 @@ import {IVoucher} from "./IVoucher.sol";
 contract VoucherImpl is OwnableUpgradeable, IVoucher {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
-        uint256 _creditBalance;
+        address _creditERC20; // future address of the Voucher erc20 credit.
         uint256 _expiration;
         uint256 _type;
         mapping(address => bool) _authorizedAccounts;
@@ -42,21 +42,21 @@ contract VoucherImpl is OwnableUpgradeable, IVoucher {
     function initialize(
         address owner,
         uint256 vtype,
-        uint256 creditBalance,
-        uint256 expiration
+        uint256 expiration,
+        address creditERC20
     ) external initializer {
         __Ownable_init(owner);
         VoucherStorage storage $ = _getVoucherStorage();
         $._type = vtype;
-        $._creditBalance = creditBalance;
+        $._creditERC20 = creditERC20;
         $._expiration = expiration;
         // deposit
         emit ExpirationUpdated(expiration);
     }
 
-    function getCreditBalance() external view returns (uint256) {
+    function getCreditERC20() external view returns (address creditAddress) {
         VoucherStorage storage $ = _getVoucherStorage();
-        return $._creditBalance;
+        creditAddress = $._creditERC20;
     }
 
     function getExpiration() external view override returns (uint256) {
