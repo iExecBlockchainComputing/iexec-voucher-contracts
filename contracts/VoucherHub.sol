@@ -158,7 +158,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * TODO return Voucher structure.
      *
      * Get voucher address of a given account.
-     * Returnss address(0) if not voucher is found.
+     * Returns address(0) if voucher is not found.
      * @param account owner address.
      */
     function getVoucher(address account) public view override returns (address voucherAddress) {
