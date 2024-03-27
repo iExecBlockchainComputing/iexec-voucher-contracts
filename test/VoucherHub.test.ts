@@ -3,13 +3,13 @@
 
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
+import { ContractTransactionReceipt } from 'ethers';
 import { ethers, upgrades } from 'hardhat';
 import { UpgradeableBeacon, VoucherImpl, VoucherProxy } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 import { VoucherHubV2Mock } from '../typechain-types/contracts/mocks';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
-const voucherCredit = '0xc0ffee254729296a45a3885639AC7E10F9d54979'; // random
 const voucherType0 = 0;
 const description0 = 'Early Access';
 const duration0 = 3600;
@@ -40,7 +40,7 @@ describe('VoucherHub', function () {
             const { beacon, voucherHub } = await loadFixture(deployFixture);
 
             await expect(
-                voucherHub.initialize(iexecPoco, await beacon.getAddress(), voucherCredit),
+                voucherHub.initialize(iexecPoco, await beacon.getAddress()),
             ).to.be.revertedWithCustomError(voucherHub, 'InvalidInitialization');
         });
     });
@@ -262,7 +262,12 @@ describe('VoucherHub', function () {
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: VoucherImpl = await getVoucher(voucherAddress);
             await expect(
-                voucher.initialize(voucherOwner1, voucherType0, expectedExpiration, voucherCredit),
+                voucher.initialize(
+                    voucherOwner1,
+                    voucherType0,
+                    expectedExpiration,
+                    await voucherHub.getAddress(),
+                ),
             ).to.be.revertedWithCustomError(voucher, 'InvalidInitialization');
         });
 
@@ -333,7 +338,6 @@ async function deployVoucherHub(beacon: string): Promise<VoucherHub> {
     const voucherHubContract = (await upgrades.deployProxy(VoucherHubFactory, [
         iexecPoco,
         beacon,
-        voucherCredit,
     ])) as unknown; // Workaround openzeppelin-upgrades/pull/535;
     const voucherHub = voucherHubContract as VoucherHub;
     return await voucherHub.waitForDeployment();

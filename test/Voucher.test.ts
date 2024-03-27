@@ -10,7 +10,6 @@ import { VoucherHub } from '../typechain-types/contracts';
 import { VoucherImplV2Mock } from '../typechain-types/contracts/mocks';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
-const voucherCredit = '0xc0ffee254729296a45a3885639AC7E10F9d54979'; // random
 const voucherType0 = 0;
 const duration0 = 3600;
 const description0 = 'Early Access';
@@ -176,7 +175,7 @@ describe('Voucher', function () {
                     voucherOwner1,
                     voucherType0,
                     await getExpectedExpiration(duration0, createVoucherReceipt),
-                    voucherCredit,
+                    await voucherHub.getAddress(),
                 ),
             ).to.be.revertedWithCustomError(voucher, 'InvalidInitialization');
         });
@@ -228,11 +227,11 @@ describe('Voucher', function () {
             expect(await voucher1.owner(), 'Owners should not match between proxies').to.not.equal(
                 voucher2.owner(),
             );
-            expect(await voucher1.getCreditERC20(), 'ERC20 voucher credit mismatch').to.equal(
-                voucherCredit,
+            expect(await voucher1.getHub(), 'Voucher hub address mismatch').to.equal(
+                await voucherHub.getAddress(),
             );
-            expect(await voucher2.getCreditERC20(), 'ERC20 voucher credit mismatch').to.equal(
-                voucherCredit,
+            expect(await voucher2.getHub(), 'Voucher hub address mismatch').to.equal(
+                await voucherHub.getAddress(),
             );
             expect(await voucher1.getType(), 'Voucher 1 type mismatch').to.equal(voucherType0);
             expect(await voucher2.getType(), 'Voucher 2 type mismatch').to.equal(voucherType1);
@@ -264,7 +263,6 @@ async function deployVoucherHub(beacon: string): Promise<VoucherHub> {
     const voucherHubContract = (await upgrades.deployProxy(VoucherHubFactory, [
         iexecPoco,
         beacon,
-        voucherCredit,
     ])) as unknown; // Workaround openzeppelin-upgrades/pull/535;
     const voucherHub = voucherHubContract as VoucherHub;
     return await voucherHub.waitForDeployment();

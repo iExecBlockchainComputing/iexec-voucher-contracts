@@ -23,7 +23,6 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
         // TODO remove & compute voucher address.
         mapping(address => address) voucherByAccount;
-        address voucherCredit; // future address of the Voucher erc20 credit.
     }
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
@@ -47,17 +46,12 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         _disableInitializers();
     }
 
-    function initialize(
-        address iexecPoco,
-        address voucherBeacon,
-        address voucherCredit
-    ) external initializer {
+    function initialize(address iexecPoco, address voucherBeacon) external initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;
         $._voucherBeacon = voucherBeacon;
-        $.voucherCredit = voucherCredit;
     }
 
     // TODO: Replace most onlyOwner to onlyVoucherManager
@@ -154,7 +148,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
             account,
             voucherType,
             voucherExpiration,
-            $.voucherCredit
+            address(this)
         );
         voucherAddress = address(new VoucherProxy($._voucherBeacon, initialization));
         // Save voucher address.
