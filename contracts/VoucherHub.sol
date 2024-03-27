@@ -141,7 +141,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     ) external override onlyOwner returns (address voucherAddress) {
         voucherAddress = Create2.deploy(
             0, // value amount
-            bytes32(uint256(uint160(owner))), // salt
+            _getCreate2Salt(owner), // salt
             _computeVoucherCreationCode() // bytecode
         );
         // Initialize the created proxy contract.
@@ -163,13 +163,17 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      */
     function getVoucher(address account) public view override returns (address voucherAddress) {
         voucherAddress = Create2.computeAddress(
-            bytes32(uint256(uint160(account))), // salt
+            _getCreate2Salt(account), // salt
             keccak256(_computeVoucherCreationCode()) // bytecode hash
         );
         return voucherAddress.code.length > 0 ? voucherAddress : address(0);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    function _getCreate2Salt(address account) private pure returns (bytes32) {
+        return bytes32(uint256(uint160(account)));
+    }
 
     /**
      * Compute the creation code (bytecode + constructorArgs) of the VoucherProxy contract.
