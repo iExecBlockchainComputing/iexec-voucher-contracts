@@ -226,7 +226,7 @@ describe('VoucherHub', function () {
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: VoucherImpl = await getVoucher(voucherAddress);
             const voucherAsProxy: VoucherProxy = await getVoucherAsProxy(voucherAddress);
-            const expectedExpiration = await getExpiration(duration0, txReceipt);
+            const expectedExpiration = await getExpectedExpiration(duration0, txReceipt);
             // Run assertions.
             // Events.
             await expect(createVoucherTx)
@@ -256,7 +256,7 @@ describe('VoucherHub', function () {
             // Create voucher.
             const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, voucherType0);
             const tx1Receipt = await createVoucherTx1.wait();
-            const expectedExpiration = await getExpiration(duration0, tx1Receipt);
+            const expectedExpiration = await getExpectedExpiration(duration0, tx1Receipt);
             await expect(tx1Receipt).to.emit(voucherHub, 'VoucherCreated');
             // Second initialization should fail.
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
@@ -280,7 +280,7 @@ describe('VoucherHub', function () {
             // Create voucher1.
             const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, voucherType0);
             const tx1Receipt = await createVoucherTx1.wait();
-            const expiration1 = await getExpiration(duration0, tx1Receipt);
+            const expiration1 = await getExpectedExpiration(duration0, tx1Receipt);
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucher1 = await getVoucher(voucherAddress1);
             const voucherAsProxy1 = await getVoucherAsProxy(voucherAddress1);
@@ -288,7 +288,7 @@ describe('VoucherHub', function () {
             const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, voucherType1);
             await createVoucherTx2.wait();
             const tx2Receipt = await createVoucherTx2.wait();
-            const expiration2 = await getExpiration(duration1, tx2Receipt);
+            const expiration2 = await getExpectedExpiration(duration1, tx2Receipt);
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucher2 = await getVoucher(voucherAddress2);
             const voucherAsProxy2 = await getVoucherAsProxy(voucherAddress2);
@@ -369,7 +369,7 @@ async function getVoucherAsProxy(voucherAddress: string): Promise<VoucherProxy> 
     return await ethers.getContractAt('VoucherProxy', voucherAddress);
 }
 
-async function getExpiration(
+async function getExpectedExpiration(
     voucherDuration: number,
     txReceipt: ContractTransactionReceipt | null,
 ): Promise<number> {
