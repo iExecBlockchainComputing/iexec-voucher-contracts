@@ -139,14 +139,13 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         address owner,
         uint256 expiration
     ) external override onlyOwner returns (address voucherAddress) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
         voucherAddress = Create2.deploy(
             0, // value amount
             bytes32(uint256(uint160(owner))), // salt
-            _computeVoucherCreationCode($._voucherBeacon) // bytecode
+            _computeVoucherCreationCode() // bytecode
         );
-        // Initialize the created proxy contract. The contract does a delegatecall
-        // to its implementation.
+        // Initialize the created proxy contract.
+        // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
         (bool success, ) = voucherAddress.call(
             abi.encodeCall(Voucher.initialize, (owner, expiration))
@@ -163,10 +162,9 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * @param account owner address.
      */
     function getVoucher(address account) public view override returns (address voucherAddress) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
         voucherAddress = Create2.computeAddress(
             bytes32(uint256(uint160(account))), // salt
-            keccak256(_computeVoucherCreationCode($._voucherBeacon)) // bytecode hash
+            keccak256(_computeVoucherCreationCode()) // bytecode hash
         );
         return voucherAddress.code.length > 0 ? voucherAddress : address(0);
     }
@@ -175,15 +173,13 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
 
     /**
      * Compute the creation code (bytecode + constructorArgs) of the VoucherProxy contract.
-     * @param voucherBeacon address of the beacon
      */
-    function _computeVoucherCreationCode(
-        address voucherBeacon
-    ) private pure returns (bytes memory) {
+    function _computeVoucherCreationCode() private view returns (bytes memory) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
         return
             abi.encodePacked(
                 type(VoucherProxy).creationCode, // bytecode
-                abi.encode(voucherBeacon) // constructor args
+                abi.encode($._voucherBeacon) // constructor args
             );
     }
 }
