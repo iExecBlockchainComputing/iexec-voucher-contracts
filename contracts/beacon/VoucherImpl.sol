@@ -4,7 +4,7 @@
 pragma solidity ^0.8.20;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IVoucher} from "./IVoucher.sol";
+import {IVoucher} from "./IVoucherImplV1.sol";
 
 /**
  * @title Implementation of the voucher contract.
@@ -59,13 +59,13 @@ contract VoucherImpl is OwnableUpgradeable, IVoucher {
         voucherHubAddress = $._voucherHub;
     }
 
-    function getExpiration() external view override returns (uint256) {
+    function getExpiration() external view override returns (uint256 expirationTimestamp) {
         VoucherStorage storage $ = _getVoucherStorage();
-        return $._expiration;
+        expirationTimestamp = $._expiration;
     }
 
-    function getType() external view returns (uint256) {
+    function getType() external view returns (uint256 voucherType) {
         VoucherStorage storage $ = _getVoucherStorage();
-        return $._type;
+        voucherType = $._type;
     }
 }

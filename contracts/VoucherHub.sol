@@ -11,10 +11,10 @@ import {VoucherImpl} from "./beacon/VoucherImpl.sol";
 pragma solidity ^0.8.20;
 
 contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
-    struct VoucherType {
-        string description;
-        uint256 duration;
-    }
+    // struct VoucherType {
+    //     string description;
+    //     uint256 duration;
+    // }
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
         address _iexecPoco;

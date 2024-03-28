@@ -4,7 +4,7 @@
 pragma solidity ^0.8.20;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IVoucher} from "../beacon/IVoucher.sol";
+import {IVoucher} from "../beacon/IVoucherImplV2.sol";
 
 contract VoucherImplV2Mock is OwnableUpgradeable, IVoucher {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
@@ -35,7 +35,7 @@ contract VoucherImplV2Mock is OwnableUpgradeable, IVoucher {
         $._newStateVariable = newStateVariable;
     }
 
-    function getExpiration() external view override returns (uint256) {
+    function getExpiration() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._expiration;
     }
