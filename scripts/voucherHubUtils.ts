@@ -61,26 +61,24 @@ export async function getVoucherProxyCreationCodeHashFromStorage(voucherHubAddre
  * @returns value of the hash
  */
 export async function getVoucherProxyCreationCodeHash(voucherBeaconAddress: string) {
-    // Uncomment to recompute the hash.
-    //
-    // const factory = await ethers.getContractFactory('VoucherProxy');
-    // const tx = await factory.getDeployTransaction(voucherBeaconAddress);
-    // /**
-    //  * tx.data is the same as Solidity value of:
-    //  * ```
-    //  * abi.encodePacked(
-    //  *     type(VoucherProxy).creationCode, // bytecode
-    //  *     abi.encode($._voucherBeacon) // constructor args
-    //  * )
-    //  * ```
-    //  */
-    // console.log(ethers.keccak256(tx.data));
+    const factory = await ethers.getContractFactory('VoucherProxy');
+    const tx = await factory.getDeployTransaction(voucherBeaconAddress);
+    /**
+     * tx.data is the same as Solidity value of:
+     * ```
+     * abi.encodePacked(
+     *     type(VoucherProxy).creationCode, // bytecode
+     *     abi.encode($._voucherBeacon) // constructor args
+     * )
+     * ```
+     */
+    return ethers.keccak256(tx.data);
 
-    // For some reason, the hash is different between
-    // "hardhat test" and "hardhat coverage".
-    // TODO investigate this.
-    return [
-        '0x6b4bda6ca928b9724d26ee10eb17168dcd9c632e1905c854c10b78a05cd83398', // hardhat test
-        '0x97822cb09c6322b4ccd1c4bb70005e4a3ce60099d392676696ce3d3d69e8949f', // hardhat coverage
-    ];
+    // TODO comment the implementation and return a hardcoded hash.
+    // For some reason, the hash is different between "hardhat test" and "hardhat coverage".
+    // '0x6b4bda6ca928b9724d26ee10eb17168dcd9c632e1905c854c10b78a05cd83398' // hardhat test
+    // '0x97822cb09c6322b4ccd1c4bb70005e4a3ce60099d392676696ce3d3d69e8949f' // hardhat coverage
+
+    // console.log(ethers.keccak256(tx.data));
+    // return '<hash>'
 }
