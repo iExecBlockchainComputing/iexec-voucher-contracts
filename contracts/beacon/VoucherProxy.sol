@@ -26,10 +26,10 @@ contract VoucherProxy is BeaconProxy {
      * one constructor argument (beaconAddress) which is already available in the
      * storage of the factory contract (VoucherHub).
      *
-     * @dev By design, only 1 contract instance is created by wallet because of
-     * the above. This is a business requirement.
+     * @dev By design, only 1 contract instance is created by account as explained
+     * above. This is a business requirement.
      * The voucher type could be introduced to make it possible to have 1 instance
-     * by wallet by type.
+     * by account by type.
      *
      * @param beaconAddress used by the proxy.
      */
