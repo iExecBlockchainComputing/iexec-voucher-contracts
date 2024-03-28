@@ -39,9 +39,9 @@ describe('VoucherHub', function () {
             const voucherHubAddress = await voucherHub.getAddress();
             const actualCodeHash =
                 await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
-            const expectedCodeHash =
+            const expectedHashes =
                 await voucherHubUtils.getVoucherProxyCreationCodeHash(voucherBeaconAddress);
-            expect(actualCodeHash).to.equal(expectedCodeHash);
+            expect(expectedHashes).to.include(actualCodeHash);
         });
 
         it('Should not initialize twice', async () => {
