@@ -137,8 +137,8 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * TODO add checks.
      *
      * Create new voucher for the specified account and call initialize function.
-     * Only 1 voucher is allowed by wallet. This is guaranteed by "create2" mechanism
-     * and using the wallet address as salt.
+     * Only 1 voucher is allowed by account. This is guaranteed by "create2" mechanism
+     * and using the account address as salt.
      * @dev Note: the same account could have 2 voucher instances if the "beaconAddress"
      * changes, but this should not happen since the beacon is upgradeable, hence the
      * address should never be changed.
