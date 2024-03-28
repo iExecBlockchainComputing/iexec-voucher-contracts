@@ -156,10 +156,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         // Initialize the created proxy contract.
         // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
-        (bool success, ) = voucherAddress.call(
-            abi.encodeCall(Voucher.initialize, (owner, expiration))
-        );
-        require(success, "VoucherHub: Voucher initialization failed");
+        Voucher(voucherAddress).initialize(owner, expiration);
         emit VoucherCreated(voucherAddress, owner, expiration);
     }
 
