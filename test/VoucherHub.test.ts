@@ -313,7 +313,7 @@ describe('VoucherHub', function () {
             // Second creation should fail.
             await expect(
                 voucherHub.createVoucher(voucherOwner1, expiration),
-            ).to.be.revertedWithCustomError(voucherHub, 'Create2FailedDeployment');
+            ).to.be.revertedWithoutReason();
         });
 
         it('Should not create more than 1 voucher for the same account with different config', async () => {
@@ -327,7 +327,7 @@ describe('VoucherHub', function () {
             const differentExpiration = expiration + 1;
             await expect(
                 voucherHub.createVoucher(voucherOwner1, differentExpiration),
-            ).to.be.revertedWithCustomError(voucherHub, 'Create2FailedDeployment');
+            ).to.be.revertedWithoutReason();
         });
 
         it('Should not create voucher when initialization fails', async () => {
