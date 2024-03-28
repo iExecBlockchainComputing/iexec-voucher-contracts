@@ -249,6 +249,8 @@ describe('VoucherHub', function () {
         });
 
         it('Should create different vouchers for different accounts with the same config', async () => {
+            // Vouchers are created with the same configuration (type, expiration, ...).
+            // The goal is to make sure that constructor args are not included in create2 salt.
             const { voucherHub, voucherOwner1, voucherOwner2 } = await loadFixture(deployFixture);
             // Create voucher1
             await expect(voucherHub.createVoucher(voucherOwner1, expiration)).to.emit(
@@ -271,6 +273,8 @@ describe('VoucherHub', function () {
         });
 
         it('Should create multiple vouchers with the correct config', async () => {
+            // Vouchers are created with different configurations
+            // (type1, type2, expiration1, expiration2, ...).
             const { voucherHub, voucherOwner1, voucherOwner2 } = await loadFixture(deployFixture);
             const expiration1 = expiration;
             const expiration2 = 99999999999999; // random (November 16, 5138)
