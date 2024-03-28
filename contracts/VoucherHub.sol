@@ -20,6 +20,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     struct VoucherHubStorage {
         address _iexecPoco;
         address _voucherBeacon;
+        bytes32 _voucherCreationCodeHash;
         VoucherType[] voucherTypes;
         mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
     }
@@ -51,6 +52,12 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;
         $._voucherBeacon = voucherBeacon;
+        $._voucherCreationCodeHash = keccak256(
+            abi.encodePacked(
+                type(VoucherProxy).creationCode, // bytecode
+                abi.encode($._voucherBeacon) // constructor args
+            )
+        );
     }
 
     // TODO: Replace most onlyOwner to onlyVoucherManager
@@ -132,6 +139,9 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * Create new voucher for the specified account and call initialize function.
      * Only 1 voucher is allowed by wallet. This is guaranteed by "create2" mechanism
      * and using the wallet address as salt.
+     * @dev Note: the same account could have 2 voucher instances if the "beaconAddress"
+     * changes.
+     *
      * @param owner voucher owner
      * @param expiration voucher expiration
      */
@@ -159,9 +169,10 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * @param account owner address.
      */
     function getVoucher(address account) public view override returns (address voucherAddress) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
         voucherAddress = Create2.computeAddress(
             _getCreate2Salt(account), // salt
-            keccak256(_computeVoucherCreationCode()) // bytecode hash
+            $._voucherCreationCodeHash // bytecode hash
         );
         return voucherAddress.code.length > 0 ? voucherAddress : address(0);
     }
