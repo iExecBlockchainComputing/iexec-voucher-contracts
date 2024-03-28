@@ -40,7 +40,7 @@ describe('VoucherHub', function () {
             const actualCodeHash =
                 await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
             const expectedCodeHash =
-                await voucherHubUtils.computeVoucherProxyCreationCodeHash(voucherBeaconAddress);
+                await voucherHubUtils.getVoucherProxyCreationCodeHash(voucherBeaconAddress);
             expect(actualCodeHash).to.equal(expectedCodeHash);
         });
 

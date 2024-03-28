@@ -29,7 +29,7 @@ export async function upgradeProxy(
     const voucherBeaconAddress = await voucherHubUpgrade.getVoucherBeacon();
     if (
         (await getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress)) !==
-        (await computeVoucherProxyCreationCodeHash(voucherBeaconAddress))
+        (await getVoucherProxyCreationCodeHash(voucherBeaconAddress))
     ) {
         throw new Error(
             'Voucher proxy code hash in the new VoucherHub implementation does not match the real hash',
@@ -54,19 +54,26 @@ export async function getVoucherProxyCreationCodeHashFromStorage(voucherHubAddre
 }
 
 /**
- * Locally compute the value of the VoucherProxy creationCode hash.
+ * Get a hardcoded value of the VoucherProxy creationCode hash to prevent
+ * botched upgrades.
+ *
  * @param voucherBeaconAddress
  * @returns value of the hash
  */
-export async function computeVoucherProxyCreationCodeHash(voucherBeaconAddress: string) {
-    const factory = await ethers.getContractFactory('VoucherProxy');
-    const tx = await factory.getDeployTransaction(voucherBeaconAddress);
-    // tx.data is the same as Solidity value of:
-    // ```
-    // abi.encodePacked(
-    //     type(VoucherProxy).creationCode, // bytecode
-    //     abi.encode($._voucherBeacon) // constructor args
-    // )
-    // ```
-    return ethers.keccak256(tx.data);
+export async function getVoucherProxyCreationCodeHash(voucherBeaconAddress: string) {
+    // Uncomment to recompute the hash.
+    //
+    // const factory = await ethers.getContractFactory('VoucherProxy');
+    // const tx = await factory.getDeployTransaction(voucherBeaconAddress);
+    // /**
+    //  * tx.data is the same as Solidity value of:
+    //  * ```
+    //  * abi.encodePacked(
+    //  *     type(VoucherProxy).creationCode, // bytecode
+    //  *     abi.encode($._voucherBeacon) // constructor args
+    //  * )
+    //  * ```
+    //  */
+    // console.log(ethers.keccak256(tx.data));
+    return '0x6b4bda6ca928b9724d26ee10eb17168dcd9c632e1905c854c10b78a05cd83398';
 }
