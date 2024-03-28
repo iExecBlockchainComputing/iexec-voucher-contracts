@@ -19,7 +19,7 @@ contract VoucherProxy is BeaconProxy {
      *
      * @dev This contract is deployed by the VoucherHub contract using create2
      * mechanism. The initialization process is excluded from the constructor
-     * to make computing the address of the contract easier and not dependent
+     * to make computing the contract address easier and not dependent
      * on a lot of inputs (constructor args) that could later be difficult to
      * gather. In this case, computing the address of the contract requires
      * knowing its bytecode, the used salt (contract owner address), and only
