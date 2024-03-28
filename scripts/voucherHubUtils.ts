@@ -25,5 +25,48 @@ export async function upgradeProxy(
         newVoucherHubImplementationFactory,
     );
     const voucherHubUpgrade = contractUpgrade as VoucherHub;
-    return await voucherHubUpgrade.waitForDeployment();
+    await voucherHubUpgrade.waitForDeployment();
+    const voucherBeaconAddress = await voucherHubUpgrade.getVoucherBeacon();
+    if (
+        getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress) !==
+        computeVoucherProxyCreationCodeHash(voucherBeaconAddress)
+    ) {
+        throw new Error(
+            'Voucher proxy code hash in the new VoucherHub implementation does not match the real hash',
+        );
+    }
+    return voucherHubUpgrade;
+}
+
+/**
+ * Read the value of the VoucherProxy creationCode hash from the storage of the
+ * VoucherHub contract.
+ * @param voucherHubAddress
+ * @returns value of the hash
+ */
+export async function getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress: string) {
+    // See contracts/VoucherHub.sol
+    const voucherHubStorageSlot = BigInt(
+        '0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800',
+    );
+    const codeHashSlot = voucherHubStorageSlot + 2n;
+    return await ethers.provider.getStorage(voucherHubAddress, codeHashSlot);
+}
+
+/**
+ * Locally compute the value of the VoucherProxy creationCode hash.
+ * @param voucherBeaconAddress
+ * @returns value of the hash
+ */
+export async function computeVoucherProxyCreationCodeHash(voucherBeaconAddress: string) {
+    const factory = await ethers.getContractFactory('VoucherProxy');
+    const tx = await factory.getDeployTransaction(voucherBeaconAddress);
+    // tx.data is the same as Solidity value of:
+    // ```
+    // abi.encodePacked(
+    //     type(VoucherProxy).creationCode, // bytecode
+    //     abi.encode($._voucherBeacon) // constructor args
+    // )
+    // ```
+    return ethers.keccak256(tx.data);
 }

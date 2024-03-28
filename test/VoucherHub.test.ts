@@ -31,10 +31,17 @@ describe('VoucherHub', function () {
     describe('Initialize', function () {
         it('Should initialize', async () => {
             const { beacon, voucherHub, owner } = await loadFixture(deployFixture);
-
+            const voucherBeaconAddress = await beacon.getAddress();
             expect(await voucherHub.owner()).to.equal(owner);
             expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
-            expect(await voucherHub.getVoucherBeacon()).to.equal(await beacon.getAddress());
+            expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
+            // Check VoucherProxy code hash
+            const voucherHubAddress = await voucherHub.getAddress();
+            const actualCodeHash =
+                await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
+            const expectedCodeHash =
+                await voucherHubUtils.computeVoucherProxyCreationCodeHash(voucherBeaconAddress);
+            expect(actualCodeHash).to.equal(expectedCodeHash);
         });
 
         it('Should not initialize twice', async () => {

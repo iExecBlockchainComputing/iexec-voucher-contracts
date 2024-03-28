@@ -20,6 +20,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     struct VoucherHubStorage {
         address _iexecPoco;
         address _voucherBeacon;
+        /// @dev This hash should be updated when `VoucherProxy` is updated.
         bytes32 _voucherCreationCodeHash;
         VoucherType[] voucherTypes;
         mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
