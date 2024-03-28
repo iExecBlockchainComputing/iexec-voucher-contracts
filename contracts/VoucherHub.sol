@@ -181,16 +181,4 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     function _getCreate2Salt(address account) private pure returns (bytes32) {
         return bytes32(uint256(uint160(account)));
     }
-
-    /**
-     * Compute the creation code (bytecode + constructorArgs) of the VoucherProxy contract.
-     */
-    function _computeVoucherCreationCode() private view returns (bytes memory) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return
-            abi.encodePacked(
-                type(VoucherProxy).creationCode, // bytecode
-                abi.encode($._voucherBeacon) // constructor args
-            );
-    }
 }
