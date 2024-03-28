@@ -28,8 +28,8 @@ export async function upgradeProxy(
     await voucherHubUpgrade.waitForDeployment();
     const voucherBeaconAddress = await voucherHubUpgrade.getVoucherBeacon();
     if (
-        getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress) !==
-        computeVoucherProxyCreationCodeHash(voucherBeaconAddress)
+        (await getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress)) !==
+        (await computeVoucherProxyCreationCodeHash(voucherBeaconAddress))
     ) {
         throw new Error(
             'Voucher proxy code hash in the new VoucherHub implementation does not match the real hash',
