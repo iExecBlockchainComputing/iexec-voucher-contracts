@@ -140,7 +140,8 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * Only 1 voucher is allowed by wallet. This is guaranteed by "create2" mechanism
      * and using the wallet address as salt.
      * @dev Note: the same account could have 2 voucher instances if the "beaconAddress"
-     * changes.
+     * changes, but this should not happen since the beacon is upgradeable, hence the
+     * address should never be changed.
      *
      * @param owner voucher owner
      * @param expiration voucher expiration
