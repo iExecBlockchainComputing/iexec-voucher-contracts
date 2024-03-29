@@ -12,10 +12,6 @@ import {IVoucherHub} from "./IVoucherHub.sol";
 pragma solidity ^0.8.20;
 
 contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
-    // struct VoucherType {
-    //     string description;
-    //     uint256 duration;
-    // }
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
         address _iexecPoco;
@@ -88,7 +84,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
 
     function getVoucherType(
         uint256 id
-    ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
+    ) public view override whenVoucherTypeExists(id) returns (VoucherType memory) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $.voucherTypes[id];
     }

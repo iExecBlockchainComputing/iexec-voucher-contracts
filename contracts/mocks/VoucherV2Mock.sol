@@ -4,7 +4,7 @@
 pragma solidity ^0.8.20;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IVoucher} from "../beacon/IVoucherImplV2.sol";
+import {IVoucher} from "./IVoucherV2Mock.sol";
 
 contract VoucherV2Mock is OwnableUpgradeable, IVoucher {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
