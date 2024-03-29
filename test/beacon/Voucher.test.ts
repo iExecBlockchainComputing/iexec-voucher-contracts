@@ -143,8 +143,8 @@ describe('Voucher', function () {
                 .withArgs(await beacon.getAddress())
                 .to.emit(voucher, 'OwnershipTransferred')
                 .withArgs(ethers.ZeroAddress, voucherOwner1.address)
-                .to.emit(voucher, 'ExpirationUpdated')
-                .withArgs(expectedExpirationVoucher)
+                .to.emit(voucher, 'AuthorizationSet')
+                .withArgs(voucherOwner1.address)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(voucherAddress, voucherOwner1.address, expectedExpirationVoucher);
             // Voucher as proxy
@@ -249,6 +249,50 @@ describe('Voucher', function () {
             await expect(
                 voucherHub.createVoucher(voucherOwner1, outOfBoundsTypeID),
             ).to.be.revertedWith('VoucherHub: type index out of bounds');
+        });
+    });
+
+    describe('Authorization', async function () {
+        it('Should authorize an account', async () => {
+            const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
+            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, voucherType0);
+            await createVoucherTx.wait();
+            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
+            const voucher: Voucher = await getVoucher(voucherAddress);
+
+            // Authorize the account
+            await voucher.connect(voucherOwner1).setAuthorization(anyone.address);
+
+            // Check if the account is authorized
+            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
+        });
+
+        it('Should deauthorize an account', async () => {
+            const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
+            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, voucherType0);
+            await createVoucherTx.wait();
+            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
+            const voucher: Voucher = await getVoucher(voucherAddress);
+
+            // Authorize the account
+            await voucher.connect(voucherOwner1).setAuthorization(anyone.address);
+            await voucher.connect(voucherOwner1).unsetAuthorization(anyone.address);
+
+            // Check if the account is deauthorized
+            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.false;
+        });
+
+        it('Should not authorize an account if the account is not the owner', async () => {
+            const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
+            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, voucherType0);
+            await createVoucherTx.wait();
+            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
+            const voucher: Voucher = await getVoucher(voucherAddress);
+
+            // Authorize the account
+            await expect(
+                voucher.connect(anyone).setAuthorization(anyone.address),
+            ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
     });
 });

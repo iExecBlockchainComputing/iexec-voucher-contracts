@@ -239,8 +239,8 @@ describe('VoucherHub', function () {
                 .withArgs(await beacon.getAddress())
                 .to.emit(voucher, 'OwnershipTransferred')
                 .withArgs(ethers.ZeroAddress, voucherOwner1.address)
-                .to.emit(voucher, 'ExpirationUpdated')
-                .withArgs(expectedExpiration)
+                .to.emit(voucher, 'AuthorizationSet')
+                .withArgs(voucherOwner1.address)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(voucherAddress, voucherOwner1.address, expectedExpiration);
             // Voucher as proxy
