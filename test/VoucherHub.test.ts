@@ -3,12 +3,11 @@
 
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
-import { ContractTransactionReceipt } from 'ethers';
 import { ethers } from 'hardhat';
 import * as commonUtils from '../scripts/common';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
-import { Voucher, VoucherProxy } from '../typechain-types';
+import { Voucher } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
@@ -424,28 +423,4 @@ async function getVoucherTypeCreatedId(voucherHub: VoucherHub) {
     const events = await voucherHub.queryFilter(voucherHub.filters.VoucherTypeCreated, -1);
     const typeId = Number(events[0].args[0]);
     return typeId;
-}
-
-async function getVoucher(voucherAddress: string): Promise<Voucher> {
-    return await ethers.getContractAt('Voucher', voucherAddress);
-}
-
-async function getVoucherAsProxy(voucherAddress: string): Promise<VoucherProxy> {
-    return await ethers.getContractAt('VoucherProxy', voucherAddress);
-}
-
-async function getExpectedExpiration(
-    voucherDuration: number,
-    txReceipt: ContractTransactionReceipt | null,
-): Promise<number> {
-    if (txReceipt != null) {
-        const block = await ethers.provider.getBlock(txReceipt.blockNumber);
-        if (block) {
-            return block.timestamp + voucherDuration;
-        } else {
-            return 0;
-        }
-    } else {
-        return 0;
-    }
 }
