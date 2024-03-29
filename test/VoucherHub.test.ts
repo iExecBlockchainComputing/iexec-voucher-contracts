@@ -404,6 +404,13 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
     });
+
+    describe('Get voucher', function () {
+        it('Should return address 0 when voucher is not created', async function () {
+            const { voucherHub, owner } = await loadFixture(deployFixture);
+            await expect(await voucherHub.getVoucher(owner)).to.be.equal(ethers.ZeroAddress);
+        });
+    });
 });
 
 async function getVoucherTypeCreatedId(voucherHub: VoucherHub) {

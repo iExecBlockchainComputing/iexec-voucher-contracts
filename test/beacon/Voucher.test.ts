@@ -5,10 +5,10 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ContractTransactionReceipt } from 'ethers';
 import { ethers, upgrades } from 'hardhat';
-import * as voucherHubUtils from '../scripts/voucherHubUtils';
-import * as voucherUtils from '../scripts/voucherUtils';
-import { Voucher, VoucherProxy } from '../typechain-types';
-import { VoucherV2Mock } from '../typechain-types/contracts/mocks';
+import * as voucherHubUtils from '../../scripts/voucherHubUtils';
+import * as voucherUtils from '../../scripts/voucherUtils';
+import { Voucher, VoucherProxy } from '../../typechain-types';
+import { VoucherV2Mock } from '../../typechain-types/contracts/mocks';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
 const voucherType0 = 0;
