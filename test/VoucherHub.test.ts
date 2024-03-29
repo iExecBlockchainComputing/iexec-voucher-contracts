@@ -4,10 +4,11 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ContractTransactionReceipt } from 'ethers';
-import { ethers, upgrades } from 'hardhat';
-import { UpgradeableBeacon, VoucherImpl, VoucherProxy } from '../typechain-types';
+import { ethers } from 'hardhat';
+import * as voucherHubUtils from '../scripts/voucherHubUtils';
+import * as voucherUtils from '../scripts/voucherUtils';
+import { Voucher, VoucherProxy } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
-import { VoucherHubV2Mock } from '../typechain-types/contracts/mocks';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
 const voucherType0 = 0;
@@ -22,18 +23,25 @@ describe('VoucherHub', function () {
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
         const [owner, voucherOwner1, voucherOwner2, anyone] = await ethers.getSigners();
-        const beacon = await deployBeaconAndInitialImplementation(owner.address);
-        const voucherHub = await deployVoucherHub(await beacon.getAddress());
+        const beacon = await voucherUtils.deployBeaconAndImplementation(owner.address);
+        const voucherHub = await voucherHubUtils.deployHub(iexecPoco, await beacon.getAddress());
         return { beacon, voucherHub, owner, voucherOwner1, voucherOwner2, anyone };
     }
 
     describe('Initialize', function () {
         it('Should initialize', async () => {
             const { beacon, voucherHub, owner } = await loadFixture(deployFixture);
-
+            const voucherBeaconAddress = await beacon.getAddress();
             expect(await voucherHub.owner()).to.equal(owner);
             expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
-            expect(await voucherHub.getVoucherBeacon()).to.equal(await beacon.getAddress());
+            expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
+            // Check VoucherProxy code hash
+            const voucherHubAddress = await voucherHub.getAddress();
+            const actualCodeHash =
+                await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
+            const expectedHashes =
+                await voucherHubUtils.getVoucherProxyCreationCodeHash(voucherBeaconAddress);
+            expect(expectedHashes).to.include(actualCodeHash);
         });
 
         it('Should not initialize twice', async () => {
@@ -51,11 +59,8 @@ describe('VoucherHub', function () {
             const voucherHubAddress = await voucherHub.getAddress();
             const VoucherHubV2Factory = await ethers.getContractFactory('VoucherHubV2Mock');
             // Next line should throw if new storage schema is not compatible with previous one
-            const voucherHubV2Contract: unknown = await upgrades.upgradeProxy(
-                voucherHubAddress,
-                VoucherHubV2Factory,
-            );
-            const voucherHubV2 = voucherHubV2Contract as VoucherHubV2Mock;
+            await voucherHubUtils.upgradeProxy(voucherHubAddress, VoucherHubV2Factory);
+            const voucherHubV2 = await ethers.getContractAt('VoucherHubV2Mock', voucherHubAddress);
             await voucherHubV2.initializeV2('bar');
 
             expect(await voucherHubV2.getAddress()).to.equal(voucherHubAddress);
@@ -215,7 +220,7 @@ describe('VoucherHub', function () {
     });
 
     describe('Create voucher', async function () {
-        it('Should create voucher', async () => {
+        it('Should create and initialize voucher', async () => {
             const { beacon, voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
             await createTypeTx.wait();
@@ -224,8 +229,8 @@ describe('VoucherHub', function () {
             const txReceipt = await createVoucherTx.wait();
 
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: VoucherImpl = await getVoucher(voucherAddress);
-            const voucherAsProxy: VoucherProxy = await getVoucherAsProxy(voucherAddress);
+            const voucher: Voucher = await getVoucher(voucherAddress);
+            const voucherAsProxy = await getVoucherAsProxy(voucherAddress);
             const expectedExpiration = await getExpectedExpiration(duration0, txReceipt);
             // Run assertions.
             // Events.
@@ -249,29 +254,38 @@ describe('VoucherHub', function () {
             );
         });
 
-        it('Should create voucher and initialize only once', async () => {
-            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+        it('Should create different vouchers for different accounts with the same config', async () => {
+            // Vouchers are created with the same configuration (type, expiration, ...).
+            // The goal is to make sure that configuration is not included in the constructor
+            // args which would result in different create2 salts.
+            const { voucherHub, voucherOwner1, voucherOwner2 } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
             await createTypeTx.wait();
-            // Create voucher.
-            const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, voucherType0);
-            const tx1Receipt = await createVoucherTx1.wait();
-            const expectedExpiration = await getExpectedExpiration(duration0, tx1Receipt);
-            await expect(tx1Receipt).to.emit(voucherHub, 'VoucherCreated');
-            // Second initialization should fail.
-            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: VoucherImpl = await getVoucher(voucherAddress);
-            await expect(
-                voucher.initialize(
-                    voucherOwner1,
-                    voucherType0,
-                    expectedExpiration,
-                    await voucherHub.getAddress(),
-                ),
-            ).to.be.revertedWithCustomError(voucher, 'InvalidInitialization');
+
+            // Create voucher1.
+            await expect(voucherHub.createVoucher(voucherOwner1, voucherType0)).to.emit(
+                voucherHub,
+                'VoucherCreated',
+            );
+            const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
+            const voucher1: Voucher = await getVoucher(voucherAddress1);
+            // Create voucher2.
+            await expect(voucherHub.createVoucher(voucherOwner2, voucherType0)).to.emit(
+                voucherHub,
+                'VoucherCreated',
+            );
+            const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
+            const voucher2: Voucher = await getVoucher(voucherAddress2);
+
+            expect(voucherAddress1).is.not.equal(voucherAddress2);
+            expect(await voucher1.owner()).to.not.equal(await voucher2.owner());
+            expect(await voucher1.getType()).to.equal(await voucher2.getType());
+            expect(await voucher1.getHub()).to.equal(await voucher2.getHub());
         });
 
         it('Should create multiple vouchers with the correct config', async () => {
+            // Vouchers are created with different configurations
+            // (type1, type2, expiration1, expiration2, ...).
             const { voucherHub, voucherOwner1, voucherOwner2 } = await loadFixture(deployFixture);
             const duration1 = 7200;
             const description1 = 'Long Term Duration';
@@ -311,6 +325,7 @@ describe('VoucherHub', function () {
                 'Implementation mismatch between proxies',
             ).to.equal(await voucherAsProxy2.implementation());
             // Voucher
+            expect(voucherAddress1).is.not.equal(voucherAddress2);
             expect(
                 await voucher1.getExpiration(),
                 'Expiration should not match between proxies',
@@ -318,6 +333,67 @@ describe('VoucherHub', function () {
             expect(await voucher1.owner(), 'Owners should not match between proxies').to.not.equal(
                 voucher2.owner(),
             );
+        });
+
+        it('Should not create more than 1 voucher for the same account', async () => {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
+            await createTypeTx.wait();
+            // Create voucher.
+            await expect(voucherHub.createVoucher(voucherOwner1, voucherType0)).to.emit(
+                voucherHub,
+                'VoucherCreated',
+            );
+            // Second creation should fail.
+            await expect(
+                voucherHub.createVoucher(voucherOwner1, voucherType0),
+            ).to.be.revertedWithoutReason();
+        });
+
+        it('Should not create more than 1 voucher for the same account with different config', async () => {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            const createType0Tx = await voucherHub.createVoucherType(description0, duration0);
+            await createType0Tx.wait();
+            // Create voucher.
+            await expect(voucherHub.createVoucher(voucherOwner1, voucherType0)).to.emit(
+                voucherHub,
+                'VoucherCreated',
+            );
+            // Second creation should fail.
+            const duration1 = 7200;
+            const description1 = 'Long Term Duration';
+            const voucherType1 = 1;
+            const createType1Tx = await voucherHub.createVoucherType(description1, duration1);
+            await createType1Tx.wait();
+            await expect(
+                voucherHub.createVoucher(voucherOwner1, voucherType1),
+            ).to.be.revertedWithoutReason();
+        });
+
+        it('Should not create voucher when initialization fails', async () => {
+            // TODO
+        });
+
+        it('Should not initialize voucher more than once', async () => {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
+            await createTypeTx.wait();
+            // Create voucher.
+            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, voucherType0);
+            const createVoucherReceipt = await createVoucherTx.wait();
+            const expectedExpiration = await getExpectedExpiration(duration0, createVoucherReceipt);
+            await expect(createVoucherReceipt).to.emit(voucherHub, 'VoucherCreated');
+            // Second initialization should fail.
+            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
+            const voucher: Voucher = await getVoucher(voucherAddress);
+            await expect(
+                voucher.initialize(
+                    voucherOwner1,
+                    voucherType0,
+                    expectedExpiration,
+                    await voucherHub.getAddress(),
+                ),
+            ).to.be.revertedWithCustomError(voucher, 'InvalidInitialization');
         });
 
         it('Should not create voucher when not owner', async () => {
@@ -330,43 +406,14 @@ describe('VoucherHub', function () {
     });
 });
 
-async function deployVoucherHub(beacon: string): Promise<VoucherHub> {
-    const VoucherHubFactory = await ethers.getContractFactory('VoucherHub');
-    // @dev Type declaration produces a warning until feature is supported by
-    // openzeppelin plugin. See "Support TypeChain in deployProxy function":
-    // https://github.com/OpenZeppelin/openzeppelin-upgrades/pull/535
-    const voucherHubContract = (await upgrades.deployProxy(VoucherHubFactory, [
-        iexecPoco,
-        beacon,
-    ])) as unknown; // Workaround openzeppelin-upgrades/pull/535;
-    const voucherHub = voucherHubContract as VoucherHub;
-    return await voucherHub.waitForDeployment();
-}
-
-async function deployBeaconAndInitialImplementation(
-    beaconOwner: string,
-): Promise<UpgradeableBeacon> {
-    const voucherImplFactory = await ethers.getContractFactory('VoucherImpl');
-    // upgrades.deployBeacon() does the following:
-    // 1. Deploys the implementation contract.
-    // 2. Deploys an instance of oz/UpgradeableBeacon contract.
-    // 3. Links the implementation in the beacon contract.
-    const beaconContract = (await upgrades.deployBeacon(voucherImplFactory, {
-        initialOwner: beaconOwner,
-    })) as unknown; // Workaround openzeppelin-upgrades/pull/535;
-    const beacon = beaconContract as UpgradeableBeacon;
-    await beacon.waitForDeployment();
-    return beacon;
-}
-
 async function getVoucherTypeCreatedId(voucherHub: VoucherHub) {
     const events = await voucherHub.queryFilter(voucherHub.filters.VoucherTypeCreated, -1);
     const typeId = Number(events[0].args[0]);
     return typeId;
 }
 
-async function getVoucher(voucherAddress: string): Promise<VoucherImpl> {
-    return await ethers.getContractAt('VoucherImpl', voucherAddress);
+async function getVoucher(voucherAddress: string): Promise<Voucher> {
+    return await ethers.getContractAt('Voucher', voucherAddress);
 }
 
 async function getVoucherAsProxy(voucherAddress: string): Promise<VoucherProxy> {

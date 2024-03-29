@@ -5,9 +5,10 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ContractTransactionReceipt } from 'ethers';
 import { ethers, upgrades } from 'hardhat';
-import { UpgradeableBeacon, VoucherImpl, VoucherProxy } from '../typechain-types';
-import { VoucherHub } from '../typechain-types/contracts';
-import { VoucherImplV2Mock } from '../typechain-types/contracts/mocks';
+import * as voucherHubUtils from '../scripts/voucherHubUtils';
+import * as voucherUtils from '../scripts/voucherUtils';
+import { Voucher, VoucherProxy } from '../typechain-types';
+import { VoucherV2Mock } from '../typechain-types/contracts/mocks';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
 const voucherType0 = 0;
@@ -24,8 +25,8 @@ describe('Voucher', function () {
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
         const [owner, voucherOwner1, voucherOwner2, anyone] = await ethers.getSigners();
-        const beacon = await deployBeaconAndInitialImplementation(owner.address);
-        const voucherHub = await deployVoucherHub(await beacon.getAddress());
+        const beacon = await voucherUtils.deployBeaconAndImplementation(owner.address);
+        const voucherHub = await voucherHubUtils.deployHub(iexecPoco, await beacon.getAddress());
         const createType0Tx = await voucherHub.createVoucherType(description0, duration0);
         await createType0Tx.wait();
         return { beacon, voucherHub, owner, voucherOwner1, voucherOwner2, anyone };
@@ -60,7 +61,7 @@ describe('Voucher', function () {
             // Save old implementation.
             const initialImplementation = await beacon.implementation();
             // Upgrade beacon.
-            const voucherImplV2Factory = await ethers.getContractFactory('VoucherImplV2Mock');
+            const voucherImplV2Factory = await ethers.getContractFactory('VoucherV2Mock');
             // Note: upgrades.upgradeBeacon() deploys the new impl contract only if it is
             // different from the old implementation. To override the default config 'onchange'
             // use the option (redeployImplementation: 'always').
@@ -112,10 +113,7 @@ describe('Voucher', function () {
             await beacon.transferOwnership(ethers.Wallet.createRandom().address);
             // Try to upgrade beacon.
             expect(
-                upgrades.upgradeBeacon(
-                    beacon,
-                    await ethers.getContractFactory('VoucherImplV2Mock'),
-                ),
+                upgrades.upgradeBeacon(beacon, await ethers.getContractFactory('VoucherV2Mock')),
             ).to.revertedWithCustomError(beacon, 'OwnableUnauthorizedAccount');
             // Check implementation did not change.
             expect(await beacon.implementation(), 'Implementation has changed').to.equal(
@@ -131,7 +129,7 @@ describe('Voucher', function () {
             const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, voucherType0);
             const createVoucherReceipt = await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: VoucherImpl = await getVoucher(voucherAddress);
+            const voucher: Voucher = await getVoucher(voucherAddress);
             const voucherAsProxy: VoucherProxy = await getVoucherAsProxy(voucherAddress);
             const expectedExpirationVoucher = await getExpectedExpiration(
                 duration0,
@@ -169,7 +167,7 @@ describe('Voucher', function () {
             expect(createVoucherReceipt).to.emit(voucherHub, 'VoucherCreated');
             // Second initialization should fail.
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: VoucherImpl = await getVoucher(voucherAddress);
+            const voucher: Voucher = await getVoucher(voucherAddress);
             await expect(
                 voucher.initialize(
                     voucherOwner1,
@@ -255,41 +253,12 @@ describe('Voucher', function () {
     });
 });
 
-async function deployVoucherHub(beacon: string): Promise<VoucherHub> {
-    const VoucherHubFactory = await ethers.getContractFactory('VoucherHub');
-    // @dev Type declaration produces a warning until feature is supported by
-    // openzeppelin plugin. See "Support TypeChain in deployProxy function":
-    // https://github.com/OpenZeppelin/openzeppelin-upgrades/pull/535
-    const voucherHubContract = (await upgrades.deployProxy(VoucherHubFactory, [
-        iexecPoco,
-        beacon,
-    ])) as unknown; // Workaround openzeppelin-upgrades/pull/535;
-    const voucherHub = voucherHubContract as VoucherHub;
-    return await voucherHub.waitForDeployment();
+async function getVoucher(voucherAddress: string): Promise<Voucher> {
+    return await ethers.getContractAt('Voucher', voucherAddress);
 }
 
-async function deployBeaconAndInitialImplementation(
-    beaconOwner: string,
-): Promise<UpgradeableBeacon> {
-    const voucherImplFactory = await ethers.getContractFactory('VoucherImpl');
-    // upgrades.deployBeacon() does the following:
-    // 1. Deploys the implementation contract.
-    // 2. Deploys an instance of oz/UpgradeableBeacon contract.
-    // 3. Links the implementation in the beacon contract.
-    const beaconContract = (await upgrades.deployBeacon(voucherImplFactory, {
-        initialOwner: beaconOwner,
-    })) as unknown; // Workaround openzeppelin-upgrades/pull/535;
-    const beacon = beaconContract as UpgradeableBeacon;
-    await beacon.waitForDeployment();
-    return beacon;
-}
-
-async function getVoucher(voucherAddress: string): Promise<VoucherImpl> {
-    return await ethers.getContractAt('VoucherImpl', voucherAddress);
-}
-
-async function getVoucherV2(voucherAddress: string): Promise<VoucherImplV2Mock> {
-    return await ethers.getContractAt('VoucherImplV2Mock', voucherAddress);
+async function getVoucherV2(voucherAddress: string): Promise<VoucherV2Mock> {
+    return await ethers.getContractAt('VoucherV2Mock', voucherAddress);
 }
 
 async function getVoucherAsProxy(voucherAddress: string): Promise<VoucherProxy> {

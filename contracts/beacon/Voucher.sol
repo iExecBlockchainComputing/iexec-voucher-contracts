@@ -10,7 +10,7 @@ import {IVoucher} from "./IVoucherImplV1.sol";
  * @title Implementation of the voucher contract.
  * @notice Deployed along the Beacon contract using "Upgrades" plugin of OZ.
  */
-contract VoucherImpl is OwnableUpgradeable, IVoucher {
+contract Voucher is OwnableUpgradeable, IVoucher {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
         address _voucherHub;
