@@ -5,6 +5,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ContractTransactionReceipt } from 'ethers';
 import { ethers } from 'hardhat';
+import * as commonUtils from '../scripts/common';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import { Voucher, VoucherProxy } from '../typechain-types';
@@ -229,9 +230,12 @@ describe('VoucherHub', function () {
             const txReceipt = await createVoucherTx.wait();
 
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: Voucher = await getVoucher(voucherAddress);
-            const voucherAsProxy = await getVoucherAsProxy(voucherAddress);
-            const expectedExpiration = await getExpectedExpiration(duration0, txReceipt);
+            const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
+            const voucherAsProxy = await commonUtils.getVoucherAsProxy(voucherAddress);
+            const expectedExpiration = await commonUtils.getExpectedExpiration(
+                duration0,
+                txReceipt,
+            );
             // Run assertions.
             // Events.
             await expect(createVoucherTx)
@@ -268,14 +272,14 @@ describe('VoucherHub', function () {
                 'VoucherCreated',
             );
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
-            const voucher1: Voucher = await getVoucher(voucherAddress1);
+            const voucher1: Voucher = await commonUtils.getVoucher(voucherAddress1);
             // Create voucher2.
             await expect(voucherHub.createVoucher(voucherOwner2, voucherType0)).to.emit(
                 voucherHub,
                 'VoucherCreated',
             );
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
-            const voucher2: Voucher = await getVoucher(voucherAddress2);
+            const voucher2: Voucher = await commonUtils.getVoucher(voucherAddress2);
 
             expect(voucherAddress1).is.not.equal(voucherAddress2);
             expect(await voucher1.owner()).to.not.equal(await voucher2.owner());
@@ -299,18 +303,18 @@ describe('VoucherHub', function () {
             // Create voucher1.
             const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, voucherType0);
             const tx1Receipt = await createVoucherTx1.wait();
-            const expiration1 = await getExpectedExpiration(duration0, tx1Receipt);
+            const expiration1 = await commonUtils.getExpectedExpiration(duration0, tx1Receipt);
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
-            const voucher1 = await getVoucher(voucherAddress1);
-            const voucherAsProxy1 = await getVoucherAsProxy(voucherAddress1);
+            const voucher1 = await commonUtils.getVoucher(voucherAddress1);
+            const voucherAsProxy1 = await commonUtils.getVoucherAsProxy(voucherAddress1);
             // Create voucher2.
             const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, voucherType1);
             await createVoucherTx2.wait();
             const tx2Receipt = await createVoucherTx2.wait();
-            const expiration2 = await getExpectedExpiration(duration1, tx2Receipt);
+            const expiration2 = await commonUtils.getExpectedExpiration(duration1, tx2Receipt);
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
-            const voucher2 = await getVoucher(voucherAddress2);
-            const voucherAsProxy2 = await getVoucherAsProxy(voucherAddress2);
+            const voucher2 = await commonUtils.getVoucher(voucherAddress2);
+            const voucherAsProxy2 = await commonUtils.getVoucherAsProxy(voucherAddress2);
 
             // Events
             await expect(createVoucherTx1)
@@ -381,11 +385,14 @@ describe('VoucherHub', function () {
             // Create voucher.
             const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, voucherType0);
             const createVoucherReceipt = await createVoucherTx.wait();
-            const expectedExpiration = await getExpectedExpiration(duration0, createVoucherReceipt);
+            const expectedExpiration = await commonUtils.getExpectedExpiration(
+                duration0,
+                createVoucherReceipt,
+            );
             await expect(createVoucherReceipt).to.emit(voucherHub, 'VoucherCreated');
             // Second initialization should fail.
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: Voucher = await getVoucher(voucherAddress);
+            const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
             await expect(
                 voucher.initialize(
                     voucherOwner1,
