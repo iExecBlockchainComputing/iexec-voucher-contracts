@@ -294,6 +294,21 @@ describe('Voucher', function () {
                 voucher.connect(anyone).setAuthorization(anyone.address),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
+
+        it('Should not unauthorize an account if the account is not the owner', async () => {
+            const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
+            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, voucherType0);
+            await createVoucherTx.wait();
+            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
+            const voucher: Voucher = await getVoucher(voucherAddress);
+
+            // Authorize the account
+            await voucher.connect(voucherOwner1).setAuthorization(anyone.address);
+
+            await expect(
+                voucher.connect(anyone).unsetAuthorization(anyone.address),
+            ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
+        });
     });
 });
 
