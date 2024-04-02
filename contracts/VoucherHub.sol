@@ -155,7 +155,6 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         // Re-Entrancy safe because the target contract is controlled.
         Voucher(voucherAddress).initialize(owner, voucherType, voucherExpiration, address(this));
         emit VoucherCreated(voucherAddress, owner, voucherExpiration);
-        // Create voucher and call initialize() function.
     }
 
     /**
