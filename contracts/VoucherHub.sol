@@ -148,7 +148,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         uint256 voucherType
     ) external override onlyOwner returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        uint256 voucherExpiration = getVoucherType(voucherType).duration + block.timestamp;
+        uint256 voucherExpiration = block.timestamp + getVoucherType(voucherType).duration;
         voucherAddress = address(new VoucherProxy{salt: _getCreate2Salt(owner)}($._voucherBeacon));
         // Initialize the created proxy contract.
         // The proxy contract does a delegatecall to its implementation.
