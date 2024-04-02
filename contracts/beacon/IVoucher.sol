@@ -32,13 +32,13 @@ interface IVoucher {
      * @notice Sets authorization for an account.
      * @param account The account to authorize.
      */
-    function setAuthorization(address account) external;
+    function authorizeAccount(address account) external;
 
     /**
      * @notice Unsets authorization for an account.
      * @param account The account to remove authorization from.
      */
-    function unsetAuthorization(address account) external;
+    function unauthorizeAccount(address account) external;
 
     /**
      * @notice Checks if an account is authorized.

@@ -278,7 +278,7 @@ describe('Voucher', function () {
             // Authorize the account
             const authorizationTx = await voucher
                 .connect(voucherOwner1)
-                .setAuthorization(anyone.address);
+                .authorizeAccount(anyone.address);
             const authorizationReceipt = await authorizationTx.wait();
             // Run assertions.
             // Events.
@@ -296,11 +296,11 @@ describe('Voucher', function () {
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
             // Authorize the account
-            await voucher.connect(voucherOwner1).setAuthorization(anyone.address);
+            await voucher.connect(voucherOwner1).authorizeAccount(anyone.address);
             // unauthorize the account
             const unauthorizationTx = await voucher
                 .connect(voucherOwner1)
-                .unsetAuthorization(anyone.address);
+                .unauthorizeAccount(anyone.address);
             const unauthorizationReceipt = await unauthorizationTx.wait();
             // Run assertions.
             // Events.
@@ -320,7 +320,7 @@ describe('Voucher', function () {
 
             // Authorize the account
             await expect(
-                voucher.connect(anyone).setAuthorization(anyone.address),
+                voucher.connect(anyone).authorizeAccount(anyone.address),
             ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
         });
 
@@ -332,10 +332,10 @@ describe('Voucher', function () {
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
 
             // Authorize the account
-            await voucher.connect(voucherOwner1).setAuthorization(anyone.address);
+            await voucher.connect(voucherOwner1).authorizeAccount(anyone.address);
 
             await expect(
-                voucher.connect(anyone).unsetAuthorization(anyone.address),
+                voucher.connect(anyone).unauthorizeAccount(anyone.address),
             ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
         });
     });

@@ -69,13 +69,13 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         return $._type;
     }
 
-    function setAuthorization(address account) external onlyOwner {
+    function authorizeAccount(address account) external onlyOwner {
         VoucherStorage storage $ = _getVoucherStorage();
         $._authorizedAccounts[account] = true;
         emit AccountAuthorized(account);
     }
 
-    function unsetAuthorization(address account) external onlyOwner {
+    function unauthorizeAccount(address account) external onlyOwner {
         VoucherStorage storage $ = _getVoucherStorage();
         $._authorizedAccounts[account] = false;
         emit AccountUnauthorized(account);
