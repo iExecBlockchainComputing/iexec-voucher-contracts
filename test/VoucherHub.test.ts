@@ -149,7 +149,7 @@ describe('VoucherHub', function () {
 
     describe('Update Voucher Type Duration', function () {
         const newDuration = 7200;
-        it('Should modify voucher duration0', async function () {
+        it('Should modify voucher duration', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
             await createTypeTx.wait();
@@ -160,7 +160,7 @@ describe('VoucherHub', function () {
                 .withArgs(0, newDuration);
         });
 
-        it('Should not modify voucher duration0 when the caller is not the owner', async function () {
+        it('Should not modify voucher duration when the caller is not the owner', async function () {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
             await voucherHub.createVoucherType(description0, duration0);
             await expect(
@@ -168,7 +168,7 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
 
-        it('Should not change duration0 when the voucher type ID is out of bounds', async function () {
+        it('Should not change duration when the voucher type ID is out of bounds', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             await voucherHub.createVoucherType(description0, duration0);
             await expect(voucherHub.updateVoucherTypeDuration(999, newDuration)).to.be.revertedWith(
