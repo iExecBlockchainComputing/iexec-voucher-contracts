@@ -13,10 +13,9 @@
   },
   "homepage": "https://github.com/iExecBlockchainComputing/iexec-voucher-contracts#readme",
   "scripts": {
-    "prepare": "husky install",
-    "build": "npx hardhat compile",
     "test": "npx hardhat test",
     "coverage": "npx hardhat coverage",
+    "prepare": "husky install",
     "copyright-header": "npx ts-node tools/copyright-header.ts"
   },
   "lint-staged": {
