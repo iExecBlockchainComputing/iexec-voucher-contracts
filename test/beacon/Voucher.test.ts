@@ -293,7 +293,7 @@ describe('Voucher', function () {
             // Authorize the account
             await expect(
                 voucher.connect(anyone).setAuthorization(anyone.address),
-            ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
+            ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
         });
 
         it('Should not unauthorize an account if the account is not the owner', async () => {
@@ -308,7 +308,7 @@ describe('Voucher', function () {
 
             await expect(
                 voucher.connect(anyone).unsetAuthorization(anyone.address),
-            ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
+            ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
         });
     });
 });
