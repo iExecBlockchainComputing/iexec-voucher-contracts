@@ -50,7 +50,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         $._type = vtype;
         $._voucherHub = voucherHub;
         $._expiration = expiration;
-        $._authorizedAccounts[owner] = true;
         // deposit
         emit AuthorizationSet(owner);
     }
@@ -60,7 +59,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         voucherHubAddress = $._voucherHub;
     }
 
-    function getExpiration() external view override returns (uint256) {
+    function getExpiration() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._expiration;
     }

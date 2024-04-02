@@ -84,7 +84,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
 
     function getVoucherType(
         uint256 id
-    ) public view override whenVoucherTypeExists(id) returns (VoucherType memory) {
+    ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $.voucherTypes[id];
     }
@@ -146,7 +146,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     function createVoucher(
         address owner,
         uint256 voucherType
-    ) external override onlyOwner returns (address voucherAddress) {
+    ) external onlyOwner returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         uint256 voucherExpiration = block.timestamp + getVoucherType(voucherType).duration;
         voucherAddress = address(new VoucherProxy{salt: _getCreate2Salt(owner)}($._voucherBeacon));
@@ -164,7 +164,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * Returns address(0) if voucher is not found.
      * @param account owner address.
      */
-    function getVoucher(address account) public view override returns (address voucherAddress) {
+    function getVoucher(address account) public view returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         voucherAddress = Create2.computeAddress(
             _getCreate2Salt(account), // salt
