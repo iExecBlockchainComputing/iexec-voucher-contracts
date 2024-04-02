@@ -43,7 +43,7 @@ interface IVoucherHub {
     function getVoucherBeacon() external view returns (address voucherBeacon);
 
     /**
-     * @notice Get the iExec Poco address.
+     * @notice Get iExec Poco address used by vouchers.
      * @return iexecPoco The address of the iExec Poco contract.
      */
     function getIexecPoco() external view returns (address iexecPoco);
