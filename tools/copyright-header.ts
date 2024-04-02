@@ -19,7 +19,8 @@ const licenseLine = 'SPDX-License-Identifier: Apache-2.0';
     filepaths.forEach((filepath) => {
         const content = fs.readFileSync(filepath, 'utf-8');
         if (content.includes(spdxCopyright)) {
-            // Nothing to do.
+            // TODO
+            updateYear(filepath);
             return;
         }
         const header = buildHeader(filepath);
@@ -61,3 +62,5 @@ function getCommentPrefix(filepath: string) {
             return null;
     }
 }
+
+function updateYear(filepath: string) {}
