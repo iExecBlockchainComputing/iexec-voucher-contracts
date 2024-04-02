@@ -41,13 +41,13 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      */
     function initialize(
         address owner,
-        uint256 vtype,
+        uint256 voucherType,
         uint256 expiration,
         address voucherHub
     ) external initializer {
         __Ownable_init(owner);
         VoucherStorage storage $ = _getVoucherStorage();
-        $._type = vtype;
+        $._type = voucherType;
         $._voucherHub = voucherHub;
         $._expiration = expiration;
         // deposit
