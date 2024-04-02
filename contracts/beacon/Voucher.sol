@@ -70,15 +70,18 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     function authorizeAccount(address account) external onlyOwner {
-        VoucherStorage storage $ = _getVoucherStorage();
-        $._authorizedAccounts[account] = true;
+        _setAccountAuthorization(account, true);
         emit AccountAuthorized(account);
     }
 
     function unauthorizeAccount(address account) external onlyOwner {
-        VoucherStorage storage $ = _getVoucherStorage();
-        $._authorizedAccounts[account] = false;
+        _setAccountAuthorization(account, false);
         emit AccountUnauthorized(account);
+    }
+
+    function _setAccountAuthorization(address account, bool isAuthorize) private {
+        VoucherStorage storage $ = _getVoucherStorage();
+        $._authorizedAccounts[account] = isAuthorize;
     }
 
     function isAccountAuthorized(address account) external view returns (bool) {
