@@ -154,7 +154,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
         Voucher(voucherAddress).initialize(owner, voucherType, voucherExpiration, address(this));
-        emit VoucherCreated(voucherAddress, owner, voucherExpiration);
+        emit VoucherCreated(voucherAddress, owner, voucherType, voucherExpiration);
     }
 
     /**

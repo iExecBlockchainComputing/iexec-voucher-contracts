@@ -146,7 +146,12 @@ describe('Voucher', function () {
                 .to.emit(voucher, 'AuthorizationSet')
                 .withArgs(voucherOwner1.address)
                 .to.emit(voucherHub, 'VoucherCreated')
-                .withArgs(voucherAddress, voucherOwner1.address, expectedExpirationVoucher);
+                .withArgs(
+                    voucherAddress,
+                    voucherOwner1.address,
+                    voucherType0,
+                    expectedExpirationVoucher,
+                );
             // Voucher as proxy
             expect(await voucherAsProxy.implementation(), 'Implementation mismatch').to.equal(
                 await beacon.implementation(),
@@ -209,10 +214,20 @@ describe('Voucher', function () {
             // Events
             expect(createVoucherReceipt1)
                 .to.emit(voucherHub, 'VoucherCreated')
-                .withArgs(voucherAddress1, voucherOwner1.address, expectedExpirationVoucher1);
+                .withArgs(
+                    voucherAddress1,
+                    voucherOwner1.address,
+                    voucherType0,
+                    expectedExpirationVoucher1,
+                );
             expect(createVoucherReceipt2)
                 .to.emit(voucherHub, 'VoucherCreated')
-                .withArgs(voucherAddress2, voucherOwner2.address, expectedExpirationVoucher2);
+                .withArgs(
+                    voucherAddress2,
+                    voucherOwner2.address,
+                    voucherType1,
+                    expectedExpirationVoucher2,
+                );
             // Voucher as proxy
             expect(
                 await voucherAsProxy1.implementation(),
