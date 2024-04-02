@@ -242,7 +242,8 @@ describe('Voucher', function () {
                 voucherHub.connect(anyone).createVoucher(voucherOwner1, voucherType0),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
-        it('Should not create voucher with voucher type ID is out of bounds', async () => {
+
+        it('Should not create voucher when voucher type ID is out of bounds', async () => {
             const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
             const outOfBoundsTypeID = 999;
             // Create voucher.
