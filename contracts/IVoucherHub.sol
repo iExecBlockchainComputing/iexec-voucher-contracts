@@ -49,7 +49,7 @@ interface IVoucherHub {
     function getIexecPoco() external view returns (address iexecPoco);
 
     /**
-     * @notice Get the count of voucher types.
+     * @notice Get voucher types count.
      * @return count The count of voucher types.
      */
     function getVoucherTypeCount() external view returns (uint256 count);
@@ -62,14 +62,14 @@ interface IVoucherHub {
     function getVoucherType(uint256 id) external view returns (VoucherType memory);
 
     /**
-     * @notice Add an eligible asset for a voucher type.
+     * @notice Add an eligible asset to a voucher type.
      * @param voucherTypeId The ID of the voucher type.
      * @param asset The address of the asset to add.
      */
     function addEligibleAsset(uint256 voucherTypeId, address asset) external;
 
     /**
-     * @notice Remove an eligible asset for a voucher type.
+     * @notice Remove an eligible asset from a voucher type.
      * @param voucherTypeId The ID of the voucher type.
      * @param asset The address of the asset to remove.
      */

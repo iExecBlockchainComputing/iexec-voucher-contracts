@@ -11,7 +11,7 @@ interface IVoucher {
     event AuthorizationUnset(address indexed account);
 
     /**
-     * @notice Retrieves the expiration timestamp of the voucher.
+     * @notice Retrieve the expiration timestamp of the voucher.
      * @return expirationTimestamp The expiration timestamp.
      */
     function getExpiration() external view returns (uint256 expirationTimestamp);
