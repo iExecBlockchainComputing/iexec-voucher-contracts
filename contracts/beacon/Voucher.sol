@@ -60,14 +60,14 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         voucherHubAddress = $._voucherHub;
     }
 
-    function getExpiration() external view override returns (uint256 expirationTimestamp) {
+    function getExpiration() external view override returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
-        expirationTimestamp = $._expiration;
+        return $._expiration;
     }
 
-    function getType() external view returns (uint256 voucherType) {
+    function getType() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
-        voucherType = $._type;
+        return $._type;
     }
 
     function setAuthorization(address account) external onlyOwner {
@@ -82,8 +82,8 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         emit AuthorizationUnset(account);
     }
 
-    function isAccountAuthorized(address account) external view returns (bool isAuthorized) {
+    function isAccountAuthorized(address account) external view returns (bool) {
         VoucherStorage storage voucherStorage = _getVoucherStorage();
-        isAuthorized = voucherStorage._authorizedAccounts[account];
+        return voucherStorage._authorizedAccounts[account];
     }
 }
