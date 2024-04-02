@@ -19,7 +19,7 @@ interface IVoucherHub {
     event EligibleAssetRemoved(uint256 indexed id, address asset);
 
     /**
-     * @notice Creates a new voucher for the specified owner.
+     * @notice Create a new voucher for the specified owner.
      * @param owner The address of the voucher owner.
      * @param voucherType The ID of the voucher type.
      * @return voucherAddress The address of the created voucher contract.
