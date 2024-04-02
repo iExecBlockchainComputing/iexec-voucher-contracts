@@ -17,13 +17,13 @@ interface IVoucher {
     function getExpiration() external view returns (uint256 expirationTimestamp);
 
     /**
-     * @notice Retrieves the type of the voucher.
+     * @notice Retrieve the type of the voucher.
      * @return voucherType The type of the voucher.
      */
     function getType() external view returns (uint256 voucherType);
 
     /**
-     * @notice Retrieves the address of the voucher hub associated with the voucher.
+     * @notice Retrieve the address of the voucher hub associated with the voucher.
      * @return voucherHubAddress The address of the voucher hub.
      */
     function getHub() external view returns (address voucherHubAddress);
