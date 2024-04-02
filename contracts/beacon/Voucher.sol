@@ -54,9 +54,9 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         emit AccountAuthorized(owner);
     }
 
-    function getHub() external view returns (address voucherHubAddress) {
+    function getVoucherHub() external view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
-        voucherHubAddress = $._voucherHub;
+        return $._voucherHub;
     }
 
     function getExpiration() external view returns (uint256) {

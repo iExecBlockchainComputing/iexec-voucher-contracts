@@ -240,10 +240,10 @@ describe('Voucher', function () {
             expect(await voucher1.owner(), 'Owners should not match between proxies').to.not.equal(
                 voucher2.owner(),
             );
-            expect(await voucher1.getHub(), 'Voucher hub address mismatch').to.equal(
+            expect(await voucher1.getVoucherHub(), 'Voucher hub address mismatch').to.equal(
                 await voucherHub.getAddress(),
             );
-            expect(await voucher2.getHub(), 'Voucher hub address mismatch').to.equal(
+            expect(await voucher2.getVoucherHub(), 'Voucher hub address mismatch').to.equal(
                 await voucherHub.getAddress(),
             );
             expect(await voucher1.getType(), 'Voucher 1 type mismatch').to.equal(voucherType0);

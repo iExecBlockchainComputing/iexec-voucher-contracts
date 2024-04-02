@@ -284,7 +284,7 @@ describe('VoucherHub', function () {
             expect(voucherAddress1).is.not.equal(voucherAddress2);
             expect(await voucher1.owner()).to.not.equal(await voucher2.owner());
             expect(await voucher1.getType()).to.equal(await voucher2.getType());
-            expect(await voucher1.getHub()).to.equal(await voucher2.getHub());
+            expect(await voucher1.getVoucherHub()).to.equal(await voucher2.getVoucherHub());
         });
 
         it('Should create multiple vouchers with the correct config', async () => {

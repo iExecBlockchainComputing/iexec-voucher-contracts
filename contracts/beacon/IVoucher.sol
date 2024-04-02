@@ -26,7 +26,7 @@ interface IVoucher {
      * @notice Retrieve the address of the voucher hub associated with the voucher.
      * @return voucherHubAddress The address of the voucher hub.
      */
-    function getHub() external view returns (address voucherHubAddress);
+    function getVoucherHub() external view returns (address voucherHubAddress);
 
     /**
      * @notice Sets authorization for an account.
