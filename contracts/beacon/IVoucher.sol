@@ -7,8 +7,8 @@ pragma solidity ^0.8.20;
  * @title Interface of the voucher contract.
  */
 interface IVoucher {
-    event AuthorizationSet(address indexed account);
-    event AuthorizationUnset(address indexed account);
+    event AccountAuthorized(address indexed account);
+    event AccountUnauthorized(address indexed account);
 
     /**
      * @notice Retrieve the expiration timestamp of the voucher.

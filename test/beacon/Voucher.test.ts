@@ -135,7 +135,6 @@ describe('Voucher', function () {
                 duration0,
                 createVoucherReceipt,
             );
-
             // Run assertions.
             // Events.
             expect(createVoucherReceipt)
@@ -143,7 +142,7 @@ describe('Voucher', function () {
                 .withArgs(await beacon.getAddress())
                 .to.emit(voucher, 'OwnershipTransferred')
                 .withArgs(ethers.ZeroAddress, voucherOwner1.address)
-                .to.emit(voucher, 'AuthorizationSet')
+                .to.emit(voucher, 'AccountAuthorized')
                 .withArgs(voucherOwner1.address)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(
@@ -276,10 +275,16 @@ describe('Voucher', function () {
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
-
             // Authorize the account
-            await voucher.connect(voucherOwner1).setAuthorization(anyone.address);
-
+            const authorizationTx = await voucher
+                .connect(voucherOwner1)
+                .setAuthorization(anyone.address);
+            const authorizationReceipt = await authorizationTx.wait();
+            // Run assertions.
+            // Events.
+            expect(authorizationReceipt)
+                .to.emit(voucher, 'AccountAuthorized')
+                .withArgs(anyone.address);
             // Check if the account is authorized
             expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
         });
@@ -290,12 +295,19 @@ describe('Voucher', function () {
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
-
             // Authorize the account
             await voucher.connect(voucherOwner1).setAuthorization(anyone.address);
-            await voucher.connect(voucherOwner1).unsetAuthorization(anyone.address);
-
-            // Check if the account is deauthorized
+            // unauthorize the account
+            const unauthorizationTx = await voucher
+                .connect(voucherOwner1)
+                .unsetAuthorization(anyone.address);
+            const unauthorizationReceipt = await unauthorizationTx.wait();
+            // Run assertions.
+            // Events.
+            expect(unauthorizationReceipt)
+                .to.emit(voucher, 'AccountUnauthorized')
+                .withArgs(anyone.address);
+            // Check if the account is unauthorized
             expect(await voucher.isAccountAuthorized(anyone.address)).to.be.false;
         });
 

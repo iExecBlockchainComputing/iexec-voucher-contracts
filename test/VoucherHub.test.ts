@@ -242,7 +242,7 @@ describe('VoucherHub', function () {
                 .withArgs(await beacon.getAddress())
                 .to.emit(voucher, 'OwnershipTransferred')
                 .withArgs(ethers.ZeroAddress, voucherOwner1.address)
-                .to.emit(voucher, 'AuthorizationSet')
+                .to.emit(voucher, 'AccountAuthorized')
                 .withArgs(voucherOwner1.address)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(voucherAddress, voucherOwner1.address, voucherType0, expectedExpiration);

@@ -51,7 +51,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         $._voucherHub = voucherHub;
         $._expiration = expiration;
         // deposit
-        emit AuthorizationSet(owner);
+        emit AccountAuthorized(owner);
     }
 
     function getHub() external view returns (address voucherHubAddress) {
@@ -72,13 +72,13 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     function setAuthorization(address account) external onlyOwner {
         VoucherStorage storage $ = _getVoucherStorage();
         $._authorizedAccounts[account] = true;
-        emit AuthorizationSet(account);
+        emit AccountAuthorized(account);
     }
 
     function unsetAuthorization(address account) external onlyOwner {
         VoucherStorage storage $ = _getVoucherStorage();
         $._authorizedAccounts[account] = false;
-        emit AuthorizationUnset(account);
+        emit AccountUnauthorized(account);
     }
 
     function isAccountAuthorized(address account) external view returns (bool) {
