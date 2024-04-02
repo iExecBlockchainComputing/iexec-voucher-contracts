@@ -156,6 +156,7 @@ describe('Voucher', function () {
             expect(await voucher.getExpiration(), 'Expiration mismatch').to.equal(
                 expectedExpirationVoucher,
             );
+            expect(await voucher.isAccountAuthorized(voucherOwner1.address)).to.be.true;
         });
 
         it('Should create voucher and initialize only once', async () => {

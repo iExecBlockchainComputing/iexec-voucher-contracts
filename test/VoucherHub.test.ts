@@ -255,6 +255,7 @@ describe('VoucherHub', function () {
             expect(await voucher.getExpiration(), 'Expiration mismatch').to.equal(
                 expectedExpiration,
             );
+            expect(await voucher.isAccountAuthorized(voucherOwner1.address)).to.be.true;
         });
 
         it('Should create different vouchers for different accounts with the same config', async () => {

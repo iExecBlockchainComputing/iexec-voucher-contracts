@@ -83,6 +83,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
 
     function isAccountAuthorized(address account) external view returns (bool) {
         VoucherStorage storage $ = _getVoucherStorage();
-        return $._authorizedAccounts[account];
+        return account == owner() || $._authorizedAccounts[account];
     }
 }
