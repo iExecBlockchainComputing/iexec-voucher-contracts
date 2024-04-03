@@ -55,16 +55,16 @@ contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeabl
     }
 
     function initialize(
-        address upgradeManagerAccount,
-        address assetEligibilityManagerAccount,
-        address voucherManagerAccount,
+        address upgradeManager,
+        address assetEligibilityManager,
+        address voucherManager,
         address iexecPoco,
         address voucherBeacon
     ) external initializer {
         __AccessControlDefaultAdminRules_init(5 days, msg.sender);
-        _grantRole(UPGRADE_MANAGER_ROLE, upgradeManagerAccount);
-        _grantRole(ASSET_ELIGIBILITY_MANAGER_ROLE, assetEligibilityManagerAccount);
-        _grantRole(VOUCHER_MANAGER_ROLE, voucherManagerAccount);
+        _grantRole(UPGRADE_MANAGER_ROLE, upgradeManager);
+        _grantRole(ASSET_ELIGIBILITY_MANAGER_ROLE, assetEligibilityManager);
+        _grantRole(VOUCHER_MANAGER_ROLE, voucherManager);
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;

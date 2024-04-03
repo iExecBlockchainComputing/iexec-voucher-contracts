@@ -10,6 +10,10 @@ import * as voucherUtils from '../scripts/voucherUtils';
 import { Voucher } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 
+const upgradeManager = '0xbee4B4D44c9472347482c7941409E4E7AEdf3c1e'; // random
+const assetEligibilityManager = '0x0f78173486FDFdA573a894dcC037E0486DDEE6Db'; // random
+const voucherManager = '0xf3B82Dcc6028d8e78DDd137d048A6580E94DEe5b'; // random
+const voucherHubAdminOperationDelay = 5 * 24 * 60 * 60; // 432000 (5 days in seconds)
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
 const voucherType = 0;
 const description = 'Early Access';
@@ -24,7 +28,13 @@ describe('VoucherHub', function () {
         // Contracts are deployed using the first signer/account by default
         const [owner, voucherOwner1, voucherOwner2, anyone] = await ethers.getSigners();
         const beacon = await voucherUtils.deployBeaconAndImplementation(owner.address);
-        const voucherHub = await voucherHubUtils.deployHub(iexecPoco, await beacon.getAddress());
+        const voucherHub = await voucherHubUtils.deployHub(
+            upgradeManager,
+            assetEligibilityManager,
+            voucherManager,
+            iexecPoco,
+            await beacon.getAddress(),
+        );
         return { beacon, voucherHub, owner, voucherOwner1, voucherOwner2, anyone };
     }
 
@@ -32,7 +42,29 @@ describe('VoucherHub', function () {
         it('Should initialize', async () => {
             const { beacon, voucherHub, owner } = await loadFixture(deployFixture);
             const voucherBeaconAddress = await beacon.getAddress();
-            expect(await voucherHub.owner()).to.equal(owner);
+            expect(await voucherHub.owner())
+                .to.equal(await voucherHub.defaultAdmin())
+                .to.equal(owner);
+            console.log();
+            expect(await voucherHub.defaultAdminDelay()).to.equal(voucherHubAdminOperationDelay);
+            expect(
+                await voucherHub.hasRole(
+                    await voucherHub.UPGRADE_MANAGER_ROLE.staticCall(),
+                    upgradeManager,
+                ),
+            );
+            expect(
+                await voucherHub.hasRole(
+                    await voucherHub.ASSET_ELIGIBILITY_MANAGER_ROLE.staticCall(),
+                    assetEligibilityManager,
+                ),
+            );
+            expect(
+                await voucherHub.hasRole(
+                    await voucherHub.VOUCHER_MANAGER_ROLE.staticCall(),
+                    voucherManager,
+                ),
+            );
             expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
             expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
             // Check VoucherProxy code hash
@@ -48,7 +80,13 @@ describe('VoucherHub', function () {
             const { beacon, voucherHub } = await loadFixture(deployFixture);
 
             await expect(
-                voucherHub.initialize(iexecPoco, await beacon.getAddress()),
+                voucherHub.initialize(
+                    upgradeManager,
+                    assetEligibilityManager,
+                    voucherManager,
+                    iexecPoco,
+                    await beacon.getAddress(),
+                ),
             ).to.be.revertedWithCustomError(voucherHub, 'InvalidInitialization');
         });
     });
