@@ -3,9 +3,6 @@
 
 pragma solidity ^0.8.20;
 
-/**
- * @title Interface of the voucher hub contract.
- */
 interface IVoucherHub {
     struct VoucherType {
         string description;
