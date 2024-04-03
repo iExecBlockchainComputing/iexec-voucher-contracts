@@ -11,9 +11,9 @@ import { Voucher } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
-const voucherType0 = 0;
-const description0 = 'Early Access';
-const duration0 = 3600;
+const voucherType = 0;
+const description = 'Early Access';
+const duration = 3600;
 const asset = ethers.Wallet.createRandom().address;
 
 describe('VoucherHub', function () {
@@ -82,23 +82,23 @@ describe('VoucherHub', function () {
     describe('Create voucher type', function () {
         it('Should create a voucher type when the caller is the owner', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
+            const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
-            const type1 = await voucherHub.getVoucherType(0);
+            const type0 = await voucherHub.getVoucherType(0);
             const count = await voucherHub.getVoucherTypeCount();
             // Run assertions.
             expect(createTypeTx)
                 .to.emit(voucherHub, 'VoucherTypeCreated')
-                .withArgs(0, description0, duration0);
-            expect(type1.description).to.equal(description0);
-            expect(type1.duration).to.equal(duration0);
+                .withArgs(0, description, duration);
+            expect(type0.description).to.equal(description);
+            expect(type0.duration).to.equal(duration);
             expect(count).to.equal(1);
         });
 
         it('Should not create a voucher type when the caller is not the owner', async function () {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
             await expect(
-                voucherHub.connect(anyone).createVoucherType(description0, duration0),
+                voucherHub.connect(anyone).createVoucherType(description, duration),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
         });
     });
@@ -116,7 +116,7 @@ describe('VoucherHub', function () {
         const newDescription = 'Long Term Duration';
         it('Should modify voucher description', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
+            const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
             const updateDescriptionTx = await voucherHub.updateVoucherTypeDescription(
                 0,
@@ -130,7 +130,7 @@ describe('VoucherHub', function () {
 
         it('Should not modify voucher description when the caller is not the owner', async function () {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
-            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
+            const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
             await expect(
                 voucherHub.connect(anyone).updateVoucherTypeDescription(0, newDescription),
@@ -139,7 +139,7 @@ describe('VoucherHub', function () {
 
         it('Should not change description when the voucher type ID is out of bounds', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
+            const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
             await expect(
                 voucherHub.updateVoucherTypeDescription(999, newDescription),
@@ -151,7 +151,7 @@ describe('VoucherHub', function () {
         const newDuration = 7200;
         it('Should modify voucher duration', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
+            const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
             const updateDurationTx = await voucherHub.updateVoucherTypeDuration(0, newDuration);
             await updateDurationTx.wait();
@@ -162,7 +162,7 @@ describe('VoucherHub', function () {
 
         it('Should not modify voucher duration when the caller is not the owner', async function () {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
-            await voucherHub.createVoucherType(description0, duration0);
+            await voucherHub.createVoucherType(description, duration);
             await expect(
                 voucherHub.connect(anyone).updateVoucherTypeDuration(0, newDuration),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
@@ -170,7 +170,7 @@ describe('VoucherHub', function () {
 
         it('Should not change duration when the voucher type ID is out of bounds', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            await voucherHub.createVoucherType(description0, duration0);
+            await voucherHub.createVoucherType(description, duration);
             await expect(voucherHub.updateVoucherTypeDuration(999, newDuration)).to.be.revertedWith(
                 'VoucherHub: type index out of bounds',
             );
@@ -180,7 +180,7 @@ describe('VoucherHub', function () {
     describe('Asset Eligibility', function () {
         it('Should set and unset asset eligibility', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
-            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
+            const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
             const typeId = await getVoucherTypeCreatedId(voucherHub);
             const addEligibleAssetTx = await voucherHub.addEligibleAsset(typeId, asset);
@@ -197,7 +197,7 @@ describe('VoucherHub', function () {
 
         it('Should not set asset eligibility when the caller is not the owner', async function () {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
-            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
+            const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
             await expect(
                 voucherHub.connect(anyone).addEligibleAsset(0, asset),
@@ -206,7 +206,7 @@ describe('VoucherHub', function () {
 
         it('Should not unset asset eligibility when the caller is not the owner', async function () {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
-            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
+            const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
             const typeId = await getVoucherTypeCreatedId(voucherHub);
             const addEligibleAssetTx = await voucherHub.addEligibleAsset(typeId, asset);
@@ -222,19 +222,16 @@ describe('VoucherHub', function () {
     describe('Create voucher', async function () {
         it('Should create and initialize voucher', async () => {
             const { beacon, voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
-            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
+            const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
             // Create voucher.
-            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, voucherType0);
+            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, voucherType);
             const txReceipt = await createVoucherTx.wait();
 
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
             const voucherAsProxy = await commonUtils.getVoucherAsProxy(voucherAddress);
-            const expectedExpiration = await commonUtils.getExpectedExpiration(
-                duration0,
-                txReceipt,
-            );
+            const expectedExpiration = await commonUtils.getExpectedExpiration(duration, txReceipt);
             // Run assertions.
             // Events.
             await expect(createVoucherTx)
@@ -245,7 +242,7 @@ describe('VoucherHub', function () {
                 .to.emit(voucher, 'AccountAuthorized')
                 .withArgs(voucherOwner1.address)
                 .to.emit(voucherHub, 'VoucherCreated')
-                .withArgs(voucherAddress, voucherOwner1.address, voucherType0, expectedExpiration);
+                .withArgs(voucherAddress, voucherOwner1.address, voucherType, expectedExpiration);
             // Voucher as proxy
             expect(await voucherAsProxy.implementation(), 'Implementation mismatch').to.equal(
                 await beacon.implementation(),
@@ -258,108 +255,27 @@ describe('VoucherHub', function () {
             expect(await voucher.isAccountAuthorized(voucherOwner1.address)).to.be.true;
         });
 
-        it('Should create different vouchers for different accounts with the same config', async () => {
-            // Vouchers are created with the same configuration (type, expiration, ...).
-            // The goal is to make sure that configuration is not included in the constructor
-            // args which would result in different create2 salts.
-            const { voucherHub, voucherOwner1, voucherOwner2 } = await loadFixture(deployFixture);
-            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
-            await createTypeTx.wait();
-
-            // Create voucher1.
-            await expect(voucherHub.createVoucher(voucherOwner1, voucherType0)).to.emit(
-                voucherHub,
-                'VoucherCreated',
-            );
-            const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
-            const voucher1: Voucher = await commonUtils.getVoucher(voucherAddress1);
-            // Create voucher2.
-            await expect(voucherHub.createVoucher(voucherOwner2, voucherType0)).to.emit(
-                voucherHub,
-                'VoucherCreated',
-            );
-            const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
-            const voucher2: Voucher = await commonUtils.getVoucher(voucherAddress2);
-
-            expect(voucherAddress1).is.not.equal(voucherAddress2);
-            expect(await voucher1.owner()).to.not.equal(await voucher2.owner());
-            expect(await voucher1.getType()).to.equal(await voucher2.getType());
-            expect(await voucher1.getVoucherHub()).to.equal(await voucher2.getVoucherHub());
-        });
-
-        it('Should create multiple vouchers with the correct config', async () => {
-            // Vouchers are created with different configurations
-            // (type1, type2, expiration1, expiration2, ...).
-            const { voucherHub, voucherOwner1, voucherOwner2 } = await loadFixture(deployFixture);
-            const duration1 = 7200;
-            const description1 = 'Long Term Duration';
-            const voucherType1 = 1;
-
-            const createType1Tx = await voucherHub.createVoucherType(description0, duration0);
-            await createType1Tx.wait();
-            const createType2Tx = await voucherHub.createVoucherType(description1, duration1);
-            await createType2Tx.wait();
-
-            // Create voucher1.
-            const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, voucherType0);
-            const tx1Receipt = await createVoucherTx1.wait();
-            const expiration1 = await commonUtils.getExpectedExpiration(duration0, tx1Receipt);
-            const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
-            const voucher1 = await commonUtils.getVoucher(voucherAddress1);
-            const voucherAsProxy1 = await commonUtils.getVoucherAsProxy(voucherAddress1);
-            // Create voucher2.
-            const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, voucherType1);
-            await createVoucherTx2.wait();
-            const tx2Receipt = await createVoucherTx2.wait();
-            const expiration2 = await commonUtils.getExpectedExpiration(duration1, tx2Receipt);
-            const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
-            const voucher2 = await commonUtils.getVoucher(voucherAddress2);
-            const voucherAsProxy2 = await commonUtils.getVoucherAsProxy(voucherAddress2);
-
-            // Events
-            await expect(createVoucherTx1)
-                .to.emit(voucherHub, 'VoucherCreated')
-                .withArgs(voucherAddress1, voucherOwner1.address, voucherType0, expiration1);
-            await expect(createVoucherTx2)
-                .to.emit(voucherHub, 'VoucherCreated')
-                .withArgs(voucherAddress2, voucherOwner2.address, voucherType1, expiration2);
-            // Voucher as proxy
-            expect(
-                await voucherAsProxy1.implementation(),
-                'Implementation mismatch between proxies',
-            ).to.equal(await voucherAsProxy2.implementation());
-            // Voucher
-            expect(voucherAddress1).is.not.equal(voucherAddress2);
-            expect(
-                await voucher1.getExpiration(),
-                'Expiration should not match between proxies',
-            ).to.not.equal(await voucher2.getExpiration());
-            expect(await voucher1.owner(), 'Owners should not match between proxies').to.not.equal(
-                voucher2.owner(),
-            );
-        });
-
         it('Should not create more than 1 voucher for the same account', async () => {
             const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
-            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
+            const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
             // Create voucher.
-            await expect(voucherHub.createVoucher(voucherOwner1, voucherType0)).to.emit(
+            await expect(voucherHub.createVoucher(voucherOwner1, voucherType)).to.emit(
                 voucherHub,
                 'VoucherCreated',
             );
             // Second creation should fail.
             await expect(
-                voucherHub.createVoucher(voucherOwner1, voucherType0),
+                voucherHub.createVoucher(voucherOwner1, voucherType),
             ).to.be.revertedWithoutReason();
         });
 
         it('Should not create more than 1 voucher for the same account with different config', async () => {
             const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
-            const createType0Tx = await voucherHub.createVoucherType(description0, duration0);
-            await createType0Tx.wait();
+            const createTypeTx = await voucherHub.createVoucherType(description, duration);
+            await createTypeTx.wait();
             // Create voucher.
-            await expect(voucherHub.createVoucher(voucherOwner1, voucherType0)).to.emit(
+            await expect(voucherHub.createVoucher(voucherOwner1, voucherType)).to.emit(
                 voucherHub,
                 'VoucherCreated',
             );
@@ -380,13 +296,13 @@ describe('VoucherHub', function () {
 
         it('Should not initialize voucher more than once', async () => {
             const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
-            const createTypeTx = await voucherHub.createVoucherType(description0, duration0);
+            const createTypeTx = await voucherHub.createVoucherType(description, duration);
             await createTypeTx.wait();
             // Create voucher.
-            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, voucherType0);
+            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, voucherType);
             const createVoucherReceipt = await createVoucherTx.wait();
             const expectedExpiration = await commonUtils.getExpectedExpiration(
-                duration0,
+                duration,
                 createVoucherReceipt,
             );
             await expect(createVoucherReceipt).to.emit(voucherHub, 'VoucherCreated');
@@ -396,7 +312,7 @@ describe('VoucherHub', function () {
             await expect(
                 voucher.initialize(
                     voucherOwner1,
-                    voucherType0,
+                    voucherType,
                     expectedExpiration,
                     await voucherHub.getAddress(),
                 ),
@@ -407,8 +323,17 @@ describe('VoucherHub', function () {
             const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
             // Create voucher.
             await expect(
-                voucherHub.connect(anyone).createVoucher(voucherOwner1, voucherType0),
+                voucherHub.connect(anyone).createVoucher(voucherOwner1, voucherType),
             ).to.be.revertedWithCustomError(voucherHub, 'OwnableUnauthorizedAccount');
+        });
+
+        it('Should not create voucher when voucher type ID is out of bounds', async () => {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            const outOfBoundsTypeID = 999;
+            // Create voucher.
+            await expect(
+                voucherHub.createVoucher(voucherOwner1, outOfBoundsTypeID),
+            ).to.be.revertedWith('VoucherHub: type index out of bounds');
         });
     });
 
