@@ -82,6 +82,9 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         emit VoucherTypeDurationUpdated(id, duration);
     }
 
+    /**
+     * Get the voucher type details by ID.
+     */
     function getVoucherType(
         uint256 id
     ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
@@ -89,16 +92,29 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         return $.voucherTypes[id];
     }
 
+    /**
+     * Get voucher types count.
+     */
     function getVoucherTypeCount() public view returns (uint256) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $.voucherTypes.length;
     }
 
+    /**
+     * Add an eligible asset to a voucher type.
+     * @param voucherTypeId The ID of the voucher type.
+     * @param asset The address of the asset to add.
+     */
     function addEligibleAsset(uint256 voucherTypeId, address asset) external onlyOwner {
         _setAssetEligibility(voucherTypeId, asset, true);
         emit EligibleAssetAdded(voucherTypeId, asset);
     }
 
+    /**
+     * Remove an eligible asset to a voucher type.
+     * @param voucherTypeId The ID of the voucher type.
+     * @param asset The address of the asset to remove.
+     */
     function removeEligibleAsset(uint256 voucherTypeId, address asset) external onlyOwner {
         _setAssetEligibility(voucherTypeId, asset, false);
         emit EligibleAssetRemoved(voucherTypeId, asset);
@@ -109,6 +125,11 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
     }
 
+    /**
+     * Check if an asset is eligible to match orders sponsoring.
+     * @param voucherTypeId The ID of the voucher type.
+     * @param asset The address of the asset to check.
+     */
     function isAssetEligibleToMatchOrdersSponsoring(
         uint256 voucherTypeId,
         address asset
@@ -117,6 +138,9 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         return $.matchOrdersEligibility[voucherTypeId][asset];
     }
 
+    /**
+     * Get iExec Poco address used by vouchers.
+     */
     function getIexecPoco() public view returns (address) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $._iexecPoco;
@@ -140,8 +164,10 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * changes, but this should not happen since the beacon is upgradeable, hence the
      * address should never be changed.
      *
-     * @param owner voucher owner
-     * @param voucherType voucher expiration
+
+     * @param owner The address of the voucher owner.
+     * @param voucherType The ID of the voucher type.
+     * @return voucherAddress The address of the created voucher contract.
      */
     function createVoucher(
         address owner,
@@ -162,7 +188,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      *
      * Get voucher address of a given account.
      * Returns address(0) if voucher is not found.
-     * @param account owner address.
+     * @param account voucher's owner address.
      */
     function getVoucher(address account) public view returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();

@@ -8,7 +8,7 @@ import {IVoucher} from "./IVoucher.sol";
 
 /**
  * @title Implementation of the voucher contract.
- * @notice Deployed along the Beacon contract using "Upgrades" plugin of OZ.
+ * Deployed along the Beacon contract using "Upgrades" plugin of OZ.
  */
 contract Voucher is OwnableUpgradeable, IVoucher {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
@@ -54,26 +54,46 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         emit AccountAuthorized(owner);
     }
 
+    /**
+     * Retrieve the address of the voucher hub associated with the voucher.
+     * @return voucherHubAddress The address of the voucher hub.
+     */
     function getVoucherHub() external view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._voucherHub;
     }
 
+    /**
+     * Retrieve the expiration timestamp of the voucher.
+     * @return expirationTimestamp The expiration timestamp.
+     */
     function getExpiration() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._expiration;
     }
 
+    /**
+     * Retrieve the type of the voucher.
+     * @return voucherType The type of the voucher.
+     */
     function getType() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._type;
     }
 
+    /**
+     * Sets authorization for an account.
+     * @param account The account to authorize.
+     */
     function authorizeAccount(address account) external onlyOwner {
         _setAccountAuthorization(account, true);
         emit AccountAuthorized(account);
     }
 
+    /**
+     * Unsets authorization for an account.
+     * @param account The account to remove authorization from.
+     */
     function unauthorizeAccount(address account) external onlyOwner {
         _setAccountAuthorization(account, false);
         emit AccountUnauthorized(account);
@@ -84,6 +104,11 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         $._authorizedAccounts[account] = isAuthorize;
     }
 
+    /**
+     * Checks if an account is authorized for.
+     * @param account The account to check.
+     * @return isAuthorized True if the account is authorized, false otherwise.
+     */
     function isAccountAuthorized(address account) external view returns (bool) {
         VoucherStorage storage $ = _getVoucherStorage();
         return account == owner() || $._authorizedAccounts[account];
