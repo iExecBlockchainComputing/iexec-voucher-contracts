@@ -53,8 +53,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         $._type = voucherType;
         $._voucherHub = voucherHub;
         $._expiration = expiration;
-        // deposit
-        emit AccountAuthorized(owner);
+        // TODO: deposit sRLC.
     }
 
     /**
@@ -118,6 +117,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      * @param isAuthorized Whether to authorize or unauthorize the account.
      */
     function _setAccountAuthorization(address account, bool isAuthorized) private {
+        require(account != owner(), "Voucher: owner is already authorized.");
         VoucherStorage storage $ = _getVoucherStorage();
         $._authorizedAccounts[account] = isAuthorized;
     }

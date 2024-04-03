@@ -165,6 +165,7 @@ describe('Voucher', function () {
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucher1 = await commonUtils.getVoucher(voucherAddress1);
             const voucherAsProxy1 = await commonUtils.getVoucherAsProxy(voucherAddress1);
+
             // Create voucher2.
             const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, voucherType1);
             const createVoucherReceipt2 = await createVoucherTx2.wait();
@@ -286,6 +287,18 @@ describe('Voucher', function () {
             await expect(
                 voucher.connect(anyone).unauthorizeAccount(anyone.address),
             ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
+        });
+
+        it('Should not authorize owner account', async () => {
+            const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
+            const createVoucherTx = await voucherHub.createVoucher(voucherOwner1, voucherType);
+            await createVoucherTx.wait();
+            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
+            const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
+
+            await expect(
+                voucher.connect(voucherOwner1).authorizeAccount(voucherOwner1.address),
+            ).to.be.revertedWith('Voucher: owner is already authorized.');
         });
     });
 });
