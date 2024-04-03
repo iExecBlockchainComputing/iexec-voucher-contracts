@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.20;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
+import {AccessControlDefaultAdminRulesUpgradeable} from "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
@@ -12,10 +12,9 @@ import {Voucher} from "./beacon/Voucher.sol";
 import {VoucherProxy} from "./beacon/VoucherProxy.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
 
-pragma solidity ^0.8.20;
+contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeable, IVoucherHub {
+    // msg.sender will have DEFAULT_ADMIN_ROLE to grant/revoke roles.
 
-contract VoucherHub is AccessControl, UUPSUpgradeable, IVoucherHub {
-    // msg.sender will have the admin role (grant/revoke roles).
     // Upgrade VoucherHub and Vouchers contracts.
     bytes32 public constant UPGRADE_MANAGER_ROLE = keccak256("UPGRADE_MANAGER_ROLE");
     // Add/remove eligible assets.
@@ -62,7 +61,7 @@ contract VoucherHub is AccessControl, UUPSUpgradeable, IVoucherHub {
         address iexecPoco,
         address voucherBeacon
     ) external initializer {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        __AccessControlDefaultAdminRules_init(5 days, msg.sender);
         _grantRole(UPGRADE_MANAGER_ROLE, upgradeManagerAccount);
         _grantRole(ASSET_ELIGIBILITY_MANAGER_ROLE, assetEligibilityManagerAccount);
         _grantRole(VOUCHER_MANAGER_ROLE, voucherManagerAccount);
