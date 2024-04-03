@@ -3,9 +3,6 @@
 
 pragma solidity ^0.8.20;
 
-/**
- * @title Interface of the voucher contract.
- */
 interface IVoucher {
     event AccountAuthorized(address indexed account);
     event AccountUnauthorized(address indexed account);
