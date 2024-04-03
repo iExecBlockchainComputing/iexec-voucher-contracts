@@ -240,7 +240,7 @@ describe('VoucherHub', function () {
                 .to.emit(voucher, 'OwnershipTransferred')
                 .withArgs(ethers.ZeroAddress, voucherOwner1.address)
                 .to.emit(voucherHub, 'VoucherCreated')
-                .withArgs(voucherAddress, voucherOwner1.address, voucherType, expectedExpiration);
+                .withArgs(voucherAddress, voucherOwner1.address, expectedExpiration, voucherType);
             // Voucher as proxy
             expect(await voucherAsProxy.implementation(), 'Implementation mismatch').to.equal(
                 await beacon.implementation(),
@@ -321,16 +321,16 @@ describe('VoucherHub', function () {
                 .withArgs(
                     voucherAddress1,
                     voucherOwner1.address,
-                    voucherType,
                     expectedExpirationVoucher1,
+                    voucherType,
                 );
             expect(createVoucherReceipt2)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(
                     voucherAddress2,
                     voucherOwner2.address,
-                    voucherType1,
                     expectedExpirationVoucher2,
+                    voucherType1,
                 );
             // Voucher as proxy
             expect(
@@ -412,9 +412,9 @@ describe('VoucherHub', function () {
             await expect(
                 voucher.initialize(
                     voucherOwner1,
-                    voucherType,
-                    expectedExpiration,
                     await voucherHub.getAddress(),
+                    expectedExpiration,
+                    voucherType,
                 ),
             ).to.be.revertedWithCustomError(voucher, 'InvalidInitialization');
         });
