@@ -105,11 +105,11 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     /**
      * Internal function to set authorization for an account.
      * @param account The account to set authorization for.
-     * @param isAuthorize Whether to authorize or unauthorize the account.
+     * @param isAuthorized Whether to authorize or unauthorize the account.
      */
-    function _setAccountAuthorization(address account, bool isAuthorize) private {
+    function _setAccountAuthorization(address account, bool isAuthorized) private {
         VoucherStorage storage $ = _getVoucherStorage();
-        $._authorizedAccounts[account] = isAuthorize;
+        $._authorizedAccounts[account] = isAuthorized;
     }
 
     /**
