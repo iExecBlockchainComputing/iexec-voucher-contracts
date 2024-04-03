@@ -37,7 +37,10 @@ contract Voucher is OwnableUpgradeable, IVoucher {
 
     /**
      * Initialize implementation contract.
-     * @param expiration initial expiration.
+     * @param owner The owner of the contract.
+     * @param voucherType The type of the voucher.
+     * @param expiration The expiration timestamp of the voucher.
+     * @param voucherHub The address of the voucher hub.
      */
     function initialize(
         address owner,
@@ -99,6 +102,11 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         emit AccountUnauthorized(account);
     }
 
+    /**
+     * Internal function to set authorization for an account.
+     * @param account The account to set authorization for.
+     * @param isAuthorize Whether to authorize or unauthorize the account.
+     */
     function _setAccountAuthorization(address account, bool isAuthorize) private {
         VoucherStorage storage $ = _getVoucherStorage();
         $._authorizedAccounts[account] = isAuthorize;
