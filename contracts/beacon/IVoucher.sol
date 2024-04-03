@@ -3,11 +3,19 @@
 
 pragma solidity ^0.8.20;
 
-/**
- * @title Interface of the voucher contract.
- */
 interface IVoucher {
-    event ExpirationUpdated(uint256 newExpiration);
+    event AccountAuthorized(address indexed account);
+    event AccountUnauthorized(address indexed account);
 
     function getExpiration() external view returns (uint256);
+
+    function getType() external view returns (uint256);
+
+    function getVoucherHub() external view returns (address);
+
+    function authorizeAccount(address account) external;
+
+    function unauthorizeAccount(address account) external;
+
+    function isAccountAuthorized(address account) external view returns (bool);
 }

@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
+pragma solidity ^0.8.20;
+
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -22,10 +24,6 @@ contract VoucherHub is AccessControl, UUPSUpgradeable, IVoucherHub {
     // Create & top up Vouchers.
     bytes32 public constant VOUCHER_MANAGER_ROLE = keccak256("VOUCHER_MANAGER_ROLE");
 
-    struct VoucherType {
-        string description;
-        uint256 duration;
-    }
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
         address _iexecPoco;
@@ -107,6 +105,9 @@ contract VoucherHub is AccessControl, UUPSUpgradeable, IVoucherHub {
         emit VoucherTypeDurationUpdated(id, duration);
     }
 
+    /**
+     * Get the voucher type details by ID.
+     */
     function getVoucherType(
         uint256 id
     ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
@@ -114,11 +115,19 @@ contract VoucherHub is AccessControl, UUPSUpgradeable, IVoucherHub {
         return $.voucherTypes[id];
     }
 
+    /**
+     * Get voucher types count.
+     */
     function getVoucherTypeCount() public view returns (uint256) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $.voucherTypes.length;
     }
 
+    /**
+     * Add an eligible asset to a voucher type.
+     * @param voucherTypeId The ID of the voucher type.
+     * @param asset The address of the asset to add.
+     */
     function addEligibleAsset(
         uint256 voucherTypeId,
         address asset
@@ -127,6 +136,11 @@ contract VoucherHub is AccessControl, UUPSUpgradeable, IVoucherHub {
         emit EligibleAssetAdded(voucherTypeId, asset);
     }
 
+    /**
+     * Remove an eligible asset to a voucher type.
+     * @param voucherTypeId The ID of the voucher type.
+     * @param asset The address of the asset to remove.
+     */
     function removeEligibleAsset(
         uint256 voucherTypeId,
         address asset
@@ -135,11 +149,11 @@ contract VoucherHub is AccessControl, UUPSUpgradeable, IVoucherHub {
         emit EligibleAssetRemoved(voucherTypeId, asset);
     }
 
-    function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
-    }
-
+    /**
+     * Check if an asset is eligible to match orders sponsoring.
+     * @param voucherTypeId The ID of the voucher type.
+     * @param asset The address of the asset to check.
+     */
     function isAssetEligibleToMatchOrdersSponsoring(
         uint256 voucherTypeId,
         address asset
@@ -148,6 +162,9 @@ contract VoucherHub is AccessControl, UUPSUpgradeable, IVoucherHub {
         return $.matchOrdersEligibility[voucherTypeId][asset];
     }
 
+    /**
+     * Get iExec Poco address used by vouchers.
+     */
     function getIexecPoco() public view returns (address) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $._iexecPoco;
@@ -171,20 +188,23 @@ contract VoucherHub is AccessControl, UUPSUpgradeable, IVoucherHub {
      * changes, but this should not happen since the beacon is upgradeable, hence the
      * address should never be changed.
      *
-     * @param owner voucher owner
-     * @param expiration voucher expiration
+
+     * @param owner The address of the voucher owner.
+     * @param voucherType The ID of the voucher type.
+     * @return voucherAddress The address of the created voucher contract.
      */
     function createVoucher(
         address owner,
-        uint256 expiration
-    ) external override onlyRole(VOUCHER_MANAGER_ROLE) returns (address voucherAddress) {
+        uint256 voucherType
+    ) external onlyRole(VOUCHER_MANAGER_ROLE) returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
+        uint256 voucherExpiration = block.timestamp + getVoucherType(voucherType).duration;
         voucherAddress = address(new VoucherProxy{salt: _getCreate2Salt(owner)}($._voucherBeacon));
         // Initialize the created proxy contract.
         // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
-        Voucher(voucherAddress).initialize(owner, expiration);
-        emit VoucherCreated(voucherAddress, owner, expiration);
+        Voucher(voucherAddress).initialize(owner, voucherType, voucherExpiration, address(this));
+        emit VoucherCreated(voucherAddress, owner, voucherType, voucherExpiration);
     }
 
     /**
@@ -192,9 +212,9 @@ contract VoucherHub is AccessControl, UUPSUpgradeable, IVoucherHub {
      *
      * Get voucher address of a given account.
      * Returns address(0) if voucher is not found.
-     * @param account owner address.
+     * @param account voucher's owner address.
      */
-    function getVoucher(address account) public view override returns (address voucherAddress) {
+    function getVoucher(address account) public view returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         voucherAddress = Create2.computeAddress(
             _getCreate2Salt(account), // salt
@@ -206,6 +226,11 @@ contract VoucherHub is AccessControl, UUPSUpgradeable, IVoucherHub {
     function _authorizeUpgrade(
         address newImplementation
     ) internal override onlyRole(UPGRADE_MANAGER_ROLE) {}
+
+    function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
+    }
 
     function _getCreate2Salt(address account) private pure returns (bytes32) {
         return bytes32(uint256(uint160(account)));
