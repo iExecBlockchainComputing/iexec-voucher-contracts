@@ -183,8 +183,6 @@ describe('Voucher', function () {
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
 
-            // Authorize the account
-            await voucher.connect(voucherOwner1).authorizeAccount(anyone.address);
 
             await expect(
                 voucher.connect(anyone).unauthorizeAccount(anyone.address),
