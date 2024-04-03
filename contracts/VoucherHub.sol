@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
+pragma solidity ^0.8.20;
+
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -8,8 +10,6 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {Voucher} from "./beacon/Voucher.sol";
 import {VoucherProxy} from "./beacon/VoucherProxy.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
-
-pragma solidity ^0.8.20;
 
 contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
