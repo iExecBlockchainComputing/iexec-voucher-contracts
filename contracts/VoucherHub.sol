@@ -120,11 +120,6 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         emit EligibleAssetRemoved(voucherTypeId, asset);
     }
 
-    function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
-    }
-
     /**
      * Check if an asset is eligible to match orders sponsoring.
      * @param voucherTypeId The ID of the voucher type.
@@ -200,6 +195,11 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
+    }
 
     function _getCreate2Salt(address account) private pure returns (bytes32) {
         return bytes32(uint256(uint160(account)));
