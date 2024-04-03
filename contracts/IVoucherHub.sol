@@ -25,13 +25,13 @@ interface IVoucherHub {
         uint256 voucherType
     ) external returns (address voucherAddress);
 
-    function getVoucher(address account) external view returns (address voucherAddress);
+    function getVoucher(address account) external view returns (address);
 
-    function getVoucherBeacon() external view returns (address voucherBeacon);
+    function getVoucherBeacon() external view returns (address);
 
-    function getIexecPoco() external view returns (address iexecPoco);
+    function getIexecPoco() external view returns (address);
 
-    function getVoucherTypeCount() external view returns (uint256 count);
+    function getVoucherTypeCount() external view returns (uint256);
 
     function getVoucherType(uint256 id) external view returns (VoucherType memory);
 
@@ -42,5 +42,5 @@ interface IVoucherHub {
     function isAssetEligibleToMatchOrdersSponsoring(
         uint256 voucherTypeId,
         address asset
-    ) external view returns (bool isEligible);
+    ) external view returns (bool);
 }
