@@ -433,7 +433,7 @@ describe('VoucherHub', function () {
                 .createVoucher(voucherOwner2, voucherType1);
             const createVoucherReceipt2 = await createVoucherTx2.wait();
             const expectedExpirationVoucher2 = await commonUtils.getExpectedExpiration(
-                duration,
+                duration1,
                 createVoucherReceipt2,
             );
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);

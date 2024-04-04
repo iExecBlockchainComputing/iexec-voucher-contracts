@@ -3,6 +3,7 @@
 
 node {
     stage('Clone') {
+        cleanWs()
         checkoutInfo = checkout(scm)
         echo "git checkout: ${checkoutInfo}"
     }
