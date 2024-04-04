@@ -64,6 +64,7 @@ describe('VoucherHub', function () {
                 voucherManager,
             } = await loadFixture(deployFixture);
             const voucherBeaconAddress = await beacon.getAddress();
+            // Check roles.
             expect(await voucherHub.owner())
                 .to.equal(await voucherHub.defaultAdmin())
                 .to.equal(owner);
@@ -86,6 +87,7 @@ describe('VoucherHub', function () {
                     voucherManager,
                 ),
             );
+            // Check config.
             expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
             expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
             // Check VoucherProxy code hash
