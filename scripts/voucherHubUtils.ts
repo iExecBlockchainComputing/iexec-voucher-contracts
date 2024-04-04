@@ -10,7 +10,10 @@ export async function deployHub(iexecPoco: string, beacon: string): Promise<Vouc
     // @dev Type declaration produces a warning until feature is supported by
     // openzeppelin plugin. See "Support TypeChain in deployProxy function":
     // https://github.com/OpenZeppelin/openzeppelin-upgrades/pull/535
-    const contract: unknown = await upgrades.deployProxy(VoucherHubFactory, [iexecPoco, beacon]);
+    const contract: unknown = await upgrades.deployProxy(VoucherHubFactory, [
+        ethers.getAddress(iexecPoco),
+        ethers.getAddress(beacon),
+    ]);
     // Workaround openzeppelin-upgrades/pull/535;
     const voucherHub = contract as VoucherHub;
     return await voucherHub.waitForDeployment();
@@ -21,12 +24,14 @@ export async function upgradeProxy(
     newVoucherHubImplementationFactory: ContractFactory,
 ): Promise<VoucherHub> {
     const contractUpgrade: unknown = await upgrades.upgradeProxy(
-        voucherHubAddress,
+        ethers.getAddress(voucherHubAddress),
         newVoucherHubImplementationFactory,
     );
     const voucherHubUpgrade = contractUpgrade as VoucherHub;
     await voucherHubUpgrade.waitForDeployment();
-    const voucherBeaconAddress = await voucherHubUpgrade.getVoucherBeacon();
+    const voucherBeaconAddress = ethers.getAddress(await voucherHubUpgrade.getVoucherBeacon());
+    console.log(voucherBeaconAddress);
+    console.log(voucherHubAddress);
     const expectedHashes = await getVoucherProxyCreationCodeHash(voucherBeaconAddress);
     const actualHash = await getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
     if (!expectedHashes.includes(actualHash)) {
@@ -45,6 +50,7 @@ export async function upgradeProxy(
  * @returns value of the hash
  */
 export async function getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress: string) {
+    console.log('Getting Voucher Proxy Creation Code from Storage');
     // See contracts/VoucherHub.sol
     const voucherHubStorageSlot = BigInt(
         '0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800',
@@ -62,7 +68,9 @@ export async function getVoucherProxyCreationCodeHashFromStorage(voucherHubAddre
  */
 export async function getVoucherProxyCreationCodeHash(voucherBeaconAddress: string) {
     const factory = await ethers.getContractFactory('VoucherProxy');
+    console.log('voucherBeaconAddress => ', voucherBeaconAddress);
     const tx = await factory.getDeployTransaction(voucherBeaconAddress);
+    console.log('Simulated deploy tx => ', tx.data);
     /**
      * tx.data is the same as Solidity value of:
      * ```
@@ -72,6 +80,7 @@ export async function getVoucherProxyCreationCodeHash(voucherBeaconAddress: stri
      * )
      * ```
      */
+    console.log('Simulated deploy tx hash=> ', ethers.keccak256(tx.data));
     return ethers.keccak256(tx.data);
 
     // TODO comment the implementation and return a hardcoded hash.
