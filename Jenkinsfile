@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 node {
+    stage ('Clean WS')
     stage('Clone') {
+        cleanWs()
         checkoutInfo = checkout(scm)
         echo "git checkout: ${checkoutInfo}"
     }

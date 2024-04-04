@@ -29,20 +29,20 @@ describe('VoucherHub', function () {
     }
 
     describe('Initialize', function () {
-        // it('Should initialize', async () => {
-        //     const { beacon, voucherHub, owner } = await loadFixture(deployFixture);
-        //     const voucherBeaconAddress = await beacon.getAddress();
-        //     expect(await voucherHub.owner()).to.equal(owner);
-        //     expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
-        //     expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
-        //     // Check VoucherProxy code hash
-        //     const voucherHubAddress = await voucherHub.getAddress();
-        //     const actualCodeHash =
-        //         await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
-        //     const expectedHashes =
-        //         await voucherHubUtils.getVoucherProxyCreationCodeHash(voucherBeaconAddress);
-        //     expect(expectedHashes).to.include(actualCodeHash);
-        // });
+        it('Should initialize', async () => {
+            const { beacon, voucherHub, owner } = await loadFixture(deployFixture);
+            const voucherBeaconAddress = await beacon.getAddress();
+            expect(await voucherHub.owner()).to.equal(owner);
+            expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
+            expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
+            // Check VoucherProxy code hash
+            const voucherHubAddress = await voucherHub.getAddress();
+            const actualCodeHash =
+                await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
+            const expectedHashes =
+                await voucherHubUtils.getVoucherProxyCreationCodeHash(voucherBeaconAddress);
+            expect(expectedHashes).to.include(actualCodeHash);
+        });
 
         it('Should not initialize twice', async () => {
             const { beacon, voucherHub } = await loadFixture(deployFixture);
