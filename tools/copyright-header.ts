@@ -3,7 +3,7 @@
 
 /**
  * This file is used in pre-commit hook to automatically add copyright
- * header to new (or existing) files.
+ * header if missing from new (or existing) files.
  */
 
 import * as fs from 'fs';
@@ -19,8 +19,7 @@ const licenseLine = 'SPDX-License-Identifier: Apache-2.0';
     filepaths.forEach((filepath) => {
         const content = fs.readFileSync(filepath, 'utf-8');
         if (content.includes(spdxCopyright)) {
-            // TODO
-            updateYear(filepath);
+            updateYear(content);
             return;
         }
         const header = buildHeader(filepath);
@@ -63,4 +62,4 @@ function getCommentPrefix(filepath: string) {
     }
 }
 
-function updateYear(filepath: string) {}
+function updateYear(content: string) {}
