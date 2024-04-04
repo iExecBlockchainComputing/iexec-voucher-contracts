@@ -10,9 +10,6 @@ import * as voucherUtils from '../scripts/voucherUtils';
 import { Voucher } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 
-const upgradeManager = '0xbee4B4D44c9472347482c7941409E4E7AEdf3c1e'; // random
-const assetEligibilityManager = '0x0f78173486FDFdA573a894dcC037E0486DDEE6Db'; // random
-const voucherManager = '0xf3B82Dcc6028d8e78DDd137d048A6580E94DEe5b'; // random
 const voucherHubAdminOperationDelay = 5 * 24 * 60 * 60; // 432000 (5 days in seconds)
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
 const voucherType = 0;
@@ -26,26 +23,50 @@ describe('VoucherHub', function () {
     // and reset Hardhat Network to that snapshot in every test.
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
-        const [owner, voucherOwner1, voucherOwner2, anyone] = await ethers.getSigners();
-        const beacon = await voucherUtils.deployBeaconAndImplementation(owner.address);
-        const voucherHub = await voucherHubUtils.deployHub(
+        const [
+            owner, // TODO rename to admin.
             upgradeManager,
             assetEligibilityManager,
             voucherManager,
+            voucherOwner1,
+            voucherOwner2,
+            anyone,
+        ] = await ethers.getSigners();
+        const beacon = await voucherUtils.deployBeaconAndImplementation(owner.address);
+        const voucherHub = await voucherHubUtils.deployHub(
+            upgradeManager.address,
+            assetEligibilityManager.address,
+            voucherManager.address,
             iexecPoco,
             await beacon.getAddress(),
         );
-        return { beacon, voucherHub, owner, voucherOwner1, voucherOwner2, anyone };
+        return {
+            beacon,
+            voucherHub,
+            owner,
+            upgradeManager,
+            assetEligibilityManager,
+            voucherManager,
+            voucherOwner1,
+            voucherOwner2,
+            anyone,
+        };
     }
 
     describe('Initialize', function () {
         it('Should initialize', async () => {
-            const { beacon, voucherHub, owner } = await loadFixture(deployFixture);
+            const {
+                beacon,
+                voucherHub,
+                owner,
+                upgradeManager,
+                assetEligibilityManager,
+                voucherManager,
+            } = await loadFixture(deployFixture);
             const voucherBeaconAddress = await beacon.getAddress();
             expect(await voucherHub.owner())
                 .to.equal(await voucherHub.defaultAdmin())
                 .to.equal(owner);
-            console.log();
             expect(await voucherHub.defaultAdminDelay()).to.equal(voucherHubAdminOperationDelay);
             expect(
                 await voucherHub.hasRole(
@@ -77,7 +98,8 @@ describe('VoucherHub', function () {
         });
 
         it('Should not initialize twice', async () => {
-            const { beacon, voucherHub } = await loadFixture(deployFixture);
+            const { beacon, voucherHub, upgradeManager, assetEligibilityManager, voucherManager } =
+                await loadFixture(deployFixture);
 
             await expect(
                 voucherHub.initialize(

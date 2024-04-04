@@ -13,8 +13,8 @@ import {VoucherProxy} from "./beacon/VoucherProxy.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
 
 contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeable, IVoucherHub {
-    // msg.sender will have DEFAULT_ADMIN_ROLE to grant/revoke roles.
-
+    // Grant/revoke roles through delayed 2 steps process.
+    // DEFAULT_ADMIN_ROLE == msg.sender == defaultAdmin() == owner()
     // Upgrade VoucherHub and Vouchers contracts.
     bytes32 public constant UPGRADE_MANAGER_ROLE = keccak256("UPGRADE_MANAGER_ROLE");
     // Add/remove eligible assets.
