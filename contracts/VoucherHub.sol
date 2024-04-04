@@ -10,7 +10,6 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {Voucher} from "./beacon/Voucher.sol";
 import {VoucherProxy} from "./beacon/VoucherProxy.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
-import "hardhat/console.sol";
 
 contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
@@ -45,20 +44,12 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     }
 
     function initialize(address iexecPoco, address voucherBeacon) external initializer {
-        console.log("voucherBeacon", voucherBeacon);
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;
         $._voucherBeacon = voucherBeacon;
         $._voucherCreationCodeHash = keccak256(
-            abi.encodePacked(
-                type(VoucherProxy).creationCode, // bytecode
-                abi.encode($._voucherBeacon) // constructor args
-            )
-        );
-
-        console.logBytes(
             abi.encodePacked(
                 type(VoucherProxy).creationCode, // bytecode
                 abi.encode($._voucherBeacon) // constructor args
