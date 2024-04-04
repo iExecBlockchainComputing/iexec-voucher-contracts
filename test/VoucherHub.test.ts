@@ -32,7 +32,7 @@ describe('VoucherHub', function () {
             voucherOwner2,
             anyone,
         ] = await ethers.getSigners();
-        const beacon = await voucherUtils.deployBeaconAndImplementation(owner.address);
+        const beacon = await voucherUtils.deployBeaconAndImplementation(upgradeManager.address);
         const voucherHub = await voucherHubUtils.deployHub(
             upgradeManager.address,
             assetEligibilityManager.address,
