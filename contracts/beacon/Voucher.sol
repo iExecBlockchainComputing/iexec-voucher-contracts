@@ -38,7 +38,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     /**
      * Initialize implementation contract.
      * @param owner The owner of the contract.
-     * @param voucherType The type of the voucher.
+     * @param voucherTypeId The type Id of the voucher.
      * @param expiration The expiration timestamp of the voucher.
      * @param voucherHub The address of the voucher hub.
      */
@@ -46,13 +46,13 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         address owner,
         address voucherHub,
         uint256 expiration,
-        uint256 voucherType
+        uint256 voucherTypeId
     ) external initializer {
         __Ownable_init(owner);
         VoucherStorage storage $ = _getVoucherStorage();
         $._voucherHub = voucherHub;
         $._expiration = expiration;
-        $._type = voucherType;
+        $._type = voucherTypeId;
         // TODO: deposit sRLC.
     }
 

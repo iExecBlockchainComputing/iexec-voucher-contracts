@@ -7,15 +7,18 @@ interface IVoucher {
     event AccountAuthorized(address indexed account);
     event AccountUnauthorized(address indexed account);
 
-    function getExpiration() external view returns (uint256);
-
-    function getType() external view returns (uint256);
+    function initialize(
+        address owner,
+        address voucherHub,
+        uint256 expiration,
+        uint256 voucherTypeId
+    ) external;
 
     function getVoucherHub() external view returns (address);
+    function getExpiration() external view returns (uint256);
+    function getType() external view returns (uint256);
 
     function authorizeAccount(address account) external;
-
     function unauthorizeAccount(address account) external;
-
     function isAccountAuthorized(address account) external view returns (bool);
 }
