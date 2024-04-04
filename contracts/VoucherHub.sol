@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
+pragma solidity ^0.8.20;
+
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -9,13 +11,7 @@ import {Voucher} from "./beacon/Voucher.sol";
 import {VoucherProxy} from "./beacon/VoucherProxy.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
 
-pragma solidity ^0.8.20;
-
 contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
-    struct VoucherType {
-        string description;
-        uint256 duration;
-    }
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
         address _iexecPoco;
@@ -86,6 +82,9 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         emit VoucherTypeDurationUpdated(id, duration);
     }
 
+    /**
+     * Get the voucher type details by ID.
+     */
     function getVoucherType(
         uint256 id
     ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
@@ -93,26 +92,39 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         return $.voucherTypes[id];
     }
 
+    /**
+     * Get voucher types count.
+     */
     function getVoucherTypeCount() public view returns (uint256) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $.voucherTypes.length;
     }
 
+    /**
+     * Add an eligible asset to a voucher type.
+     * @param voucherTypeId The ID of the voucher type.
+     * @param asset The address of the asset to add.
+     */
     function addEligibleAsset(uint256 voucherTypeId, address asset) external onlyOwner {
         _setAssetEligibility(voucherTypeId, asset, true);
         emit EligibleAssetAdded(voucherTypeId, asset);
     }
 
+    /**
+     * Remove an eligible asset to a voucher type.
+     * @param voucherTypeId The ID of the voucher type.
+     * @param asset The address of the asset to remove.
+     */
     function removeEligibleAsset(uint256 voucherTypeId, address asset) external onlyOwner {
         _setAssetEligibility(voucherTypeId, asset, false);
         emit EligibleAssetRemoved(voucherTypeId, asset);
     }
 
-    function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
-    }
-
+    /**
+     * Check if an asset is eligible to match orders sponsoring.
+     * @param voucherTypeId The ID of the voucher type.
+     * @param asset The address of the asset to check.
+     */
     function isAssetEligibleToMatchOrdersSponsoring(
         uint256 voucherTypeId,
         address asset
@@ -121,6 +133,9 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         return $.matchOrdersEligibility[voucherTypeId][asset];
     }
 
+    /**
+     * Get iExec Poco address used by vouchers.
+     */
     function getIexecPoco() public view returns (address) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $._iexecPoco;
@@ -143,21 +158,22 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * @dev Note: the same account could have 2 voucher instances if the "beaconAddress"
      * changes, but this should not happen since the beacon is upgradeable, hence the
      * address should never be changed.
-     *
-     * @param owner voucher owner
-     * @param expiration voucher expiration
+     * @param owner The address of the voucher owner.
+     * @param voucherType The ID of the voucher type.
+     * @return voucherAddress The address of the created voucher contract.
      */
     function createVoucher(
         address owner,
-        uint256 expiration
-    ) external override onlyOwner returns (address voucherAddress) {
+        uint256 voucherType
+    ) external onlyOwner returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
+        uint256 voucherExpiration = block.timestamp + getVoucherType(voucherType).duration;
         voucherAddress = address(new VoucherProxy{salt: _getCreate2Salt(owner)}($._voucherBeacon));
         // Initialize the created proxy contract.
         // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
-        Voucher(voucherAddress).initialize(owner, expiration);
-        emit VoucherCreated(voucherAddress, owner, expiration);
+        Voucher(voucherAddress).initialize(owner, address(this), voucherExpiration, voucherType);
+        emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType);
     }
 
     /**
@@ -165,9 +181,9 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      *
      * Get voucher address of a given account.
      * Returns address(0) if voucher is not found.
-     * @param account owner address.
+     * @param account voucher's owner address.
      */
-    function getVoucher(address account) public view override returns (address voucherAddress) {
+    function getVoucher(address account) public view returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         voucherAddress = Create2.computeAddress(
             _getCreate2Salt(account), // salt
@@ -177,6 +193,11 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
+    }
 
     function _getCreate2Salt(address account) private pure returns (bytes32) {
         return bytes32(uint256(uint160(account)));
