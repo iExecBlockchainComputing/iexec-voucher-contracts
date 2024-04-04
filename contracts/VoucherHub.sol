@@ -186,8 +186,6 @@ contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeabl
      * @dev Note: the same account could have 2 voucher instances if the "beaconAddress"
      * changes, but this should not happen since the beacon is upgradeable, hence the
      * address should never be changed.
-     *
-
      * @param owner The address of the voucher owner.
      * @param voucherType The ID of the voucher type.
      * @return voucherAddress The address of the created voucher contract.

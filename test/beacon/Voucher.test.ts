@@ -230,10 +230,15 @@ describe('Voucher', function () {
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
-
+            await voucher.connect(voucherOwner1).authorizeAccount(anyone.address);
+            const anyoneIsAuthorized = await voucher.isAccountAuthorized(anyone.address);
+            // unauthorize the account
             await expect(
                 voucher.connect(anyone).unauthorizeAccount(anyone.address),
             ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
+            // Check that the state of mapping is not modified from.
+            expect(await voucher.isAccountAuthorized(anyone.address)).to.equal(anyoneIsAuthorized)
+                .to.be.true;
         });
 
         it('Should not authorize owner account', async () => {
