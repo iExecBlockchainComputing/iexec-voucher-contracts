@@ -29,20 +29,20 @@ describe('VoucherHub', function () {
     }
 
     describe('Initialize', function () {
-        // it('Should initialize', async () => {
-        //     const { beacon, voucherHub, owner } = await loadFixture(deployFixture);
-        //     const voucherBeaconAddress = await beacon.getAddress();
-        //     expect(await voucherHub.owner()).to.equal(owner);
-        //     expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
-        //     expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
-        //     // Check VoucherProxy code hash
-        //     const voucherHubAddress = await voucherHub.getAddress();
-        //     const actualCodeHash =
-        //         await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
-        //     const expectedHashes =
-        //         await voucherHubUtils.getVoucherProxyCreationCodeHash(voucherBeaconAddress);
-        //     expect(expectedHashes).to.include(actualCodeHash);
-        // });
+        it('Should initialize', async () => {
+            const { beacon, voucherHub, owner } = await loadFixture(deployFixture);
+            const voucherBeaconAddress = await beacon.getAddress();
+            expect(await voucherHub.owner()).to.equal(owner);
+            expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
+            expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
+            // Check VoucherProxy code hash
+            const voucherHubAddress = await voucherHub.getAddress();
+            const actualCodeHash =
+                await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
+            const expectedHashes =
+                await voucherHubUtils.getVoucherProxyCreationCodeHash(voucherBeaconAddress);
+            expect(expectedHashes).to.include(actualCodeHash);
+        });
 
         it('Should not initialize twice', async () => {
             const { beacon, voucherHub } = await loadFixture(deployFixture);
@@ -54,19 +54,19 @@ describe('VoucherHub', function () {
     });
 
     describe('Upgrade', function () {
-        // it('Should upgrade', async () => {
-        //     const { voucherHub } = await loadFixture(deployFixture);
-        //     const voucherHubAddress = await voucherHub.getAddress();
-        //     const VoucherHubV2Factory = await ethers.getContractFactory('VoucherHubV2Mock');
-        //     // Next line should throw if new storage schema is not compatible with previous one
-        //     await voucherHubUtils.upgradeProxy(voucherHubAddress, VoucherHubV2Factory);
-        //     const voucherHubV2 = await ethers.getContractAt('VoucherHubV2Mock', voucherHubAddress);
-        //     await voucherHubV2.initializeV2('bar');
+        it('Should upgrade', async () => {
+            const { voucherHub } = await loadFixture(deployFixture);
+            const voucherHubAddress = await voucherHub.getAddress();
+            const VoucherHubV2Factory = await ethers.getContractFactory('VoucherHubV2Mock');
+            // Next line should throw if new storage schema is not compatible with previous one
+            await voucherHubUtils.upgradeProxy(voucherHubAddress, VoucherHubV2Factory);
+            const voucherHubV2 = await ethers.getContractAt('VoucherHubV2Mock', voucherHubAddress);
+            await voucherHubV2.initializeV2('bar');
 
-        //     expect(await voucherHubV2.getAddress()).to.equal(voucherHubAddress);
-        //     expect(await voucherHubV2.getIexecPoco()).to.equal(iexecPoco); // V1
-        //     expect(await voucherHubV2.foo()).to.equal('bar'); // V2
-        // });
+            expect(await voucherHubV2.getAddress()).to.equal(voucherHubAddress);
+            expect(await voucherHubV2.getIexecPoco()).to.equal(iexecPoco); // V1
+            expect(await voucherHubV2.foo()).to.equal('bar'); // V2
+        });
 
         it('Should not upgrade when account is unauthorized', async () => {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
@@ -282,78 +282,78 @@ describe('VoucherHub', function () {
             expect(await voucher1.getVoucherHub()).to.equal(await voucher2.getVoucherHub());
         });
 
-        // it('Should create multiple vouchers with the correct config', async () => {
-        //     const { voucherHub, voucherOwner1, voucherOwner2 } = await loadFixture(deployFixture);
-        //     // Create type0.
-        //     const createTypeTx = await voucherHub.createVoucherType(description, duration);
-        //     await createTypeTx.wait();
-        //     const voucherType1 = 1;
-        //     const duration1 = 7200;
-        //     const description1 = 'Long Term Duration';
-        //     // Create type1.
-        //     const createType1Tx = await voucherHub.createVoucherType(description1, duration1);
-        //     await createType1Tx.wait();
-        //     // Create voucher1.
-        //     const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, voucherType);
-        //     const createVoucherReceipt1 = await createVoucherTx1.wait();
-        //     const expectedExpirationVoucher1 = await commonUtils.getExpectedExpiration(
-        //         duration,
-        //         createVoucherReceipt1,
-        //     );
-        //     const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
-        //     const voucher1 = await commonUtils.getVoucher(voucherAddress1);
-        //     const voucherAsProxy1 = await commonUtils.getVoucherAsProxy(voucherAddress1);
+        it('Should create multiple vouchers with the correct config', async () => {
+            const { voucherHub, voucherOwner1, voucherOwner2 } = await loadFixture(deployFixture);
+            // Create type0.
+            const createTypeTx = await voucherHub.createVoucherType(description, duration);
+            await createTypeTx.wait();
+            const voucherType1 = 1;
+            const duration1 = 7200;
+            const description1 = 'Long Term Duration';
+            // Create type1.
+            const createType1Tx = await voucherHub.createVoucherType(description1, duration1);
+            await createType1Tx.wait();
+            // Create voucher1.
+            const createVoucherTx1 = await voucherHub.createVoucher(voucherOwner1, voucherType);
+            const createVoucherReceipt1 = await createVoucherTx1.wait();
+            const expectedExpirationVoucher1 = await commonUtils.getExpectedExpiration(
+                duration,
+                createVoucherReceipt1,
+            );
+            const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
+            const voucher1 = await commonUtils.getVoucher(voucherAddress1);
+            const voucherAsProxy1 = await commonUtils.getVoucherAsProxy(voucherAddress1);
 
-        //     // Create voucher2.
-        //     const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, voucherType1);
-        //     const createVoucherReceipt2 = await createVoucherTx2.wait();
-        //     const expectedExpirationVoucher2 = await commonUtils.getExpectedExpiration(
-        //         duration,
-        //         createVoucherReceipt2,
-        //     );
-        //     const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
-        //     const voucher2 = await commonUtils.getVoucher(voucherAddress2);
-        //     const voucherAsProxy2 = await commonUtils.getVoucherAsProxy(voucherAddress2);
+            // Create voucher2.
+            const createVoucherTx2 = await voucherHub.createVoucher(voucherOwner2, voucherType1);
+            const createVoucherReceipt2 = await createVoucherTx2.wait();
+            const expectedExpirationVoucher2 = await commonUtils.getExpectedExpiration(
+                duration,
+                createVoucherReceipt2,
+            );
+            const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
+            const voucher2 = await commonUtils.getVoucher(voucherAddress2);
+            const voucherAsProxy2 = await commonUtils.getVoucherAsProxy(voucherAddress2);
 
-        //     // Events
-        //     expect(createVoucherReceipt1)
-        //         .to.emit(voucherHub, 'VoucherCreated')
-        //         .withArgs(
-        //             voucherAddress1,
-        //             voucherOwner1.address,
-        //             expectedExpirationVoucher1,
-        //             voucherType,
-        //         );
-        //     expect(createVoucherReceipt2)
-        //         .to.emit(voucherHub, 'VoucherCreated')
-        //         .withArgs(
-        //             voucherAddress2,
-        //             voucherOwner2.address,
-        //             expectedExpirationVoucher2,
-        //             voucherType1,
-        //         );
-        //     // Voucher as proxy
-        //     expect(
-        //         await voucherAsProxy1.implementation(),
-        //         'Implementation mismatch between proxies',
-        //     ).to.equal(await voucherAsProxy2.implementation());
-        //     // Voucher
-        //     expect(
-        //         await voucher1.getExpiration(),
-        //         'Expiration should not match between proxies',
-        //     ).to.not.equal(await voucher2.getExpiration());
-        //     expect(await voucher1.owner(), 'Owners should not match between proxies').to.not.equal(
-        //         voucher2.owner(),
-        //     );
-        //     expect(await voucher1.getVoucherHub(), 'Voucher hub address mismatch').to.equal(
-        //         await voucherHub.getAddress(),
-        //     );
-        //     expect(await voucher2.getVoucherHub(), 'Voucher hub address mismatch').to.equal(
-        //         await voucherHub.getAddress(),
-        //     );
-        //     expect(await voucher1.getType(), 'Voucher 1 type mismatch').to.equal(voucherType);
-        //     expect(await voucher2.getType(), 'Voucher 2 type mismatch').to.equal(voucherType1);
-        // });
+            // Events
+            expect(createVoucherReceipt1)
+                .to.emit(voucherHub, 'VoucherCreated')
+                .withArgs(
+                    voucherAddress1,
+                    voucherOwner1.address,
+                    expectedExpirationVoucher1,
+                    voucherType,
+                );
+            expect(createVoucherReceipt2)
+                .to.emit(voucherHub, 'VoucherCreated')
+                .withArgs(
+                    voucherAddress2,
+                    voucherOwner2.address,
+                    expectedExpirationVoucher2,
+                    voucherType1,
+                );
+            // Voucher as proxy
+            expect(
+                await voucherAsProxy1.implementation(),
+                'Implementation mismatch between proxies',
+            ).to.equal(await voucherAsProxy2.implementation());
+            // Voucher
+            expect(
+                await voucher1.getExpiration(),
+                'Expiration should not match between proxies',
+            ).to.not.equal(await voucher2.getExpiration());
+            expect(await voucher1.owner(), 'Owners should not match between proxies').to.not.equal(
+                voucher2.owner(),
+            );
+            expect(await voucher1.getVoucherHub(), 'Voucher hub address mismatch').to.equal(
+                await voucherHub.getAddress(),
+            );
+            expect(await voucher2.getVoucherHub(), 'Voucher hub address mismatch').to.equal(
+                await voucherHub.getAddress(),
+            );
+            expect(await voucher1.getType(), 'Voucher 1 type mismatch').to.equal(voucherType);
+            expect(await voucher2.getType(), 'Voucher 2 type mismatch').to.equal(voucherType1);
+        });
 
         it('Should not create more than 1 voucher for the same account', async () => {
             const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
