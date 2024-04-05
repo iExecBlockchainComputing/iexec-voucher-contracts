@@ -3,7 +3,6 @@ import { ethers } from 'hardhat';
 import { Voucher, VoucherProxy } from '../../typechain-types';
 import { VoucherV2Mock } from '../../typechain-types/contracts/mocks';
 
-// TODO move file to test/
 
 export async function getVoucher(voucherAddress: string): Promise<Voucher> {
     return await ethers.getContractAt('Voucher', voucherAddress);
