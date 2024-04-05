@@ -14,6 +14,7 @@ import {IVoucherHub} from "./IVoucherHub.sol";
 
 contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeable, IVoucherHub {
     // Grant/revoke roles through delayed 2 steps process.
+    // Used to grant the rest of the roles.
     // DEFAULT_ADMIN_ROLE == msg.sender == defaultAdmin() == owner()
     // Upgrade VoucherHub and Vouchers contracts.
     bytes32 public constant UPGRADE_MANAGER_ROLE = keccak256("UPGRADE_MANAGER_ROLE");
