@@ -15,8 +15,11 @@ import {IVoucherHub} from "./IVoucherHub.sol";
 contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeable, IVoucherHub {
     // Grant/revoke roles through delayed 2 steps process.
     // Used to grant the rest of the roles.
-    // DEFAULT_ADMIN_ROLE == msg.sender == defaultAdmin() == owner()
+    // Granted to msg.sender == defaultAdmin() == owner()
+    // DEFAULT_ADMIN_ROLE
+
     // Upgrade VoucherHub and Vouchers contracts.
+    // Granted to msg.sender
     bytes32 public constant UPGRADE_MANAGER_ROLE = keccak256("UPGRADE_MANAGER_ROLE");
     // Add/remove eligible assets.
     bytes32 public constant ASSET_ELIGIBILITY_MANAGER_ROLE =
@@ -56,14 +59,14 @@ contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeabl
     }
 
     function initialize(
-        address upgradeManager,
         address assetEligibilityManager,
         address voucherManager,
         address iexecPoco,
         address voucherBeacon
     ) external initializer {
+        // DEFAULT_ADMIN_ROLE is granted to msg.sender.
         __AccessControlDefaultAdminRules_init(5 days, msg.sender);
-        _grantRole(UPGRADE_MANAGER_ROLE, upgradeManager);
+        _grantRole(UPGRADE_MANAGER_ROLE, msg.sender);
         _grantRole(ASSET_ELIGIBILITY_MANAGER_ROLE, assetEligibilityManager);
         _grantRole(VOUCHER_MANAGER_ROLE, voucherManager);
         __UUPSUpgradeable_init();

@@ -23,16 +23,14 @@ describe('Voucher', function () {
         // Contracts are deployed using the first signer/account by default
         const [
             owner, // TODO rename to admin.
-            upgradeManager,
             assetEligibilityManager,
             voucherManager,
             voucherOwner1,
             voucherOwner2,
             anyone,
         ] = await ethers.getSigners();
-        const beacon = await voucherUtils.deployBeaconAndImplementation(upgradeManager.address);
+        const beacon = await voucherUtils.deployBeaconAndImplementation(owner.address);
         const voucherHub = await voucherHubUtils.deployHub(
-            upgradeManager.address,
             assetEligibilityManager.address,
             voucherManager.address,
             iexecPoco,
@@ -43,7 +41,6 @@ describe('Voucher', function () {
             beacon,
             voucherHub,
             owner,
-            upgradeManager,
             assetEligibilityManager,
             voucherManager,
             voucherOwner1,
@@ -57,7 +54,7 @@ describe('Voucher', function () {
             const {
                 beacon,
                 voucherHub,
-                upgradeManager,
+                owner,
                 assetEligibilityManager,
                 voucherManager,
                 voucherOwner1,
@@ -93,10 +90,7 @@ describe('Voucher', function () {
             // Save old implementation.
             const initialImplementation = await beacon.implementation();
             // Upgrade beacon.
-            const voucherImplV2Factory = await ethers.getContractFactory(
-                'VoucherV2Mock',
-                upgradeManager,
-            );
+            const voucherImplV2Factory = await ethers.getContractFactory('VoucherV2Mock', owner);
             await voucherUtils.upgradeBeacon(beacon, voucherImplV2Factory);
             const voucher1_V2 = await commonUtils.getVoucherV2(voucherAddress1);
             const voucher2_V2 = await commonUtils.getVoucherV2(voucherAddress2);

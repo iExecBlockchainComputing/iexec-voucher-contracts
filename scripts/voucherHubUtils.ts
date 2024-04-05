@@ -6,7 +6,6 @@ import { ethers, upgrades } from 'hardhat';
 import { VoucherHub } from '../typechain-types';
 
 export async function deployHub(
-    upgradeManager: string,
     assetEligibilityManager: string,
     voucherManager: string,
     iexecPoco: string,
@@ -17,7 +16,6 @@ export async function deployHub(
     // openzeppelin plugin. See "Support TypeChain in deployProxy function":
     // https://github.com/OpenZeppelin/openzeppelin-upgrades/pull/535
     const contract: unknown = await upgrades.deployProxy(VoucherHubFactory, [
-        upgradeManager,
         assetEligibilityManager,
         voucherManager,
         iexecPoco,

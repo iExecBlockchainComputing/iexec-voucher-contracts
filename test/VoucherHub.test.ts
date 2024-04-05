@@ -26,16 +26,14 @@ describe('VoucherHub', function () {
         // Contracts are deployed using the first signer/account by default
         const [
             owner, // TODO rename to admin.
-            upgradeManager,
             assetEligibilityManager,
             voucherManager,
             voucherOwner1,
             voucherOwner2,
             anyone,
         ] = await ethers.getSigners();
-        const beacon = await voucherUtils.deployBeaconAndImplementation(upgradeManager.address);
+        const beacon = await voucherUtils.deployBeaconAndImplementation(owner.address);
         const voucherHub = await voucherHubUtils.deployHub(
-            upgradeManager.address,
             assetEligibilityManager.address,
             voucherManager.address,
             iexecPoco,
@@ -45,7 +43,6 @@ describe('VoucherHub', function () {
             beacon,
             voucherHub,
             owner,
-            upgradeManager,
             assetEligibilityManager,
             voucherManager,
             voucherOwner1,
@@ -56,14 +53,8 @@ describe('VoucherHub', function () {
 
     describe('Initialize', function () {
         it('Should initialize', async () => {
-            const {
-                beacon,
-                voucherHub,
-                owner,
-                upgradeManager,
-                assetEligibilityManager,
-                voucherManager,
-            } = await loadFixture(deployFixture);
+            const { beacon, voucherHub, owner, assetEligibilityManager, voucherManager } =
+                await loadFixture(deployFixture);
             const voucherBeaconAddress = await beacon.getAddress();
             // Check roles.
             expect(await voucherHub.owner())
@@ -71,10 +62,7 @@ describe('VoucherHub', function () {
                 .to.equal(owner);
             expect(await voucherHub.defaultAdminDelay()).to.equal(voucherHubAdminOperationDelay);
             expect(
-                await voucherHub.hasRole(
-                    await voucherHub.UPGRADE_MANAGER_ROLE.staticCall(),
-                    upgradeManager,
-                ),
+                await voucherHub.hasRole(await voucherHub.UPGRADE_MANAGER_ROLE.staticCall(), owner),
             );
             expect(
                 await voucherHub.hasRole(
@@ -101,12 +89,11 @@ describe('VoucherHub', function () {
         });
 
         it('Should not initialize twice', async () => {
-            const { beacon, voucherHub, upgradeManager, assetEligibilityManager, voucherManager } =
+            const { beacon, voucherHub, assetEligibilityManager, voucherManager } =
                 await loadFixture(deployFixture);
 
             await expect(
                 voucherHub.initialize(
-                    upgradeManager,
                     assetEligibilityManager,
                     voucherManager,
                     iexecPoco,
@@ -118,12 +105,9 @@ describe('VoucherHub', function () {
 
     describe('Upgrade', function () {
         it('Should upgrade', async () => {
-            const { voucherHub, upgradeManager } = await loadFixture(deployFixture);
+            const { voucherHub, owner } = await loadFixture(deployFixture);
             const voucherHubAddress = await voucherHub.getAddress();
-            const VoucherHubV2Factory = await ethers.getContractFactory(
-                'VoucherHubV2Mock',
-                upgradeManager,
-            );
+            const VoucherHubV2Factory = await ethers.getContractFactory('VoucherHubV2Mock', owner);
             // Next line should throw if new storage schema is not compatible with previous one
             await voucherHubUtils.upgradeProxy(voucherHubAddress, VoucherHubV2Factory);
             const voucherHubV2 = await ethers.getContractAt('VoucherHubV2Mock', voucherHubAddress);
