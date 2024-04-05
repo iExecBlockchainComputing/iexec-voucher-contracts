@@ -65,7 +65,7 @@ contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeabl
         address voucherBeacon
     ) external initializer {
         // DEFAULT_ADMIN_ROLE is granted to msg.sender.
-        __AccessControlDefaultAdminRules_init(5 days, msg.sender);
+        __AccessControlDefaultAdminRules_init(0, msg.sender);
         _grantRole(UPGRADE_MANAGER_ROLE, msg.sender);
         _grantRole(ASSET_ELIGIBILITY_MANAGER_ROLE, assetEligibilityManager);
         _grantRole(VOUCHER_MANAGER_ROLE, voucherManager);
