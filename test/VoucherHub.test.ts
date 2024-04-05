@@ -11,7 +11,6 @@ import * as voucherUtils from '../scripts/voucherUtils';
 import { Voucher } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 
-const voucherHubAdminOperationDelay = 5 * 24 * 60 * 60; // 432000 (5 days in seconds)
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
 const voucherType = 0;
 const description = 'Early Access';
@@ -60,7 +59,7 @@ describe('VoucherHub', function () {
             expect(await voucherHub.owner())
                 .to.equal(await voucherHub.defaultAdmin())
                 .to.equal(owner);
-            expect(await voucherHub.defaultAdminDelay()).to.equal(voucherHubAdminOperationDelay);
+            expect(await voucherHub.defaultAdminDelay()).to.equal(0);
             expect(
                 await voucherHub.hasRole(await voucherHub.UPGRADE_MANAGER_ROLE.staticCall(), owner),
             );
