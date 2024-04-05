@@ -5,6 +5,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import * as commonUtils from '../../scripts/common';
+import { createVoucherType } from '../../scripts/common';
 import * as voucherHubUtils from '../../scripts/voucherHubUtils';
 import * as voucherUtils from '../../scripts/voucherUtils';
 import { Voucher } from '../../typechain-types';
@@ -37,10 +38,7 @@ describe('Voucher', function () {
             iexecPoco,
             await beacon.getAddress(),
         );
-        const createTypeTx = await voucherHub
-            .connect(assetEligibilityManager)
-            .createVoucherType(description, duration);
-        await createTypeTx.wait();
+        await createVoucherType(voucherHub, assetEligibilityManager, description, duration);
         return {
             beacon,
             voucherHub,
@@ -69,10 +67,7 @@ describe('Voucher', function () {
             const duration1 = 7200;
             const description1 = 'Long Term Duration';
             // Create type1.
-            const createType1Tx = await voucherHub
-                .connect(assetEligibilityManager)
-                .createVoucherType(description1, duration1);
-            await createType1Tx.wait();
+            await createVoucherType(voucherHub, assetEligibilityManager, description1, duration1);
             // Create voucher1.
             const createVoucherTx1 = await voucherHub
                 .connect(voucherManager)
