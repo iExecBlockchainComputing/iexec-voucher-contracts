@@ -5,10 +5,9 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import * as commonUtils from '../../scripts/common';
-import { createVoucherType } from '../../scripts/common';
 import * as voucherHubUtils from '../../scripts/voucherHubUtils';
 import * as voucherUtils from '../../scripts/voucherUtils';
-import { Voucher } from '../../typechain-types';
+import { Voucher, VoucherHub } from '../../typechain-types';
 
 const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
 const voucherType = 0;
@@ -16,6 +15,9 @@ const duration = 3600;
 const description = 'Early Access';
 
 describe('Voucher', function () {
+    let voucherHubWithVoucherManagerSigner: VoucherHub;
+    let voucherHubWithAssetEligibilityManagerSigner: VoucherHub;
+    let voucherHubWithAnyoneSigner: VoucherHub;
     // We define a fixture to reuse the same setup in every test.
     // We use loadFixture to run this setup once, snapshot that state,
     // and reset Hardhat Network to that snapshot in every test.
@@ -36,7 +38,10 @@ describe('Voucher', function () {
             iexecPoco,
             await beacon.getAddress(),
         );
-        await createVoucherType(voucherHub, assetEligibilityManager, description, duration);
+        voucherHubWithVoucherManagerSigner = voucherHub.connect(voucherManager);
+        voucherHubWithAssetEligibilityManagerSigner = voucherHub.connect(assetEligibilityManager);
+        voucherHubWithAnyoneSigner = voucherHub.connect(anyone);
+        await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(description, duration);
         return {
             beacon,
             voucherHub,
@@ -51,24 +56,20 @@ describe('Voucher', function () {
 
     describe('Upgrade', async function () {
         it('Should upgrade all vouchers', async () => {
-            const {
-                beacon,
-                voucherHub,
-                owner,
-                assetEligibilityManager,
-                voucherManager,
-                voucherOwner1,
-                voucherOwner2,
-            } = await loadFixture(deployFixture);
+            const { beacon, voucherHub, owner, voucherOwner1, voucherOwner2 } =
+                await loadFixture(deployFixture);
             const voucherType1 = 1;
             const duration1 = 7200;
             const description1 = 'Long Term Duration';
             // Create type1.
-            await createVoucherType(voucherHub, assetEligibilityManager, description1, duration1);
+            await voucherHubWithAssetEligibilityManagerSigner
+                .createVoucherType(description1, duration1)
+                .then((tx) => tx.wait());
             // Create voucher1.
-            const createVoucherTx1 = await voucherHub
-                .connect(voucherManager)
-                .createVoucher(voucherOwner1, voucherType);
+            const createVoucherTx1 = await voucherHubWithVoucherManagerSigner.createVoucher(
+                voucherOwner1,
+                voucherType,
+            );
             const createVoucherReceipt1 = await createVoucherTx1.wait();
             const expectedExpirationVoucher1 = await commonUtils.getExpectedExpiration(
                 duration,
@@ -77,9 +78,10 @@ describe('Voucher', function () {
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucherAsProxy1 = await commonUtils.getVoucherAsProxy(voucherAddress1);
             // Create voucher2.
-            const createVoucherTx2 = await voucherHub
-                .connect(voucherManager)
-                .createVoucher(voucherOwner2, voucherType1);
+            const createVoucherTx2 = await voucherHubWithVoucherManagerSigner.createVoucher(
+                voucherOwner2,
+                voucherType1,
+            );
             const createVoucherReceipt2 = await createVoucherTx2.wait();
             const expectedExpirationVoucher2 = await commonUtils.getExpectedExpiration(
                 duration1,
@@ -147,11 +149,11 @@ describe('Voucher', function () {
 
     describe('Authorization', async function () {
         it('Should authorize an account', async () => {
-            const { voucherHub, voucherManager, voucherOwner1, anyone } =
-                await loadFixture(deployFixture);
-            const createVoucherTx = await voucherHub
-                .connect(voucherManager)
-                .createVoucher(voucherOwner1, voucherType);
+            const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
+            const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
+                voucherOwner1,
+                voucherType,
+            );
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
@@ -170,11 +172,11 @@ describe('Voucher', function () {
         });
 
         it('Should deauthorize an account', async () => {
-            const { voucherHub, voucherManager, voucherOwner1, anyone } =
-                await loadFixture(deployFixture);
-            const createVoucherTx = await voucherHub
-                .connect(voucherManager)
-                .createVoucher(voucherOwner1, voucherType);
+            const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
+            const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
+                voucherOwner1,
+                voucherType,
+            );
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
@@ -197,9 +199,10 @@ describe('Voucher', function () {
         it('Should not authorize an account if the account is not the owner', async () => {
             const { voucherHub, voucherManager, voucherOwner1, anyone } =
                 await loadFixture(deployFixture);
-            const createVoucherTx = await voucherHub
-                .connect(voucherManager)
-                .createVoucher(voucherOwner1, voucherType);
+            const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
+                voucherOwner1,
+                voucherType,
+            );
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
@@ -213,9 +216,10 @@ describe('Voucher', function () {
         it('Should not unauthorize an account if the account is not the owner', async () => {
             const { voucherHub, voucherManager, voucherOwner1, anyone } =
                 await loadFixture(deployFixture);
-            const createVoucherTx = await voucherHub
-                .connect(voucherManager)
-                .createVoucher(voucherOwner1, voucherType);
+            const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
+                voucherOwner1,
+                voucherType,
+            );
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
@@ -232,9 +236,10 @@ describe('Voucher', function () {
 
         it('Should not authorize owner account', async () => {
             const { voucherHub, voucherManager, voucherOwner1 } = await loadFixture(deployFixture);
-            const createVoucherTx = await voucherHub
-                .connect(voucherManager)
-                .createVoucher(voucherOwner1, voucherType);
+            const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
+                voucherOwner1,
+                voucherType,
+            );
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
