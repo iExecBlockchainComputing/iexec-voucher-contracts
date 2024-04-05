@@ -4,6 +4,7 @@
 pragma solidity ^0.8.20;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
+import {AccessControlDefaultAdminRulesUpgradeable} from "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
@@ -11,7 +12,21 @@ import {Voucher} from "./beacon/Voucher.sol";
 import {VoucherProxy} from "./beacon/VoucherProxy.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
 
-contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
+contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeable, IVoucherHub {
+    // Grant/revoke roles through delayed 2 steps process.
+    // Used to grant the rest of the roles.
+    // Granted to msg.sender == defaultAdmin() == owner()
+    // DEFAULT_ADMIN_ROLE
+
+    // Upgrade VoucherHub and Vouchers contracts.
+    // Granted to msg.sender
+    bytes32 public constant UPGRADE_MANAGER_ROLE = keccak256("UPGRADE_MANAGER_ROLE");
+    // Add/remove eligible assets.
+    bytes32 public constant ASSET_ELIGIBILITY_MANAGER_ROLE =
+        keccak256("ASSET_ELIGIBILITY_MANAGER_ROLE");
+    // Create & top up Vouchers.
+    bytes32 public constant VOUCHER_MANAGER_ROLE = keccak256("VOUCHER_MANAGER_ROLE");
+
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
         address _iexecPoco;
@@ -43,8 +58,17 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         _disableInitializers();
     }
 
-    function initialize(address iexecPoco, address voucherBeacon) external initializer {
-        __Ownable_init(msg.sender);
+    function initialize(
+        address assetEligibilityManager,
+        address voucherManager,
+        address iexecPoco,
+        address voucherBeacon
+    ) external initializer {
+        // DEFAULT_ADMIN_ROLE is granted to msg.sender.
+        __AccessControlDefaultAdminRules_init(0, msg.sender);
+        _grantRole(UPGRADE_MANAGER_ROLE, msg.sender);
+        _grantRole(ASSET_ELIGIBILITY_MANAGER_ROLE, assetEligibilityManager);
+        _grantRole(VOUCHER_MANAGER_ROLE, voucherManager);
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;
@@ -57,8 +81,10 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         );
     }
 
-    // TODO: Replace most onlyOwner to onlyVoucherManager
-    function createVoucherType(string memory description, uint256 duration) external onlyOwner {
+    function createVoucherType(
+        string memory description,
+        uint256 duration
+    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $.voucherTypes.push(VoucherType(description, duration));
         emit VoucherTypeCreated($.voucherTypes.length - 1, description, duration);
@@ -67,7 +93,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     function updateVoucherTypeDescription(
         uint256 id,
         string memory description
-    ) external onlyOwner whenVoucherTypeExists(id) {
+    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) whenVoucherTypeExists(id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $.voucherTypes[id].description = description;
         emit VoucherTypeDescriptionUpdated(id, description);
@@ -76,7 +102,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     function updateVoucherTypeDuration(
         uint256 id,
         uint256 duration
-    ) external onlyOwner whenVoucherTypeExists(id) {
+    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) whenVoucherTypeExists(id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $.voucherTypes[id].duration = duration;
         emit VoucherTypeDurationUpdated(id, duration);
@@ -105,7 +131,10 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * @param voucherTypeId The ID of the voucher type.
      * @param asset The address of the asset to add.
      */
-    function addEligibleAsset(uint256 voucherTypeId, address asset) external onlyOwner {
+    function addEligibleAsset(
+        uint256 voucherTypeId,
+        address asset
+    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
         _setAssetEligibility(voucherTypeId, asset, true);
         emit EligibleAssetAdded(voucherTypeId, asset);
     }
@@ -115,7 +144,10 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
      * @param voucherTypeId The ID of the voucher type.
      * @param asset The address of the asset to remove.
      */
-    function removeEligibleAsset(uint256 voucherTypeId, address asset) external onlyOwner {
+    function removeEligibleAsset(
+        uint256 voucherTypeId,
+        address asset
+    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
         _setAssetEligibility(voucherTypeId, asset, false);
         emit EligibleAssetRemoved(voucherTypeId, asset);
     }
@@ -165,7 +197,7 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
     function createVoucher(
         address owner,
         uint256 voucherType
-    ) external onlyOwner returns (address voucherAddress) {
+    ) external onlyRole(VOUCHER_MANAGER_ROLE) returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         uint256 voucherExpiration = block.timestamp + getVoucherType(voucherType).duration;
         voucherAddress = address(new VoucherProxy{salt: _getCreate2Salt(owner)}($._voucherBeacon));
@@ -192,7 +224,9 @@ contract VoucherHub is OwnableUpgradeable, UUPSUpgradeable, IVoucherHub {
         return voucherAddress.code.length > 0 ? voucherAddress : address(0);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(UPGRADE_MANAGER_ROLE) {}
 
     function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
