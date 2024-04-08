@@ -1,18 +1,30 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import * as commonUtils from '../../scripts/common';
 import * as voucherHubUtils from '../../scripts/voucherHubUtils';
 import * as voucherUtils from '../../scripts/voucherUtils';
-import { Voucher, VoucherHub } from '../../typechain-types';
+import { IexecPocoMock, IexecPocoMock__factory, Voucher, VoucherHub } from '../../typechain-types';
+import { createMockOrder } from '../utils/poco-utils';
 
-const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
+let iexecPoco: string;
+let iexecPocoInstance: IexecPocoMock;
 const voucherType = 0;
 const duration = 3600;
 const description = 'Early Access';
+const voucherValue = 100;
+const random = () => ethers.Wallet.createRandom().address;
+const app = random();
+const dataset = random();
+const workerpool = random();
+const appPrice = 1;
+const datasetPrice = 2;
+const workerpoolPrice = 3;
+const dealId = ethers.id('deal');
 
 describe('Voucher', function () {
     let voucherHubWithVoucherManagerSigner: VoucherHub;
@@ -29,9 +41,15 @@ describe('Voucher', function () {
             voucherManager,
             voucherOwner1,
             voucherOwner2,
+            requester,
             anyone,
         ] = await ethers.getSigners();
         const beacon = await voucherUtils.deployBeaconAndImplementation(owner.address);
+        iexecPocoInstance = await new IexecPocoMock__factory()
+            .connect(owner)
+            .deploy()
+            .then((x) => x.waitForDeployment());
+        iexecPoco = await iexecPocoInstance.getAddress();
         const voucherHub = await voucherHubUtils.deployHub(
             assetEligibilityManager.address,
             voucherManager.address,
@@ -42,6 +60,9 @@ describe('Voucher', function () {
         voucherHubWithAssetEligibilityManagerSigner = voucherHub.connect(assetEligibilityManager);
         voucherHubWithAnyoneSigner = voucherHub.connect(anyone);
         await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(description, duration);
+        await iexecPocoInstance
+            .transfer(await voucherHub.getAddress(), 1000)
+            .then((tx) => tx.wait());
         return {
             beacon,
             voucherHub,
@@ -50,6 +71,7 @@ describe('Voucher', function () {
             voucherManager,
             voucherOwner1,
             voucherOwner2,
+            requester,
             anyone,
         };
     }
@@ -69,6 +91,7 @@ describe('Voucher', function () {
             const createVoucherTx1 = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner1,
                 voucherType,
+                voucherValue,
             );
             const createVoucherReceipt1 = await createVoucherTx1.wait();
             const expectedExpirationVoucher1 = await commonUtils.getExpectedExpiration(
@@ -81,6 +104,7 @@ describe('Voucher', function () {
             const createVoucherTx2 = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner2,
                 voucherType1,
+                voucherValue,
             );
             const createVoucherReceipt2 = await createVoucherTx2.wait();
             const expectedExpirationVoucher2 = await commonUtils.getExpectedExpiration(
@@ -153,6 +177,7 @@ describe('Voucher', function () {
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner1,
                 voucherType,
+                voucherValue,
             );
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
@@ -176,6 +201,7 @@ describe('Voucher', function () {
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner1,
                 voucherType,
+                voucherValue,
             );
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
@@ -202,6 +228,7 @@ describe('Voucher', function () {
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner1,
                 voucherType,
+                voucherValue,
             );
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
@@ -219,6 +246,7 @@ describe('Voucher', function () {
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner1,
                 voucherType,
+                voucherValue,
             );
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
@@ -239,6 +267,7 @@ describe('Voucher', function () {
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner1,
                 voucherType,
+                voucherValue,
             );
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
@@ -247,6 +276,94 @@ describe('Voucher', function () {
             await expect(
                 voucher.connect(voucherOwner1).authorizeAccount(voucherOwner1.address),
             ).to.be.revertedWith('Voucher: owner is already authorized.');
+        });
+    });
+
+    describe('Match orders', async function () {
+        let voucherHub: VoucherHub;
+        let voucherOwner1: SignerWithAddress;
+        let voucher: Voucher;
+        let requester: SignerWithAddress;
+        const getBalanceOnIexecPoco = () => iexecPocoInstance.balanceOf(voucher.getAddress());
+
+        beforeEach(async () => {
+            ({ voucherHub, voucherOwner1, requester } = await loadFixture(deployFixture));
+            voucher = await voucherHubWithVoucherManagerSigner
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait())
+                .then(() => voucherHub.getVoucher(voucherOwner1))
+                .then((voucherAddress) => commonUtils.getVoucher(voucherAddress));
+        });
+
+        it('Should match orders', async () => {
+            const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice);
+            const mockOrder = createMockOrder();
+            const appOrder = { ...mockOrder, app: app, appprice: appPrice };
+            const datasetOrder = {
+                ...mockOrder,
+                dataset: dataset,
+                datasetprice: datasetPrice,
+            };
+            const workerpoolOrder = {
+                ...mockOrder,
+                workerpool: workerpool,
+                workerpoolprice: workerpoolPrice,
+            };
+            const requestOrder = mockOrder;
+            [app, dataset, workerpool].forEach(
+                async (asset) =>
+                    await voucherHubWithAssetEligibilityManagerSigner
+                        .addEligibleAsset(voucherType, asset)
+                        .then((x) => x.wait()),
+            );
+            const balanceBefore = await voucher.getBalance();
+            const iexecBalanceBefore = await getBalanceOnIexecPoco();
+
+            expect(
+                await voucher.matchOrders.staticCall(
+                    appOrder,
+                    datasetOrder,
+                    workerpoolOrder,
+                    requestOrder,
+                ),
+            ).to.be.equal(dealId);
+            await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
+                .to.emit(voucher, 'MatchOrders')
+                .withArgs(dealId);
+            expect(await voucher.getBalance())
+                .to.be.equal(balanceBefore - dealPrice)
+                .to.be.equal(await getBalanceOnIexecPoco())
+                .to.be.equal(iexecBalanceBefore - dealPrice);
+        });
+
+        it('Should match orders without sponsored amount ', async () => {
+            const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice);
+            const mockOrder = createMockOrder();
+            const appOrder = { ...mockOrder, app: app, appprice: appPrice };
+            const datasetOrder = {
+                ...mockOrder,
+                dataset: dataset,
+                datasetprice: datasetPrice,
+            };
+            const workerpoolOrder = {
+                ...mockOrder,
+                workerpool: workerpool,
+                workerpoolprice: workerpoolPrice,
+            };
+            const requestOrder = { ...mockOrder, requester: requester };
+            const balanceBefore = await voucher.getBalance();
+            expect(dealPrice).to.be.greaterThan(0); // just make sure the deal will not be free
+            await iexecPocoInstance.transfer(requester, dealPrice).then((tx) => tx.wait());
+            await iexecPocoInstance
+                .connect(requester)
+                .approve(await voucher.getAddress(), dealPrice)
+                .then((tx) => tx.wait());
+
+            await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
+                .to.emit(iexecPocoInstance, 'Transfer')
+                .withArgs(requester.address, iexecPoco, dealPrice)
+                .to.emit(voucher, 'MatchOrders');
+            expect(await voucher.getBalance()).to.be.equal(balanceBefore);
         });
     });
 });

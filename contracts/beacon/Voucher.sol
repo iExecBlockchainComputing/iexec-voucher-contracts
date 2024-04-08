@@ -3,7 +3,11 @@
 
 pragma solidity ^0.8.20;
 
+import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.sol";
+import {IexecPoco1} from "@iexec/poco/contracts/modules/interfaces/IexecPoco1.v8.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IVoucherHub} from "../IVoucherHub.sol";
 import {IVoucher} from "./IVoucher.sol";
 
 /**
@@ -60,7 +64,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      * Retrieve the address of the voucher hub associated with the voucher.
      * @return voucherHubAddress The address of the voucher hub.
      */
-    function getVoucherHub() external view returns (address) {
+    function getVoucherHub() public view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._voucherHub;
     }
@@ -78,9 +82,16 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      * Retrieve the type of the voucher.
      * @return voucherType The type of the voucher.
      */
-    function getType() external view returns (uint256) {
+    function getType() public view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._type;
+    }
+
+    /**
+     * Get voucher balance.
+     */
+    function getBalance() external view returns (uint256) {
+        return IERC20(getVoucherHub()).balanceOf(address(this));
     }
 
     /**
@@ -120,5 +131,54 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         require(account != owner(), "Voucher: owner is already authorized.");
         VoucherStorage storage $ = _getVoucherStorage();
         $._authorizedAccounts[account] = isAuthorized;
+    }
+
+    /**
+     * Match orders on Poco. Eligible assets prices will debited on the voucher
+     * if possible, then non-sponsored amount will will be debited on the iExec
+     * account of the requester.
+     *
+     * @param appOrder The app order.
+     * @param datasetOrder The dataset order.
+     * @param workerpoolOrder The workerpool order.
+     * @param requestOrder The request order.
+     */
+    function matchOrders(
+        IexecLibOrders_v5.AppOrder calldata appOrder,
+        IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
+        IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
+        IexecLibOrders_v5.RequestOrder calldata requestOrder
+    ) external returns (bytes32 dealId) {
+        uint256 appPrice = appOrder.appprice;
+        uint256 datasetPrice = datasetOrder.datasetprice;
+        uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
+        IVoucherHub voucherHub = IVoucherHub(getVoucherHub());
+        uint256 sponsoredValue = voucherHub.debitVoucher(
+            getType(),
+            appOrder.app,
+            appPrice,
+            datasetOrder.dataset,
+            datasetPrice,
+            workerpoolOrder.workerpool,
+            workerpoolPrice
+        );
+        uint256 dealPrice = appPrice + datasetPrice + workerpoolPrice;
+        address iexecPoco = voucherHub.getIexecPoco();
+        if (sponsoredValue != dealPrice) {
+            // Deposit non sponsored amount from requester to iExec Poco
+            IERC20(iexecPoco).transferFrom(
+                requestOrder.requester,
+                iexecPoco,
+                dealPrice - sponsoredValue
+            );
+        }
+        dealId = IexecPoco1(iexecPoco).sponsorMatchOrders(
+            appOrder,
+            datasetOrder,
+            workerpoolOrder,
+            requestOrder
+        );
+        emit MatchOrders(dealId);
+        return dealId;
     }
 }

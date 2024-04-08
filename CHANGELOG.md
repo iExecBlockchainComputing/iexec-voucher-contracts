@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Match orders through voucher. (#9)
 - Add role-based access control to VoucherHub. (#8)
 - Create voucher from VoucherHub with : type, expiration, authorize list. (#6)
 - Create vouchers with create2. (#5)
