@@ -15,7 +15,9 @@
   "scripts": {
     "prepare": "husky",
     "build": "npx hardhat compile",
+    "build:forge": "forge build",
     "test": "npx hardhat test",
+    "test:forge": "forge test",
     "coverage": "npx hardhat coverage",
     "format": "npx prettier --write"
   },
