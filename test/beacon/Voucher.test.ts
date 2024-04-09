@@ -280,14 +280,28 @@ describe('Voucher', function () {
     });
 
     describe('Match orders', async function () {
-        let voucherHub: VoucherHub;
-        let voucherOwner1: SignerWithAddress;
-        let voucher: Voucher;
-        let requester: SignerWithAddress;
         const getBalanceOnIexecPoco = () => iexecPocoInstance.balanceOf(voucher.getAddress());
+        const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice);
+        const mockOrder = createMockOrder();
+        const appOrder = { ...mockOrder, app: app, appprice: appPrice };
+        const datasetOrder = {
+            ...mockOrder,
+            dataset: dataset,
+            datasetprice: datasetPrice,
+        };
+        const workerpoolOrder = {
+            ...mockOrder,
+            workerpool: workerpool,
+            workerpoolprice: workerpoolPrice,
+        };
+        let requestOrder = { ...mockOrder };
+        let [voucherOwner1, requester]: SignerWithAddress[] = [];
+        let voucherHub: VoucherHub;
+        let voucher: Voucher;
 
         beforeEach(async () => {
             ({ voucherHub, voucherOwner1, requester } = await loadFixture(deployFixture));
+            requestOrder.requester = requester.address;
             voucher = await voucherHubWithVoucherManagerSigner
                 .createVoucher(voucherOwner1, voucherType, voucherValue)
                 .then((tx) => tx.wait())
@@ -296,26 +310,11 @@ describe('Voucher', function () {
         });
 
         it('Should match orders', async () => {
-            const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice);
-            const mockOrder = createMockOrder();
-            const appOrder = { ...mockOrder, app: app, appprice: appPrice };
-            const datasetOrder = {
-                ...mockOrder,
-                dataset: dataset,
-                datasetprice: datasetPrice,
-            };
-            const workerpoolOrder = {
-                ...mockOrder,
-                workerpool: workerpool,
-                workerpoolprice: workerpoolPrice,
-            };
-            const requestOrder = mockOrder;
-            [app, dataset, workerpool].forEach(
-                async (asset) =>
-                    await voucherHubWithAssetEligibilityManagerSigner
-                        .addEligibleAsset(voucherType, asset)
-                        .then((x) => x.wait()),
-            );
+            for (const asset of [app, dataset, workerpool]) {
+                await voucherHubWithAssetEligibilityManagerSigner
+                    .addEligibleAsset(voucherType, asset)
+                    .then((x) => x.wait());
+            }
             const balanceBefore = await voucher.getBalance();
             const iexecBalanceBefore = await getBalanceOnIexecPoco();
 
@@ -328,7 +327,7 @@ describe('Voucher', function () {
                 ),
             ).to.be.equal(dealId);
             await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
-                .to.emit(voucher, 'MatchOrders')
+                .to.emit(voucher, 'VoucherMatchOrders')
                 .withArgs(dealId);
             expect(await voucher.getBalance())
                 .to.be.equal(balanceBefore - dealPrice)
@@ -336,23 +335,10 @@ describe('Voucher', function () {
                 .to.be.equal(iexecBalanceBefore - dealPrice);
         });
 
-        it('Should match orders without sponsored amount ', async () => {
-            const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice);
-            const mockOrder = createMockOrder();
-            const appOrder = { ...mockOrder, app: app, appprice: appPrice };
-            const datasetOrder = {
-                ...mockOrder,
-                dataset: dataset,
-                datasetprice: datasetPrice,
-            };
-            const workerpoolOrder = {
-                ...mockOrder,
-                workerpool: workerpool,
-                workerpoolprice: workerpoolPrice,
-            };
-            const requestOrder = { ...mockOrder, requester: requester };
+        it('Should match orders with non-sponsored amount ', async () => {
             const balanceBefore = await voucher.getBalance();
             expect(dealPrice).to.be.greaterThan(0); // just make sure the deal will not be free
+            // Deposit in iExec account of requester
             await iexecPocoInstance.transfer(requester, dealPrice).then((tx) => tx.wait());
             await iexecPocoInstance
                 .connect(requester)
@@ -362,8 +348,27 @@ describe('Voucher', function () {
             await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
                 .to.emit(iexecPocoInstance, 'Transfer')
                 .withArgs(requester.address, iexecPoco, dealPrice)
-                .to.emit(voucher, 'MatchOrders');
+                .to.emit(voucher, 'VoucherMatchOrders');
             expect(await voucher.getBalance()).to.be.equal(balanceBefore);
+        });
+
+        it('Should not match orders when non-sponsored amount not transferable', async () => {
+            await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
+                .to.be.revertedWithCustomError(iexecPocoInstance, 'ERC20InsufficientAllowance')
+                .withArgs(await voucher.getAddress(), 0, dealPrice);
+        });
+
+        it('Should not match orders when iExec Poco matching fails', async () => {
+            await iexecPocoInstance.willRevertOnSponsorMatchOrders().then((tx) => tx.wait());
+
+            await expect(
+                voucher.matchOrders(
+                    { ...appOrder, appprice: 0 },
+                    { ...datasetOrder, datasetprice: 0 },
+                    { ...workerpoolOrder, workerpoolprice: 0 },
+                    requestOrder,
+                ),
+            ).to.be.revertedWith('IexecPocoMock: Failed to sponsorMatchOrders');
         });
     });
 });

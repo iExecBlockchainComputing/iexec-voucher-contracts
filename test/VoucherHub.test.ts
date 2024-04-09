@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { AddressLike, BigNumberish } from 'ethers';
@@ -16,7 +17,9 @@ const voucherType = 0;
 const description = 'Early Access';
 const duration = 3600;
 const voucherValue = 100;
-const asset = ethers.Wallet.createRandom().address;
+const random = () => ethers.Wallet.createRandom().address;
+const asset = random();
+const assetPrice = 1;
 
 describe('VoucherHub', function () {
     let voucherHubWithVoucherManagerSigner: VoucherHub;
@@ -51,7 +54,11 @@ describe('VoucherHub', function () {
         voucherHubWithAssetEligibilityManagerSigner = voucherHub.connect(assetEligibilityManager);
         voucherHubWithAnyoneSigner = voucherHub.connect(anyone);
         await iexecPocoInstance
-            .transfer(await voucherHub.getAddress(), 1000)
+            .transfer(
+                await voucherHub.getAddress(),
+                10 * // arbitrary value, but should support couple voucher creations
+                    voucherValue,
+            )
             .then((tx) => tx.wait());
         return {
             beacon,
@@ -604,23 +611,31 @@ describe('VoucherHub', function () {
     });
 
     describe('Debit voucher', function () {
-        it('Should debit voucher', async function () {
-            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+        let [voucherOwner1, voucherOwner2, voucher, anyone]: SignerWithAddress[] = [];
+        let voucherHub: VoucherHub;
+
+        beforeEach(async function () {
+            ({ voucherHub, voucherOwner1, voucherOwner2, anyone } =
+                await loadFixture(deployFixture));
+            // Create voucher type
             await voucherHubWithAssetEligibilityManagerSigner
                 .createVoucherType(description, duration)
                 .then((tx) => tx.wait());
-            const voucherAddress = await voucherHubWithVoucherManagerSigner
-                .createVoucher(voucherOwner1, voucherType, voucherValue)
-                .then((tx) => tx.wait())
-                .then(() => voucherHub.getVoucher(voucherOwner1));
-            const voucher = await ethers.getImpersonatedSigner(voucherAddress);
+            // Add eligible asset
             await voucherHubWithAssetEligibilityManagerSigner
                 .addEligibleAsset(voucherType, asset)
                 .then((tx) => tx.wait());
-            const assetPrice = 1;
+            // Create voucher
+            voucher = await voucherHubWithVoucherManagerSigner
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait())
+                .then(() => voucherHub.getVoucher(voucherOwner1))
+                .then((voucherAddress) => ethers.getImpersonatedSigner(voucherAddress));
+        });
+
+        it('Should debit voucher', async function () {
             const sponsoredValue = BigInt(assetPrice * 3);
-            const balanceBefore = await voucherHub.balanceOf(voucherAddress);
-            const voucherHubWithVoucherSigner = voucherHub.connect(voucher);
+            const balanceBefore = await voucherHub.balanceOf(voucher.address);
 
             const args = [voucherType, asset, assetPrice, asset, assetPrice, asset, assetPrice] as [
                 voucherTypeId: BigNumberish,
@@ -631,37 +646,31 @@ describe('VoucherHub', function () {
                 workerpool: AddressLike,
                 workerpoolPrice: BigNumberish,
             ];
-            expect(await voucherHubWithVoucherSigner.debitVoucher.staticCall(...args)).to.be.equal(
+            expect(await voucherHub.connect(voucher).debitVoucher.staticCall(...args)).to.be.equal(
                 sponsoredValue,
             );
-            await expect(await voucherHubWithVoucherSigner.debitVoucher(...args))
+            await expect(await voucherHub.connect(voucher).debitVoucher(...args))
                 .to.emit(voucherHub, 'Transfer')
-                .withArgs(voucherAddress, ethers.ZeroAddress, sponsoredValue)
+                .withArgs(voucher.address, ethers.ZeroAddress, sponsoredValue)
                 .to.emit(voucherHub, 'VoucherDebited')
-                .withArgs(voucherAddress, sponsoredValue);
-            expect(await voucherHub.balanceOf(voucherAddress)).equals(
+                .withArgs(voucher.address, sponsoredValue);
+            expect(await voucherHub.balanceOf(voucher.address)).equals(
                 balanceBefore - sponsoredValue,
             );
         });
 
-        it('Should debit voucher with no sponsored amount', async function () {
-            const { voucherHub, anyone } = await loadFixture(deployFixture);
-            await voucherHubWithAssetEligibilityManagerSigner
-                .createVoucherType(description, duration)
-                .then((tx) => tx.wait());
-            const somePrice = 1;
-
+        it('Should debit zero when not voucher', async function () {
             const debitVoucher = () =>
                 voucherHub
                     .connect(anyone)
                     .debitVoucher(
                         voucherType,
                         asset,
-                        somePrice,
+                        assetPrice,
                         asset,
-                        somePrice,
+                        assetPrice,
                         asset,
-                        somePrice,
+                        assetPrice,
                     );
             // The matcher 'emit' cannot be chained after or before 'reverted'
             // so we call several times to check different assertions
@@ -669,14 +678,53 @@ describe('VoucherHub', function () {
             await expect(await debitVoucher()).to.not.emit(voucherHub, 'VoucherDebited');
         });
 
-        it('Should not debit voucher when invalid voucher type ID', async function () {
-            const { voucherHub, anyone } = await loadFixture(deployFixture);
-            const somePrice = 1;
+        it('Should debit zero when empty voucher balance', async function () {
+            const emptyVoucher = await voucherHubWithVoucherManagerSigner
+                .createVoucher(voucherOwner2, voucherType, 0)
+                .then((tx) => tx.wait())
+                .then(() => voucherHub.getVoucher(voucherOwner2))
+                .then((voucherAddress) => ethers.getImpersonatedSigner(voucherAddress));
+
+            await expect(
+                await voucherHub
+                    .connect(emptyVoucher)
+                    .debitVoucher(
+                        voucherType,
+                        asset,
+                        assetPrice,
+                        asset,
+                        assetPrice,
+                        asset,
+                        assetPrice,
+                    ),
+            ).to.not.emit(voucherHub, 'VoucherDebited');
+        });
+
+        it('Should debit zero when no eligible asset', async function () {
+            const balanceBefore = await voucherHub.balanceOf(voucher.address);
+            const unEligibleAsset = random();
 
             await expect(
                 voucherHub
+                    .connect(voucher)
+                    .debitVoucher(
+                        voucherType,
+                        unEligibleAsset,
+                        assetPrice,
+                        unEligibleAsset,
+                        assetPrice,
+                        unEligibleAsset,
+                        assetPrice,
+                    ),
+            ).to.not.emit(voucherHub, 'VoucherDebited');
+            expect(await voucherHub.balanceOf(voucher.address)).equals(balanceBefore);
+        });
+
+        it('Should not debit voucher when invalid voucher type ID', async function () {
+            await expect(
+                voucherHub
                     .connect(anyone)
-                    .debitVoucher(999, asset, somePrice, asset, somePrice, asset, somePrice),
+                    .debitVoucher(999, asset, assetPrice, asset, assetPrice, asset, assetPrice),
             ).to.be.revertedWith('VoucherHub: type index out of bounds');
         });
     });

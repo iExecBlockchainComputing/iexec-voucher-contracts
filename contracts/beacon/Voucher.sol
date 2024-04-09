@@ -178,7 +178,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
             workerpoolOrder,
             requestOrder
         );
-        emit MatchOrders(dealId);
+        emit VoucherMatchOrders(dealId);
         return dealId;
     }
 }

@@ -245,20 +245,14 @@ contract VoucherHub is
     }
 
     /**
-     * Debit voucher balance when eligible assets are used.
-     *
-     * @notice 
-     * 
-     * 1. If this function is called by an account which is not a voucher,
+     * @notice Debit voucher balance when eligible assets are used.
+     * (1) If this function is called by an account which is not a voucher,
      * it will have no effect other than consummnig gas since balance would be
      * empty (tokens are only minted for vouchers).
- 
-     * 2. This function should not revert even if the amount debited is zero when:
-     * - no asset is eligible or
-     * - balance from caller is empty
-     * 
-     * Thanks to that it is possible to try to debit the voucher in best effort
-     * mode (In short: "use voucher if possible"), before trying other payment methods.
+     * (2) This function should not revert even if the amount debited is zero when
+     * no asset is eligible or balance from caller is empty. Thanks to that it is
+     * possible to try to debit the voucher in best effort mode (In short: "use
+     * voucher if possible"), before trying other payment methods.
      */
     function debitVoucher(
         uint256 voucherTypeId,
