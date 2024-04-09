@@ -82,7 +82,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      * Retrieve the type of the voucher.
      * @return voucherType The type of the voucher.
      */
-    function getType() public view returns (uint256) {
+    function getType() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._type;
     }
@@ -152,9 +152,10 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 appPrice = appOrder.appprice;
         uint256 datasetPrice = datasetOrder.datasetprice;
         uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
-        IVoucherHub voucherHub = IVoucherHub(getVoucherHub());
+        VoucherStorage storage $ = _getVoucherStorage();
+        IVoucherHub voucherHub = IVoucherHub($._voucherHub);
         uint256 sponsoredValue = voucherHub.debitVoucher(
-            getType(),
+            $._type,
             appOrder.app,
             appPrice,
             datasetOrder.dataset,
