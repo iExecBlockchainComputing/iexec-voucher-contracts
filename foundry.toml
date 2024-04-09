@@ -5,3 +5,4 @@ libs = ['node_modules', 'lib']
 test = 'test'
 script = 'scripts'
 cache_path  = 'cache_forge'
+solc = "0.8.24"
