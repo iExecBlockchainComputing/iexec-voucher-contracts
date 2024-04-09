@@ -7,7 +7,26 @@ import 'hardhat-dependency-compiler';
 import { HardhatUserConfig } from 'hardhat/config';
 
 const config: HardhatUserConfig = {
-    solidity: '0.8.24',
+    solidity: {
+        compilers: [
+            {
+                version: '0.8.24',
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 200,
+                    },
+                },
+            },
+        ],
+    },
+    networks: {
+        hardhat: {
+            hardfork: 'berlin', // No EIP-1559 before London fork
+            gasPrice: 0,
+            blockGasLimit: 6_700_000,
+        },
+    },
     dependencyCompiler: {
         paths: ['@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol'],
     },
