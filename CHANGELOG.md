@@ -2,7 +2,7 @@
 
 ## vNEXT
 - Upgrade configuration: (#9)
-    - dependencies: hardhat, husky, iExec Poco.
+    - Upgrade dependencies: hardhat, husky, iExec Poco.
     - Ignore mocks in coverage.
     - Add solidity optimizer and use Bellecour network config.
 - Add role-based access control to VoucherHub. (#8)
