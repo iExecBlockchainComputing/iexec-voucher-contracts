@@ -166,10 +166,11 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 dealPrice = appPrice + datasetPrice + workerpoolPrice;
         address iexecPoco = voucherHub.getIexecPoco();
         if (sponsoredValue != dealPrice) {
-            // Deposit non sponsored amount from requester to iExec Poco
+            // Transfer non-sponsored amount from the iExec account of the
+            // requester to the iExec account of the voucher
             IERC20(iexecPoco).transferFrom(
                 requestOrder.requester,
-                iexecPoco,
+                address(this),
                 dealPrice - sponsoredValue
             );
         }

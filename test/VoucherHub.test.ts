@@ -11,17 +11,17 @@ import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import { IexecPocoMock__factory, Voucher } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
+import { random } from './utils/address-utils';
 
-let iexecPoco: string;
 const voucherType = 0;
 const description = 'Early Access';
 const duration = 3600;
 const voucherValue = 100;
-const random = () => ethers.Wallet.createRandom().address;
 const asset = random();
 const assetPrice = 1;
 
 describe('VoucherHub', function () {
+    let iexecPoco: string;
     let voucherHubWithVoucherManagerSigner: VoucherHub;
     let voucherHubWithAssetEligibilityManagerSigner: VoucherHub;
     let voucherHubWithAnyoneSigner: VoucherHub;

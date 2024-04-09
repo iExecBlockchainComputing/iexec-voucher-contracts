@@ -239,20 +239,28 @@ contract VoucherHub is
         // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
         Voucher(voucherAddress).initialize(owner, address(this), voucherExpiration, voucherType);
-        IERC20($._iexecPoco).transfer(voucherAddress, value); // sRLC
+        IERC20($._iexecPoco).transfer(voucherAddress, value); // SRLC
         _mint(voucherAddress, value); // VCHR
         emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType);
     }
 
     /**
-     * @notice Debit voucher balance when eligible assets are used.
-     * (1) If this function is called by an account which is not a voucher,
+     * Debit voucher balance when eligible assets are used.
+     * @notice (1) If this function is called by an account which is not a voucher,
      * it will have no effect other than consummnig gas since balance would be
      * empty (tokens are only minted for vouchers).
      * (2) This function should not revert even if the amount debited is zero when
      * no asset is eligible or balance from caller is empty. Thanks to that it is
      * possible to try to debit the voucher in best effort mode (In short: "use
      * voucher if possible"), before trying other payment methods.
+     *
+     * @param voucherTypeId The type ID of the voucher to debit.
+     * @param app The app address.
+     * @param appPrice The app price.
+     * @param dataset The dataset address.
+     * @param datasetPrice The dataset price.
+     * @param workerpool The workerpool address.
+     * @param workerpoolPrice The workerpool price.
      */
     function debitVoucher(
         uint256 voucherTypeId,

@@ -22,14 +22,14 @@ contract IexecPocoMock is ERC20 {
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
         IexecLibOrders_v5.RequestOrder calldata requestOrder
     ) external returns (bytes32 dealId) {
+        requestOrder; // Silent warning
         if (shouldRevertOnSponsorMatchOrders) {
             revert("IexecPocoMock: Failed to sponsorMatchOrders");
         }
-        requestOrder; // Silent warning
-        uint256 dealPrice = appOrder.appprice +
-            datasetOrder.datasetprice +
-            workerpoolOrder.workerpoolprice;
-        _burn(msg.sender, dealPrice);
+        _burn(
+            msg.sender,
+            appOrder.appprice + datasetOrder.datasetprice + workerpoolOrder.workerpoolprice
+        );
         return keccak256("deal");
     }
 
