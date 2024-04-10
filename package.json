@@ -13,7 +13,8 @@
   },
   "homepage": "https://github.com/iExecBlockchainComputing/iexec-voucher-contracts#readme",
   "scripts": {
-    "postinstall": "ts-node modify-api-js.ts",
+    "postinstall": "ts-node scripts/modify-solidity-coverage-lib-api-js.ts",
+    "postinstall_comment": "Set no gas price in coverage. Otherwise 'Sender doesn't have enough funds to send tx'. See https://github.com/sc-forks/solidity-coverage/issues/754",
     "prepare": "husky",
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
