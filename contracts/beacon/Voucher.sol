@@ -5,7 +5,6 @@ pragma solidity ^0.8.20;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IexecPocoMock} from "../mocks/IexecPocoMock.sol";
 import {IVoucherHub} from "../IVoucherHub.sol";
 import {IVoucher} from "./IVoucher.sol";
 
@@ -26,11 +25,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     // & ~bytes32(uint256(0xff));
     bytes32 private constant VOUCHER_STORAGE_LOCATION =
         0xc2e244293dc04d6c7fa946e063317ff8e6770fd48cbaff411a60f1efc8a7e800;
-
-    modifier onlyAuthorized() {
-        require(isAccountAuthorized(msg.sender), "Voucher: caller is not authorized.");
-        _;
-    }
 
     function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
         assembly {
@@ -135,13 +129,5 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         require(account != owner(), "Voucher: owner is already authorized.");
         VoucherStorage storage $ = _getVoucherStorage();
         $._authorizedAccounts[account] = isAuthorized;
-    }
-
-    function debitCreditAndBurnRLC(uint256 creditAmount) external onlyAuthorized {
-        VoucherStorage storage $ = _getVoucherStorage();
-        IVoucherHub voucherHub = IVoucherHub($._voucherHub);
-        voucherHub.debitVoucher(creditAmount);
-        address iexecPoco = voucherHub.getIexecPoco();
-        IexecPocoMock(iexecPoco).burnsRLC(creditAmount);
     }
 }

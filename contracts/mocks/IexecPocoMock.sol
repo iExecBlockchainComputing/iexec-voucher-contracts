@@ -9,13 +9,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * @notice Testing purposes only.
  */
 contract IexecPocoMock is ERC20 {
-    bool public shouldRevertOnSponsorMatchOrders = false;
-
     constructor() ERC20("Staked RLC", "SRLC") {
         _mint(msg.sender, 1000000);
-    }
-
-    function burnsRLC(uint256 brunedAmount) external {
-        _burn(msg.sender, brunedAmount);
     }
 }
