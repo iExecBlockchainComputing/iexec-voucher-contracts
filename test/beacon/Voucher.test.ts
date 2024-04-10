@@ -13,6 +13,7 @@ const voucherType = 0;
 const duration = 3600;
 const description = 'Early Access';
 const voucherValue = 100;
+const debitedValue = 25;
 
 describe('Voucher', function () {
     let iexecPoco: string;
@@ -285,25 +286,24 @@ describe('Voucher', function () {
             const initialsRLCVoucherBalance = await iexecPocoInstance.balanceOf(
                 voucher.getAddress(),
             );
-            const debitAmount = 50; // Define the amount to debit from the voucher
 
             // Debit the voucher
-            await voucher.connect(voucherOwner1).debitCreditAndBurnRLC(debitAmount);
+            await voucher.connect(voucherOwner1).debitCreditAndBurnRLC(debitedValue);
 
             // Check if the voucher balance is reduced by the debit amount
             const finalVoucherBalance = await voucher.getBalance();
             const finalsRLCVoucherBalance = await iexecPocoInstance.balanceOf(voucher.getAddress());
             expect(finalVoucherBalance).to.equal(
-                initialCreditVoucherBalance - BigInt(debitAmount),
+                initialCreditVoucherBalance - BigInt(debitedValue),
                 'Voucher balance not debited correctly',
             );
             expect(finalsRLCVoucherBalance).to.equal(
-                initialsRLCVoucherBalance - BigInt(debitAmount),
+                initialsRLCVoucherBalance - BigInt(debitedValue),
                 'Voucher balance not debited correctly',
             );
         });
 
-        it('Should not debit voucher if the caller is unauthorize ', async () => {
+        it('Should not debit voucher if the caller is not authorized', async () => {
             const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner1,
@@ -317,11 +317,11 @@ describe('Voucher', function () {
             const initialsRLCVoucherBalance = await iexecPocoInstance.balanceOf(
                 voucher.getAddress(),
             );
-            const debitAmount = 50; // Define the amount to debit from the voucher
+            const debitedValue = 50; // Define the amount to debit from the voucher
 
             // Debit the voucher
             await expect(
-                voucher.connect(anyone).debitCreditAndBurnRLC(debitAmount),
+                voucher.connect(anyone).debitCreditAndBurnRLC(debitedValue),
             ).to.be.revertedWith('Voucher: caller is not authorized.');
 
             // Check if the voucher balance is reduced by the debit amount
@@ -329,6 +329,21 @@ describe('Voucher', function () {
             const finalsRLCVoucherBalance = await iexecPocoInstance.balanceOf(voucher.getAddress());
             expect(finalVoucherBalance).to.equal(initialCreditVoucherBalance);
             expect(finalsRLCVoucherBalance).to.equal(initialsRLCVoucherBalance);
+        });
+    });
+
+    describe('Voucher Balance', function () {
+        it('Should have correct initial voucher balance', async () => {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
+                voucherOwner1,
+                voucherType,
+                voucherValue,
+            );
+            await createVoucherTx.wait();
+            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
+            const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
+            expect(await voucher.getBalance()).to.equal(voucherValue);
         });
     });
 });
