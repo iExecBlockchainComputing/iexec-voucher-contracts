@@ -114,6 +114,16 @@ contract VoucherHub is
         revert("VoucherHub: Unsupported transferFrom");
     }
 
+    /**
+     *
+     * @notice See `transfer` note above.
+     */
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+        spender; // Silence unused warning
+        amount; // Silence unused warning
+        revert("VoucherHub: Unsupported approve");
+    }
+
     function createVoucherType(
         string memory description,
         uint256 duration
