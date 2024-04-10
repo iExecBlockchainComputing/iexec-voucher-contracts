@@ -62,7 +62,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      * Retrieve the address of the voucher hub associated with the voucher.
      * @return voucherHubAddress The address of the voucher hub.
      */
-    function getVoucherHub() public view returns (address) {
+    function getVoucherHub() external view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._voucherHub;
     }
