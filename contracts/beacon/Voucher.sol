@@ -28,7 +28,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         0xc2e244293dc04d6c7fa946e063317ff8e6770fd48cbaff411a60f1efc8a7e800;
 
     modifier onlyAuthorized() {
-        require(isAccountAuthorized(msg.sender), "VoucherHub: caller is not authorized");
+        require(isAccountAuthorized(msg.sender), "Voucher: caller is not authorized.");
         _;
     }
 
@@ -137,9 +137,10 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         $._authorizedAccounts[account] = isAuthorized;
     }
 
-    function debitCreditAndBurnRLC(uint256 creditAmount) external {
+    function debitCreditAndBurnRLC(uint256 creditAmount) external onlyAuthorized {
         VoucherStorage storage $ = _getVoucherStorage();
         IVoucherHub voucherHub = IVoucherHub($._voucherHub);
+        voucherHub.debitVoucher(creditAmount);
         address iexecPoco = voucherHub.getIexecPoco();
         IexecPocoMock(iexecPoco).burnsRLC(creditAmount);
     }
