@@ -151,7 +151,7 @@ describe('VoucherHub', function () {
     });
 
     describe('Create voucher type', function () {
-        it('Should create a voucher type when the caller is authorized', async function () {
+        it('Should create a voucher type when the caller is authorized', async () => {
             const { voucherHub } = await loadFixture(deployFixture);
             const createTypeTx =
                 await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
@@ -169,7 +169,7 @@ describe('VoucherHub', function () {
             expect(count).to.equal(1);
         });
 
-        it('Should not create a voucher type when the caller is not authorized', async function () {
+        it('Should not create a voucher type when the caller is not authorized', async () => {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
             await expect(
                 voucherHubWithAnyoneSigner.createVoucherType(description, duration),
@@ -178,7 +178,7 @@ describe('VoucherHub', function () {
     });
 
     describe('Get voucher type', function () {
-        it('Should not get the voucher type when the voucher type ID is out of bounds', async function () {
+        it('Should not get the voucher type when the voucher type ID is out of bounds', async () => {
             const { voucherHub } = await loadFixture(deployFixture);
             await expect(voucherHub.getVoucherType(999)).to.be.revertedWith(
                 'VoucherHub: type index out of bounds',
@@ -188,7 +188,7 @@ describe('VoucherHub', function () {
 
     describe('Update voucher type description', function () {
         const newDescription = 'Long Term Duration';
-        it('Should update voucher description', async function () {
+        it('Should update voucher description', async () => {
             const { voucherHub, assetEligibilityManager } = await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
                 description,
@@ -205,7 +205,7 @@ describe('VoucherHub', function () {
                 .withArgs(0, newDescription);
         });
 
-        it('Should not update voucher description when the caller is not authorized', async function () {
+        it('Should not update voucher description when the caller is not authorized', async () => {
             const { voucherHub, assetEligibilityManager, anyone } =
                 await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
@@ -217,7 +217,7 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
         });
 
-        it('Should not update description when the voucher type ID is out of bounds', async function () {
+        it('Should not update description when the voucher type ID is out of bounds', async () => {
             const { voucherHub, assetEligibilityManager } = await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
                 description,
@@ -234,7 +234,7 @@ describe('VoucherHub', function () {
 
     describe('Update voucher type duration', function () {
         const newDuration = 7200;
-        it('Should update voucher duration', async function () {
+        it('Should update voucher duration', async () => {
             const { voucherHub, assetEligibilityManager } = await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
                 description,
@@ -251,7 +251,7 @@ describe('VoucherHub', function () {
                 .withArgs(0, newDuration);
         });
 
-        it('Should not update voucher duration when the caller is not authorized', async function () {
+        it('Should not update voucher duration when the caller is not authorized', async () => {
             const { voucherHub, assetEligibilityManager, anyone } =
                 await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
@@ -263,7 +263,7 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
         });
 
-        it('Should not update duration when the voucher type ID is out of bounds', async function () {
+        it('Should not update duration when the voucher type ID is out of bounds', async () => {
             const { voucherHub, assetEligibilityManager } = await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
                 description,
@@ -279,7 +279,7 @@ describe('VoucherHub', function () {
     });
 
     describe('Asset Eligibility', function () {
-        it('Should set and unset asset eligibility', async function () {
+        it('Should set and unset asset eligibility', async () => {
             const { voucherHub, assetEligibilityManager } = await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
                 description,
@@ -303,7 +303,7 @@ describe('VoucherHub', function () {
                 .false;
         });
 
-        it('Should not set asset eligibility when the caller is not authorized', async function () {
+        it('Should not set asset eligibility when the caller is not authorized', async () => {
             const { voucherHub, assetEligibilityManager, anyone } =
                 await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
@@ -315,7 +315,7 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
         });
 
-        it('Should not unset asset eligibility when the caller is not authorized', async function () {
+        it('Should not unset asset eligibility when the caller is not authorized', async () => {
             const { voucherHub, assetEligibilityManager, anyone } =
                 await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
@@ -334,7 +334,7 @@ describe('VoucherHub', function () {
         });
     });
 
-    describe('Create voucher', async function () {
+    describe('Create voucher', function () {
         it('Should create and initialize voucher', async () => {
             const { beacon, voucherHub, assetEligibilityManager, voucherManager, voucherOwner1 } =
                 await loadFixture(deployFixture);
@@ -633,11 +633,11 @@ describe('VoucherHub', function () {
         });
     });
 
-    describe('Debit voucher', () => {
+    describe('Debit voucher', function () {
         let [voucherOwner1, voucherOwner2, voucher, anyone]: SignerWithAddress[] = [];
         let voucherHub: VoucherHub;
 
-        beforeEach(async function () {
+        beforeEach(async () => {
             ({ voucherHub, voucherOwner1, voucherOwner2, anyone } =
                 await loadFixture(deployFixture));
             // Create voucher type
@@ -652,7 +652,7 @@ describe('VoucherHub', function () {
                 .then((voucherAddress) => ethers.getImpersonatedSigner(voucherAddress));
         });
 
-        it('Should debit voucher', async function () {
+        it('Should debit voucher', async () => {
             const balanceBefore = await voucherHub.balanceOf(voucher.address);
             await expect(await voucherHub.connect(voucher).debitVoucher(debitedValue))
                 .to.emit(voucherHub, 'Transfer')
@@ -666,21 +666,21 @@ describe('VoucherHub', function () {
     });
 
     describe('Get voucher', function () {
-        it('Should return address 0 when voucher is not created', async function () {
+        it('Should return address 0 when voucher is not created', async () => {
             const { voucherHub, owner } = await loadFixture(deployFixture);
             await expect(await voucherHub.getVoucher(owner)).to.be.equal(ethers.ZeroAddress);
         });
     });
 
     describe('ERC20', function () {
-        it('Should not transfer', async function () {
+        it('Should not transfer', async () => {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
             await expect(voucherHub.transfer(anyone, 0)).to.be.revertedWith(
                 'VoucherHub: Unsupported transfer',
             );
         });
 
-        it('Should not transferFrom', async function () {
+        it('Should not transferFrom', async () => {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
             await expect(voucherHub.transferFrom(anyone, anyone, 0)).to.be.revertedWith(
                 'VoucherHub: Unsupported transferFrom',

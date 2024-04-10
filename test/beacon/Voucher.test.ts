@@ -66,7 +66,7 @@ describe('Voucher', function () {
         };
     }
 
-    describe('Upgrade', async function () {
+    describe('Upgrade', function () {
         it('Should upgrade all vouchers', async () => {
             const { beacon, voucherHub, owner, voucherOwner1, voucherOwner2 } =
                 await loadFixture(deployFixture);
@@ -162,7 +162,7 @@ describe('Voucher', function () {
         });
     });
 
-    describe('Authorization', async function () {
+    describe('Authorization', function () {
         it('Should authorize an account', async () => {
             const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
@@ -270,7 +270,7 @@ describe('Voucher', function () {
         });
     });
 
-    describe('Debit voucher', async function () {
+    describe('Debit voucher', function () {
         it('Should debit voucher', async () => {
             const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
