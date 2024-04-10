@@ -6,6 +6,7 @@ pragma solidity ^0.8.20;
 interface IVoucher {
     event AccountAuthorized(address indexed account);
     event AccountUnauthorized(address indexed account);
+    event VoucherMatchOrders(bytes32 dealId);
 
     function getVoucherHub() external view returns (address);
     function getExpiration() external view returns (uint256);
@@ -14,4 +15,6 @@ interface IVoucher {
     function authorizeAccount(address account) external;
     function unauthorizeAccount(address account) external;
     function isAccountAuthorized(address account) external view returns (bool);
+
+    function debitCreditAndBurnRLC(uint256 creditAmount) external;
 }

@@ -4,6 +4,9 @@
 pragma solidity ^0.8.20;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IexecPocoMock} from "../mocks/IexecPocoMock.sol";
+import {IVoucherHub} from "../IVoucherHub.sol";
 import {IVoucher} from "./IVoucher.sol";
 
 /**
@@ -23,6 +26,11 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     // & ~bytes32(uint256(0xff));
     bytes32 private constant VOUCHER_STORAGE_LOCATION =
         0xc2e244293dc04d6c7fa946e063317ff8e6770fd48cbaff411a60f1efc8a7e800;
+
+    modifier onlyAuthorized() {
+        require(isAccountAuthorized(msg.sender), "VoucherHub: caller is not authorized");
+        _;
+    }
 
     function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
         assembly {
@@ -60,7 +68,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      * Retrieve the address of the voucher hub associated with the voucher.
      * @return voucherHubAddress The address of the voucher hub.
      */
-    function getVoucherHub() external view returns (address) {
+    function getVoucherHub() public view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._voucherHub;
     }
@@ -81,6 +89,13 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     function getType() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._type;
+    }
+
+    /**
+     * Get voucher balance.
+     */
+    function getBalance() external view returns (uint256) {
+        return IERC20(getVoucherHub()).balanceOf(address(this));
     }
 
     /**
@@ -106,7 +121,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      * @param account The account to check.
      * @return isAuthorized True if the account is authorized, false otherwise.
      */
-    function isAccountAuthorized(address account) external view returns (bool) {
+    function isAccountAuthorized(address account) public view returns (bool) {
         VoucherStorage storage $ = _getVoucherStorage();
         return account == owner() || $._authorizedAccounts[account];
     }
@@ -120,5 +135,12 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         require(account != owner(), "Voucher: owner is already authorized.");
         VoucherStorage storage $ = _getVoucherStorage();
         $._authorizedAccounts[account] = isAuthorized;
+    }
+
+    function debitCreditAndBurnRLC(uint256 creditAmount) external {
+        VoucherStorage storage $ = _getVoucherStorage();
+        IVoucherHub voucherHub = IVoucherHub($._voucherHub);
+        address iexecPoco = voucherHub.getIexecPoco();
+        IexecPocoMock(iexecPoco).burnsRLC(creditAmount);
     }
 }
