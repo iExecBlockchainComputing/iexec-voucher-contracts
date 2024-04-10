@@ -62,7 +62,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      * Retrieve the address of the voucher hub associated with the voucher.
      * @return voucherHubAddress The address of the voucher hub.
      */
-    function getVoucherHub() external view returns (address) {
+    function getVoucherHub() public view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._voucherHub;
     }
@@ -115,7 +115,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      * @param account The account to check.
      * @return isAuthorized True if the account is authorized, false otherwise.
      */
-    function isAccountAuthorized(address account) public view returns (bool) {
+    function isAccountAuthorized(address account) external view returns (bool) {
         VoucherStorage storage $ = _getVoucherStorage();
         return account == owner() || $._authorizedAccounts[account];
     }
