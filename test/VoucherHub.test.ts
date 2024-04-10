@@ -353,7 +353,10 @@ describe('VoucherHub', function () {
             );
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
-            const balanceCreation = await voucherHub.balanceOf(voucher.getAddress());
+            const creditBalanceCreation = await voucherHub.balanceOf(voucher.getAddress());
+            const sRLCVoucherCreationBalance = await iexecPocoInstance.balanceOf(
+                voucher.getAddress(),
+            );
             const voucherAsProxy = await commonUtils.getVoucherAsProxy(voucherAddress);
             const expectedExpiration = await commonUtils.getExpectedExpiration(
                 duration,
@@ -362,7 +365,8 @@ describe('VoucherHub', function () {
             // Run assertions.
             expect(sRLCinitBalance).to.equal(10 * voucherValue);
             expect(sRLCAfterCreationBalance).to.equal(9 * voucherValue);
-            expect(balanceCreation).to.equal(voucherValue);
+            expect(creditBalanceCreation).to.equal(voucherValue);
+            expect(sRLCVoucherCreationBalance).to.equal(voucherValue);
             // Events.
             await expect(createVoucherTx)
                 .to.emit(voucherAsProxy, 'BeaconUpgraded')
