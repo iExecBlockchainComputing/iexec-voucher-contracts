@@ -6,3 +6,7 @@ test = 'test'
 script = 'scripts'
 cache_path  = 'cache_forge'
 solc = "0.8.24"
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
