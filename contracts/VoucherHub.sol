@@ -94,7 +94,7 @@ contract VoucherHub is
      * @notice VCHR is not transferable.
      */
     function transfer(address to, uint256 value) public pure override returns (bool) {
-        to; // Silence unsused
+        to; // Silence unused
         value; // variable warnings
         revert("VoucherHub: Unsupported transfer");
     }
