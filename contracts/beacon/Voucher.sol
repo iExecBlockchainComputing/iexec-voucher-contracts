@@ -4,6 +4,8 @@
 pragma solidity ^0.8.20;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IVoucherHub} from "../IVoucherHub.sol";
 import {IVoucher} from "./IVoucher.sol";
 
 /**
@@ -60,7 +62,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      * Retrieve the address of the voucher hub associated with the voucher.
      * @return voucherHubAddress The address of the voucher hub.
      */
-    function getVoucherHub() external view returns (address) {
+    function getVoucherHub() public view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._voucherHub;
     }
@@ -81,6 +83,13 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     function getType() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._type;
+    }
+
+    /**
+     * Get voucher balance.
+     */
+    function getBalance() external view returns (uint256) {
+        return IERC20(getVoucherHub()).balanceOf(address(this));
     }
 
     /**

@@ -3,16 +3,24 @@
 
 pragma solidity ^0.8.20;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {AccessControlDefaultAdminRulesUpgradeable} from "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {Voucher} from "./beacon/Voucher.sol";
 import {VoucherProxy} from "./beacon/VoucherProxy.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
 
-contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeable, IVoucherHub {
+contract VoucherHub is
+    AccessControlDefaultAdminRulesUpgradeable,
+    ERC20Upgradeable,
+    UUPSUpgradeable,
+    IVoucherHub
+{
     // Grant/revoke roles through delayed 2 steps process.
     // Used to grant the rest of the roles.
     // Granted to msg.sender == defaultAdmin() == owner()
@@ -69,6 +77,7 @@ contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeabl
         _grantRole(UPGRADE_MANAGER_ROLE, msg.sender);
         _grantRole(ASSET_ELIGIBILITY_MANAGER_ROLE, assetEligibilityManager);
         _grantRole(VOUCHER_MANAGER_ROLE, voucherManager);
+        __ERC20_init("iExec Voucher token", "VCHR");
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;
@@ -79,6 +88,40 @@ contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeabl
                 abi.encode($._voucherBeacon) // constructor args
             )
         );
+    }
+
+    /**
+     * @notice VCHR is not transferable.
+     */
+    function transfer(address to, uint256 value) public pure override returns (bool) {
+        to; // Silence unsused
+        value; // variable warnings
+        revert("VoucherHub: Unsupported transfer");
+    }
+
+    /**
+     *
+     * @notice See `transfer` note above.
+     */
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) public pure override returns (bool) {
+        from; // Silence
+        to; // unsused variable
+        value; // warning
+        revert("VoucherHub: Unsupported transferFrom");
+    }
+
+    /**
+     *
+     * @notice See `transfer` note above.
+     */
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+        spender; // Silence unused warning
+        amount; // Silence unused warning
+        revert("VoucherHub: Unsupported approve");
     }
 
     function createVoucherType(
@@ -196,7 +239,8 @@ contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeabl
      */
     function createVoucher(
         address owner,
-        uint256 voucherType
+        uint256 voucherType,
+        uint256 value
     ) external onlyRole(VOUCHER_MANAGER_ROLE) returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         uint256 voucherExpiration = block.timestamp + getVoucherType(voucherType).duration;
@@ -205,7 +249,14 @@ contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeabl
         // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
         Voucher(voucherAddress).initialize(owner, address(this), voucherExpiration, voucherType);
+        IERC20($._iexecPoco).transfer(voucherAddress, value); // SRLC
+        _mint(voucherAddress, value); // VCHR
         emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType);
+    }
+
+    function debitVoucher(uint256 debitAmount) external {
+        _burn(msg.sender, debitAmount);
+        emit VoucherDebited(msg.sender, debitAmount);
     }
 
     /**

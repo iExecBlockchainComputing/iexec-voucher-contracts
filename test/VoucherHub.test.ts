@@ -1,22 +1,27 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import * as commonUtils from '../scripts/common';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
-import { Voucher } from '../typechain-types';
+import { IexecPocoMock, IexecPocoMock__factory, Voucher } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 
-const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // random
 const voucherType = 0;
 const description = 'Early Access';
 const duration = 3600;
 const asset = ethers.Wallet.createRandom().address;
+const voucherValue = 100;
+const debitedValue = 25;
+const initVoucherHubBalance = 10 * voucherValue; // arbitrary value, but should support couple voucher creations
 
 describe('VoucherHub', function () {
+    let iexecPoco: string;
+    let iexecPocoInstance: IexecPocoMock;
     let voucherHubWithVoucherManagerSigner: VoucherHub;
     let voucherHubWithAssetEligibilityManagerSigner: VoucherHub;
     let voucherHubWithAnyoneSigner: VoucherHub;
@@ -34,6 +39,11 @@ describe('VoucherHub', function () {
             anyone,
         ] = await ethers.getSigners();
         const beacon = await voucherUtils.deployBeaconAndImplementation(owner.address);
+        iexecPocoInstance = await new IexecPocoMock__factory()
+            .connect(owner)
+            .deploy()
+            .then((x) => x.waitForDeployment());
+        iexecPoco = await iexecPocoInstance.getAddress();
         const voucherHub = await voucherHubUtils.deployHub(
             assetEligibilityManager.address,
             voucherManager.address,
@@ -43,6 +53,9 @@ describe('VoucherHub', function () {
         voucherHubWithVoucherManagerSigner = voucherHub.connect(voucherManager);
         voucherHubWithAssetEligibilityManagerSigner = voucherHub.connect(assetEligibilityManager);
         voucherHubWithAnyoneSigner = voucherHub.connect(anyone);
+        await iexecPocoInstance
+            .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
+            .then((tx) => tx.wait());
         return {
             beacon,
             voucherHub,
@@ -135,7 +148,7 @@ describe('VoucherHub', function () {
     });
 
     describe('Create voucher type', function () {
-        it('Should create a voucher type when the caller is authorized', async function () {
+        it('Should create a voucher type when the caller is authorized', async () => {
             const { voucherHub } = await loadFixture(deployFixture);
             const createTypeTx =
                 await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
@@ -153,7 +166,7 @@ describe('VoucherHub', function () {
             expect(count).to.equal(1);
         });
 
-        it('Should not create a voucher type when the caller is not authorized', async function () {
+        it('Should not create a voucher type when the caller is not authorized', async () => {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
             await expect(
                 voucherHubWithAnyoneSigner.createVoucherType(description, duration),
@@ -162,7 +175,7 @@ describe('VoucherHub', function () {
     });
 
     describe('Get voucher type', function () {
-        it('Should not get the voucher type when the voucher type ID is out of bounds', async function () {
+        it('Should not get the voucher type when the voucher type ID is out of bounds', async () => {
             const { voucherHub } = await loadFixture(deployFixture);
             await expect(voucherHub.getVoucherType(999)).to.be.revertedWith(
                 'VoucherHub: type index out of bounds',
@@ -172,7 +185,7 @@ describe('VoucherHub', function () {
 
     describe('Update voucher type description', function () {
         const newDescription = 'Long Term Duration';
-        it('Should update voucher description', async function () {
+        it('Should update voucher description', async () => {
             const { voucherHub, assetEligibilityManager } = await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
                 description,
@@ -189,7 +202,7 @@ describe('VoucherHub', function () {
                 .withArgs(0, newDescription);
         });
 
-        it('Should not update voucher description when the caller is not authorized', async function () {
+        it('Should not update voucher description when the caller is not authorized', async () => {
             const { voucherHub, assetEligibilityManager, anyone } =
                 await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
@@ -201,7 +214,7 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
         });
 
-        it('Should not update description when the voucher type ID is out of bounds', async function () {
+        it('Should not update description when the voucher type ID is out of bounds', async () => {
             const { voucherHub, assetEligibilityManager } = await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
                 description,
@@ -218,7 +231,7 @@ describe('VoucherHub', function () {
 
     describe('Update voucher type duration', function () {
         const newDuration = 7200;
-        it('Should update voucher duration', async function () {
+        it('Should update voucher duration', async () => {
             const { voucherHub, assetEligibilityManager } = await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
                 description,
@@ -235,7 +248,7 @@ describe('VoucherHub', function () {
                 .withArgs(0, newDuration);
         });
 
-        it('Should not update voucher duration when the caller is not authorized', async function () {
+        it('Should not update voucher duration when the caller is not authorized', async () => {
             const { voucherHub, assetEligibilityManager, anyone } =
                 await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
@@ -247,7 +260,7 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
         });
 
-        it('Should not update duration when the voucher type ID is out of bounds', async function () {
+        it('Should not update duration when the voucher type ID is out of bounds', async () => {
             const { voucherHub, assetEligibilityManager } = await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
                 description,
@@ -263,7 +276,7 @@ describe('VoucherHub', function () {
     });
 
     describe('Asset Eligibility', function () {
-        it('Should set and unset asset eligibility', async function () {
+        it('Should set and unset asset eligibility', async () => {
             const { voucherHub, assetEligibilityManager } = await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
                 description,
@@ -287,7 +300,7 @@ describe('VoucherHub', function () {
                 .false;
         });
 
-        it('Should not set asset eligibility when the caller is not authorized', async function () {
+        it('Should not set asset eligibility when the caller is not authorized', async () => {
             const { voucherHub, assetEligibilityManager, anyone } =
                 await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
@@ -299,7 +312,7 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
         });
 
-        it('Should not unset asset eligibility when the caller is not authorized', async function () {
+        it('Should not unset asset eligibility when the caller is not authorized', async () => {
             const { voucherHub, assetEligibilityManager, anyone } =
                 await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
@@ -318,7 +331,7 @@ describe('VoucherHub', function () {
         });
     });
 
-    describe('Create voucher', async function () {
+    describe('Create voucher', function () {
         it('Should create and initialize voucher', async () => {
             const { beacon, voucherHub, assetEligibilityManager, voucherManager, voucherOwner1 } =
                 await loadFixture(deployFixture);
@@ -327,18 +340,30 @@ describe('VoucherHub', function () {
                 duration,
             );
             // Create voucher.
+            const sRLCinitBalance = await iexecPocoInstance.balanceOf(voucherHub.getAddress());
             const createVoucherTx = await voucherHubWithVoucherManagerSigner
-                .createVoucher(voucherOwner1, voucherType)
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
                 .then((tx) => tx.wait());
 
+            const sRLCAfterCreationBalance = await iexecPocoInstance.balanceOf(
+                voucherHub.getAddress(),
+            );
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
+            const creditBalanceCreation = await voucherHub.balanceOf(voucher.getAddress());
+            const sRLCVoucherCreationBalance = await iexecPocoInstance.balanceOf(
+                voucher.getAddress(),
+            );
             const voucherAsProxy = await commonUtils.getVoucherAsProxy(voucherAddress);
             const expectedExpiration = await commonUtils.getExpectedExpiration(
                 duration,
                 createVoucherTx,
             );
             // Run assertions.
+            expect(sRLCinitBalance).to.equal(initVoucherHubBalance);
+            expect(sRLCAfterCreationBalance).to.equal(sRLCinitBalance - BigInt(voucherValue));
+            expect(creditBalanceCreation).to.equal(voucherValue);
+            expect(sRLCVoucherCreationBalance).to.equal(voucherValue);
             // Events.
             await expect(createVoucherTx)
                 .to.emit(voucherAsProxy, 'BeaconUpgraded')
@@ -375,18 +400,41 @@ describe('VoucherHub', function () {
                 description,
                 duration,
             );
+            const sRLCinitCreationBalance = await iexecPocoInstance.balanceOf(
+                voucherHub.getAddress(),
+            );
             // Create voucher1.
             await expect(
-                voucherHubWithVoucherManagerSigner.createVoucher(voucherOwner1, voucherType),
+                voucherHubWithVoucherManagerSigner.createVoucher(
+                    voucherOwner1,
+                    voucherType,
+                    voucherValue,
+                ),
             ).to.emit(voucherHub, 'VoucherCreated');
+            const sRLCOneCreationBalance = await iexecPocoInstance.balanceOf(
+                voucherHub.getAddress(),
+            );
+
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucher1: Voucher = await commonUtils.getVoucher(voucherAddress1);
             // Create voucher2.
             await expect(
-                voucherHubWithVoucherManagerSigner.createVoucher(voucherOwner2, voucherType),
+                voucherHubWithVoucherManagerSigner.createVoucher(
+                    voucherOwner2,
+                    voucherType,
+                    voucherValue,
+                ),
             ).to.emit(voucherHub, 'VoucherCreated');
+            const sRLCSecondCreationBalance = await iexecPocoInstance.balanceOf(
+                voucherHub.getAddress(),
+            );
+
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucher2: Voucher = await commonUtils.getVoucher(voucherAddress2);
+            expect(sRLCOneCreationBalance).to.equal(sRLCinitCreationBalance - BigInt(voucherValue));
+            expect(sRLCSecondCreationBalance).to.equal(
+                sRLCOneCreationBalance - BigInt(voucherValue),
+            );
 
             expect(voucherAddress1).is.not.equal(voucherAddress2);
             expect(await voucher1.owner()).to.not.equal(await voucher2.owner());
@@ -404,6 +452,7 @@ describe('VoucherHub', function () {
             const voucherType1 = 1;
             const duration1 = 7200;
             const description1 = 'Long Term Duration';
+            const voucherValue1 = 200;
             // Create type1.
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
                 description1,
@@ -411,7 +460,7 @@ describe('VoucherHub', function () {
             );
             // Create voucher1.
             const createVoucherTx1 = await voucherHubWithVoucherManagerSigner
-                .createVoucher(voucherOwner1, voucherType)
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
                 .then((tx) => tx.wait());
             const expectedExpirationVoucher1 = await commonUtils.getExpectedExpiration(
                 duration,
@@ -420,10 +469,9 @@ describe('VoucherHub', function () {
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucher1 = await commonUtils.getVoucher(voucherAddress1);
             const voucherAsProxy1 = await commonUtils.getVoucherAsProxy(voucherAddress1);
-
             // Create voucher2.
             const createVoucherTx2 = await voucherHubWithVoucherManagerSigner
-                .createVoucher(voucherOwner2, voucherType1)
+                .createVoucher(voucherOwner2, voucherType1, voucherValue1)
                 .then((tx) => tx.wait());
             const expectedExpirationVoucher2 = await commonUtils.getExpectedExpiration(
                 duration1,
@@ -433,6 +481,7 @@ describe('VoucherHub', function () {
             const voucher2 = await commonUtils.getVoucher(voucherAddress2);
             const voucherAsProxy2 = await commonUtils.getVoucherAsProxy(voucherAddress2);
 
+            const sRLCFinalBalance = await iexecPocoInstance.balanceOf(voucherHub.getAddress());
             // Events
             expect(createVoucherTx1)
                 .to.emit(voucherHub, 'VoucherCreated')
@@ -471,6 +520,9 @@ describe('VoucherHub', function () {
             );
             expect(await voucher1.getType(), 'Voucher 1 type mismatch').to.equal(voucherType);
             expect(await voucher2.getType(), 'Voucher 2 type mismatch').to.equal(voucherType1);
+            expect(await voucherHub.balanceOf(voucher1.getAddress())).to.equal(voucherValue);
+            expect(await voucherHub.balanceOf(voucher2.getAddress())).to.equal(voucherValue1);
+            expect(sRLCFinalBalance).to.equal(initVoucherHubBalance - voucherValue - voucherValue1);
         });
 
         it('Should not create more than 1 voucher for the same account', async () => {
@@ -482,11 +534,19 @@ describe('VoucherHub', function () {
             );
             // Create voucher.
             await expect(
-                voucherHubWithVoucherManagerSigner.createVoucher(voucherOwner1, voucherType),
+                voucherHubWithVoucherManagerSigner.createVoucher(
+                    voucherOwner1,
+                    voucherType,
+                    voucherValue,
+                ),
             ).to.emit(voucherHub, 'VoucherCreated');
             // Second creation should fail.
             await expect(
-                voucherHubWithVoucherManagerSigner.createVoucher(voucherOwner1, voucherType),
+                voucherHubWithVoucherManagerSigner.createVoucher(
+                    voucherOwner1,
+                    voucherType,
+                    voucherValue,
+                ),
             ).to.be.revertedWithoutReason();
         });
 
@@ -499,7 +559,11 @@ describe('VoucherHub', function () {
             );
             // Create voucher.
             await expect(
-                voucherHubWithVoucherManagerSigner.createVoucher(voucherOwner1, voucherType),
+                voucherHubWithVoucherManagerSigner.createVoucher(
+                    voucherOwner1,
+                    voucherType,
+                    voucherValue,
+                ),
             ).to.emit(voucherHub, 'VoucherCreated');
             // Second creation should fail.
             const duration1 = 7200;
@@ -510,7 +574,11 @@ describe('VoucherHub', function () {
                 duration1,
             );
             await expect(
-                voucherHubWithVoucherManagerSigner.createVoucher(voucherOwner1, voucherType1),
+                voucherHubWithVoucherManagerSigner.createVoucher(
+                    voucherOwner1,
+                    voucherType1,
+                    voucherValue,
+                ),
             ).to.be.revertedWithoutReason();
         });
 
@@ -527,7 +595,7 @@ describe('VoucherHub', function () {
             );
             // Create voucher.
             const createVoucherTx = await voucherHubWithVoucherManagerSigner
-                .createVoucher(voucherOwner1, voucherType)
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
                 .then((tx) => tx.wait());
             const expectedExpiration = await commonUtils.getExpectedExpiration(
                 duration,
@@ -551,7 +619,7 @@ describe('VoucherHub', function () {
             const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
             // Create voucher.
             await expect(
-                voucherHubWithAnyoneSigner.createVoucher(voucherOwner1, voucherType),
+                voucherHubWithAnyoneSigner.createVoucher(voucherOwner1, voucherType, voucherValue),
             ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
         });
 
@@ -560,15 +628,74 @@ describe('VoucherHub', function () {
             const outOfBoundsTypeID = 999;
             // Create voucher.
             await expect(
-                voucherHubWithVoucherManagerSigner.createVoucher(voucherOwner1, outOfBoundsTypeID),
+                voucherHubWithVoucherManagerSigner.createVoucher(
+                    voucherOwner1,
+                    outOfBoundsTypeID,
+                    voucherValue,
+                ),
             ).to.be.revertedWith('VoucherHub: type index out of bounds');
         });
     });
 
+    describe('Debit voucher', function () {
+        let [voucherOwner1, voucherOwner2, voucher, anyone]: SignerWithAddress[] = [];
+        let voucherHub: VoucherHub;
+
+        beforeEach(async () => {
+            ({ voucherHub, voucherOwner1, voucherOwner2, anyone } =
+                await loadFixture(deployFixture));
+            // Create voucher type
+            await voucherHubWithAssetEligibilityManagerSigner
+                .createVoucherType(description, duration)
+                .then((tx) => tx.wait());
+            // Create voucher
+            voucher = await voucherHubWithVoucherManagerSigner
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait())
+                .then(() => voucherHub.getVoucher(voucherOwner1))
+                .then((voucherAddress) => ethers.getImpersonatedSigner(voucherAddress));
+        });
+
+        it('Should debit voucher', async () => {
+            const initialBalance = await voucherHub.balanceOf(voucher.address);
+            await expect(await voucherHub.connect(voucher).debitVoucher(debitedValue))
+                .to.emit(voucherHub, 'Transfer')
+                .withArgs(voucher.address, ethers.ZeroAddress, debitedValue)
+                .to.emit(voucherHub, 'VoucherDebited')
+                .withArgs(voucher.address, debitedValue);
+            expect(await voucherHub.balanceOf(voucher.address)).equals(
+                initialBalance - BigInt(debitedValue),
+            );
+        });
+    });
+
     describe('Get voucher', function () {
-        it('Should return address 0 when voucher is not created', async function () {
+        it('Should return address 0 when voucher is not created', async () => {
             const { voucherHub, owner } = await loadFixture(deployFixture);
             await expect(await voucherHub.getVoucher(owner)).to.be.equal(ethers.ZeroAddress);
+        });
+    });
+
+    describe('ERC20', function () {
+        it('Should not transfer', async () => {
+            const { voucherHub, anyone } = await loadFixture(deployFixture);
+            await expect(voucherHub.transfer(anyone, 0)).to.be.revertedWith(
+                'VoucherHub: Unsupported transfer',
+            );
+        });
+
+        it('Should not transferFrom', async () => {
+            const { voucherHub, anyone } = await loadFixture(deployFixture);
+            await expect(voucherHub.transferFrom(anyone, anyone, 0)).to.be.revertedWith(
+                'VoucherHub: Unsupported transferFrom',
+            );
+        });
+
+        it('Should not approve', async () => {
+            const { voucherHub, anyone } = await loadFixture(deployFixture);
+            await expect(voucherHub.approve(anyone, 0)).to.be.revertedWith(
+                'VoucherHub: Unsupported approve',
+            );
         });
     });
 });
