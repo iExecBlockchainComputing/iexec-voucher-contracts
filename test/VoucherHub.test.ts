@@ -411,7 +411,7 @@ describe('VoucherHub', function () {
                     voucherValue,
                 ),
             ).to.emit(voucherHub, 'VoucherCreated');
-            const sRLCOneCreationBalance = await iexecPocoInstance.balanceOf(
+            const sRLCFirstCreationBalance = await iexecPocoInstance.balanceOf(
                 voucherHub.getAddress(),
             );
 
@@ -431,9 +431,11 @@ describe('VoucherHub', function () {
 
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucher2: Voucher = await commonUtils.getVoucher(voucherAddress2);
-            expect(sRLCOneCreationBalance).to.equal(sRLCinitCreationBalance - BigInt(voucherValue));
+            expect(sRLCFirstCreationBalance).to.equal(
+                sRLCinitCreationBalance - BigInt(voucherValue),
+            );
             expect(sRLCSecondCreationBalance).to.equal(
-                sRLCOneCreationBalance - BigInt(voucherValue),
+                sRLCFirstCreationBalance - BigInt(voucherValue),
             );
 
             expect(voucherAddress1).is.not.equal(voucherAddress2);
