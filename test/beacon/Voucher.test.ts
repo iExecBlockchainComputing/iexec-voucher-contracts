@@ -14,6 +14,7 @@ const duration = 3600;
 const description = 'Early Access';
 const voucherValue = 100;
 const debitedValue = 25;
+const initVoucherHubBalance = 1000; // enough to create couple vouchers
 
 describe('Voucher', function () {
     let iexecPoco: string;
@@ -52,7 +53,7 @@ describe('Voucher', function () {
         voucherHubWithAnyoneSigner = voucherHub.connect(anyone);
         await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(description, duration);
         await iexecPocoInstance
-            .transfer(await voucherHub.getAddress(), 1000) // enough to create couple vouchers
+            .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
             .then((tx) => tx.wait());
         return {
             beacon,
