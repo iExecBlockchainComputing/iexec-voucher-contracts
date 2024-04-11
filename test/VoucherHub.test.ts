@@ -340,18 +340,20 @@ describe('VoucherHub', function () {
                 duration,
             );
             // Create voucher.
-            const sRLCinitBalance = await iexecPocoInstance.balanceOf(voucherHub.getAddress());
+            const voucherHubInitRlcBalance = await iexecPocoInstance.balanceOf(
+                voucherHub.getAddress(),
+            );
             const createVoucherTx = await voucherHubWithVoucherManagerSigner
                 .createVoucher(voucherOwner1, voucherType, voucherValue)
                 .then((tx) => tx.wait());
 
-            const sRLCAfterCreationBalance = await iexecPocoInstance.balanceOf(
+            const voucherHubPostCreationRlcBalance = await iexecPocoInstance.balanceOf(
                 voucherHub.getAddress(),
             );
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
             const creditBalanceCreation = await voucherHub.balanceOf(voucher.getAddress());
-            const sRLCVoucherCreationBalance = await iexecPocoInstance.balanceOf(
+            const voucherCreationRlcBalance = await iexecPocoInstance.balanceOf(
                 voucher.getAddress(),
             );
             const voucherAsProxy = await commonUtils.getVoucherAsProxy(voucherAddress);
@@ -360,10 +362,12 @@ describe('VoucherHub', function () {
                 createVoucherTx,
             );
             // Run assertions.
-            expect(sRLCinitBalance).to.equal(initVoucherHubBalance);
-            expect(sRLCAfterCreationBalance).to.equal(sRLCinitBalance - BigInt(voucherValue));
+            expect(voucherHubInitRlcBalance).to.equal(initVoucherHubBalance);
+            expect(voucherHubPostCreationRlcBalance).to.equal(
+                voucherHubInitRlcBalance - BigInt(voucherValue),
+            );
             expect(creditBalanceCreation).to.equal(voucherValue);
-            expect(sRLCVoucherCreationBalance).to.equal(voucherValue);
+            expect(voucherCreationRlcBalance).to.equal(voucherValue);
             // Events.
             await expect(createVoucherTx)
                 .to.emit(voucherAsProxy, 'BeaconUpgraded')
@@ -400,7 +404,7 @@ describe('VoucherHub', function () {
                 description,
                 duration,
             );
-            const sRLCinitCreationBalance = await iexecPocoInstance.balanceOf(
+            const voucherHubInitRlcBalance = await iexecPocoInstance.balanceOf(
                 voucherHub.getAddress(),
             );
             // Create voucher1.
@@ -411,7 +415,7 @@ describe('VoucherHub', function () {
                     voucherValue,
                 ),
             ).to.emit(voucherHub, 'VoucherCreated');
-            const sRLCFirstCreationBalance = await iexecPocoInstance.balanceOf(
+            const voucherHubFirstCreationRlcBalance = await iexecPocoInstance.balanceOf(
                 voucherHub.getAddress(),
             );
 
@@ -425,17 +429,17 @@ describe('VoucherHub', function () {
                     voucherValue,
                 ),
             ).to.emit(voucherHub, 'VoucherCreated');
-            const sRLCSecondCreationBalance = await iexecPocoInstance.balanceOf(
+            const voucherHubSecondCreationRlcBalance = await iexecPocoInstance.balanceOf(
                 voucherHub.getAddress(),
             );
 
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucher2: Voucher = await commonUtils.getVoucher(voucherAddress2);
-            expect(sRLCFirstCreationBalance).to.equal(
-                sRLCinitCreationBalance - BigInt(voucherValue),
+            expect(voucherHubFirstCreationRlcBalance).to.equal(
+                voucherHubInitRlcBalance - BigInt(voucherValue),
             );
-            expect(sRLCSecondCreationBalance).to.equal(
-                sRLCFirstCreationBalance - BigInt(voucherValue),
+            expect(voucherHubSecondCreationRlcBalance).to.equal(
+                voucherHubFirstCreationRlcBalance - BigInt(voucherValue),
             );
 
             expect(voucherAddress1).is.not.equal(voucherAddress2);
