@@ -118,7 +118,7 @@ contract VoucherHub is
      *
      * @notice See `transfer` note above.
      */
-    function approve(address spender, uint256 amount) public override returns (bool) {
+    function approve(address spender, uint256 amount) public pure override returns (bool) {
         spender; // Silence unused warning
         amount; // Silence unused warning
         revert("VoucherHub: Unsupported approve");
