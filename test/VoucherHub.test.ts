@@ -686,17 +686,17 @@ describe('VoucherHub', function () {
             );
         });
 
-        it('Should not transferFrom', async () => {
-            const { voucherHub, anyone } = await loadFixture(deployFixture);
-            await expect(voucherHub.transferFrom(anyone, anyone, 0)).to.be.revertedWith(
-                'VoucherHub: Unsupported transferFrom',
-            );
-        });
-
         it('Should not approve', async () => {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
             await expect(voucherHub.approve(anyone, 0)).to.be.revertedWith(
                 'VoucherHub: Unsupported approve',
+            );
+        });
+
+        it('Should not transferFrom', async () => {
+            const { voucherHub, anyone } = await loadFixture(deployFixture);
+            await expect(voucherHub.transferFrom(anyone, anyone, 0)).to.be.revertedWith(
+                'VoucherHub: Unsupported transferFrom',
             );
         });
     });

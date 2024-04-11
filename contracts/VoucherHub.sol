@@ -103,6 +103,16 @@ contract VoucherHub is
      *
      * @notice See `transfer` note above.
      */
+    function approve(address spender, uint256 amount) public pure override returns (bool) {
+        spender; // Silence unused warning
+        amount; // Silence unused warning
+        revert("VoucherHub: Unsupported approve");
+    }
+
+    /**
+     *
+     * @notice See `transfer` note above.
+     */
     function transferFrom(
         address from,
         address to,
@@ -112,16 +122,6 @@ contract VoucherHub is
         to; // unsused variable
         value; // warning
         revert("VoucherHub: Unsupported transferFrom");
-    }
-
-    /**
-     *
-     * @notice See `transfer` note above.
-     */
-    function approve(address spender, uint256 amount) public pure override returns (bool) {
-        spender; // Silence unused warning
-        amount; // Silence unused warning
-        revert("VoucherHub: Unsupported approve");
     }
 
     function createVoucherType(
