@@ -4,7 +4,7 @@
 pragma solidity ^0.8.20;
 
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-contract VoucherCredit is ERC20Upgradeable {
+contract NonTransferableERC20Upgradeable is ERC20Upgradeable {
     /**
      * @notice VCHR is not transferable.
      */

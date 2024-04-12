@@ -12,14 +12,14 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 
 import {Voucher} from "./beacon/Voucher.sol";
 import {VoucherProxy} from "./beacon/VoucherProxy.sol";
-import {VoucherCredit} from "./voucherCredit.sol";
+import {NonTransferableERC20Upgradeable} from "./NonTransferableERC20Upgradeable.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
 
 contract VoucherHub is
     AccessControlDefaultAdminRulesUpgradeable,
     UUPSUpgradeable,
     IVoucherHub,
-    VoucherCredit
+    NonTransferableERC20Upgradeable
 {
     // Grant/revoke roles through delayed 2 steps process.
     // Used to grant the rest of the roles.
