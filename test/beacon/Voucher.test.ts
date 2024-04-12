@@ -273,7 +273,7 @@ describe('Voucher', function () {
     });
 
     describe('Voucher Balance', function () {
-        it('Should have correct initial voucher balance', async function () {
+        it('Should get balance', async function () {
             const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner1,
