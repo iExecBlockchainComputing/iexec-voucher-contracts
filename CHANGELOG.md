@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Add external-hardhat network configuration. (#11)
 - Add voucher credit and SRLC manipulation. (#10)
     - SRLC and iExec poco is mocked.
     - set voucher credit as VoucherHub is ERC20.
