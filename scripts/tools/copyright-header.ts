@@ -37,7 +37,10 @@ function buildHeader(filepath: string) {
     if (!commentPrefix) {
         throw new Error('Unknown file, please add copyright header manually.');
     }
-    return commentPrefix + copyrightLine + '\n' + commentPrefix + licenseLine + '\n' + '\n';
+    // prettier-ignore
+    return commentPrefix + copyrightLine + '\n'
+        + commentPrefix + licenseLine + '\n'
+        + '\n';
 }
 
 function getCommentPrefix(filepath: string) {
