@@ -13,13 +13,14 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 
 import {Voucher} from "./beacon/Voucher.sol";
 import {VoucherProxy} from "./beacon/VoucherProxy.sol";
+import {VoucherCredit} from "./voucherCredit.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
 
 contract VoucherHub is
     AccessControlDefaultAdminRulesUpgradeable,
-    ERC20Upgradeable,
     UUPSUpgradeable,
-    IVoucherHub
+    IVoucherHub,
+    VoucherCredit
 {
     // Grant/revoke roles through delayed 2 steps process.
     // Used to grant the rest of the roles.
@@ -88,40 +89,6 @@ contract VoucherHub is
                 abi.encode($._voucherBeacon) // constructor args
             )
         );
-    }
-
-    /**
-     * @notice VCHR is not transferable.
-     */
-    function transfer(address to, uint256 value) public pure override returns (bool) {
-        to; // Silence unused
-        value; // variable warnings
-        revert("VoucherHub: Unsupported transfer");
-    }
-
-    /**
-     *
-     * @notice See `transfer` note above.
-     */
-    function approve(address spender, uint256 amount) public pure override returns (bool) {
-        spender; // Silence unused warning
-        amount; // Silence unused warning
-        revert("VoucherHub: Unsupported approve");
-    }
-
-    /**
-     *
-     * @notice See `transfer` note above.
-     */
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) public pure override returns (bool) {
-        from; // Silence
-        to; // unsused variable
-        value; // warning
-        revert("VoucherHub: Unsupported transferFrom");
     }
 
     function createVoucherType(
