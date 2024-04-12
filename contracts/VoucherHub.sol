@@ -3,16 +3,24 @@
 
 pragma solidity ^0.8.20;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {AccessControlDefaultAdminRulesUpgradeable} from "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {Voucher} from "./beacon/Voucher.sol";
 import {VoucherProxy} from "./beacon/VoucherProxy.sol";
+import {NonTransferableERC20Upgradeable} from "./NonTransferableERC20Upgradeable.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
 
-contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeable, IVoucherHub {
+contract VoucherHub is
+    AccessControlDefaultAdminRulesUpgradeable,
+    UUPSUpgradeable,
+    IVoucherHub,
+    NonTransferableERC20Upgradeable
+{
     // Grant/revoke roles through delayed 2 steps process.
     // Used to grant the rest of the roles.
     // Granted to msg.sender == defaultAdmin() == owner()
@@ -69,6 +77,8 @@ contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeabl
         _grantRole(UPGRADE_MANAGER_ROLE, msg.sender);
         _grantRole(ASSET_ELIGIBILITY_MANAGER_ROLE, assetEligibilityManager);
         _grantRole(VOUCHER_MANAGER_ROLE, voucherManager);
+        // This ERC20 is used solely to keep track of the SRLC's accounting in circulation for all emitted vouchers.
+        __ERC20_init("iExec Voucher token", "VCHR");
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;
@@ -192,11 +202,13 @@ contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeabl
      * address should never be changed.
      * @param owner The address of the voucher owner.
      * @param voucherType The ID of the voucher type.
+     * @param value The amount of SRLC we need to credit to the voucher.
      * @return voucherAddress The address of the created voucher contract.
      */
     function createVoucher(
         address owner,
-        uint256 voucherType
+        uint256 voucherType,
+        uint256 value
     ) external onlyRole(VOUCHER_MANAGER_ROLE) returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         uint256 voucherExpiration = block.timestamp + getVoucherType(voucherType).duration;
@@ -205,7 +217,14 @@ contract VoucherHub is AccessControlDefaultAdminRulesUpgradeable, UUPSUpgradeabl
         // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
         Voucher(voucherAddress).initialize(owner, address(this), voucherExpiration, voucherType);
-        emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType);
+        IERC20($._iexecPoco).transfer(voucherAddress, value); // SRLC
+        _mint(voucherAddress, value); // VCHR
+        emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType, value);
+    }
+
+    function debitVoucher(uint256 debitAmount) external {
+        _burn(msg.sender, debitAmount);
+        emit VoucherDebited(msg.sender, debitAmount);
     }
 
     /**
