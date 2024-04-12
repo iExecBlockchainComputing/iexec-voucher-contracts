@@ -339,21 +339,22 @@ describe('VoucherHub', function () {
                 description,
                 duration,
             );
+            const expectedVoucherHubInitRlcBalance = initVoucherHubBalance;
             // Create voucher.
-            const voucherHubInitRlcBalance = await iexecPocoInstance.balanceOf(
+            const voucherHubInitialSrlcBalance = await iexecPocoInstance.balanceOf(
                 voucherHub.getAddress(),
             );
             const createVoucherTx = await voucherHubWithVoucherManagerSigner
                 .createVoucher(voucherOwner1, voucherType, voucherValue)
                 .then((tx) => tx.wait());
 
-            const voucherHubPostCreationRlcBalance = await iexecPocoInstance.balanceOf(
+            const voucherHubPostCreationSrlcBalance = await iexecPocoInstance.balanceOf(
                 voucherHub.getAddress(),
             );
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
-            const creditBalanceCreation = await voucherHub.balanceOf(voucher.getAddress());
-            const voucherCreationRlcBalance = await iexecPocoInstance.balanceOf(
+            const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.getAddress());
+            const voucherInitialSrlBalance = await iexecPocoInstance.balanceOf(
                 voucher.getAddress(),
             );
             const voucherAsProxy = await commonUtils.getVoucherAsProxy(voucherAddress);
@@ -362,12 +363,12 @@ describe('VoucherHub', function () {
                 createVoucherTx,
             );
             // Run assertions.
-            expect(voucherHubInitRlcBalance).to.equal(initVoucherHubBalance);
-            expect(voucherHubPostCreationRlcBalance).to.equal(
-                voucherHubInitRlcBalance - BigInt(voucherValue),
+            expect(voucherHubInitialSrlcBalance).to.equal(expectedVoucherHubInitRlcBalance);
+            expect(voucherHubPostCreationSrlcBalance).to.equal(
+                voucherHubInitialSrlcBalance - BigInt(voucherValue),
             );
-            expect(creditBalanceCreation).to.equal(voucherValue);
-            expect(voucherCreationRlcBalance).to.equal(voucherValue);
+            expect(voucherInitialCreditBalance).to.equal(voucherValue);
+            expect(voucherInitialSrlBalance).to.equal(voucherValue);
             // Events.
             await expect(createVoucherTx)
                 .to.emit(voucherAsProxy, 'BeaconUpgraded')
@@ -404,7 +405,7 @@ describe('VoucherHub', function () {
                 description,
                 duration,
             );
-            const voucherHubInitRlcBalance = await iexecPocoInstance.balanceOf(
+            const voucherHubInitialSrlBalance = await iexecPocoInstance.balanceOf(
                 voucherHub.getAddress(),
             );
             // Create voucher1.
@@ -415,7 +416,7 @@ describe('VoucherHub', function () {
                     voucherValue,
                 ),
             ).to.emit(voucherHub, 'VoucherCreated');
-            const voucherHubFirstCreationRlcBalance = await iexecPocoInstance.balanceOf(
+            const voucherHubFirstCreationSrlcBalance = await iexecPocoInstance.balanceOf(
                 voucherHub.getAddress(),
             );
 
@@ -429,17 +430,17 @@ describe('VoucherHub', function () {
                     voucherValue,
                 ),
             ).to.emit(voucherHub, 'VoucherCreated');
-            const voucherHubSecondCreationRlcBalance = await iexecPocoInstance.balanceOf(
+            const voucherHubSecondCreationSrlcBalance = await iexecPocoInstance.balanceOf(
                 voucherHub.getAddress(),
             );
 
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucher2: Voucher = await commonUtils.getVoucher(voucherAddress2);
-            expect(voucherHubFirstCreationRlcBalance).to.equal(
-                voucherHubInitRlcBalance - BigInt(voucherValue),
+            expect(voucherHubFirstCreationSrlcBalance).to.equal(
+                voucherHubInitialSrlBalance - BigInt(voucherValue),
             );
-            expect(voucherHubSecondCreationRlcBalance).to.equal(
-                voucherHubFirstCreationRlcBalance - BigInt(voucherValue),
+            expect(voucherHubSecondCreationSrlcBalance).to.equal(
+                voucherHubFirstCreationSrlcBalance - BigInt(voucherValue),
             );
 
             expect(voucherAddress1).is.not.equal(voucherAddress2);
@@ -486,8 +487,9 @@ describe('VoucherHub', function () {
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucher2 = await commonUtils.getVoucher(voucherAddress2);
             const voucherAsProxy2 = await commonUtils.getVoucherAsProxy(voucherAddress2);
-
-            const SRLCFinalBalance = await iexecPocoInstance.balanceOf(voucherHub.getAddress());
+            const voucherHubFinalSrlcBalance = await iexecPocoInstance.balanceOf(
+                voucherHub.getAddress(),
+            );
             // Events
             expect(createVoucherTx1)
                 .to.emit(voucherHub, 'VoucherCreated')
@@ -528,7 +530,9 @@ describe('VoucherHub', function () {
             expect(await voucher2.getType(), 'Voucher 2 type mismatch').to.equal(voucherType1);
             expect(await voucherHub.balanceOf(voucher1.getAddress())).to.equal(voucherValue);
             expect(await voucherHub.balanceOf(voucher2.getAddress())).to.equal(voucherValue1);
-            expect(SRLCFinalBalance).to.equal(initVoucherHubBalance - voucherValue - voucherValue1);
+            expect(voucherHubFinalSrlcBalance).to.equal(
+                initVoucherHubBalance - voucherValue - voucherValue1,
+            );
         });
 
         it('Should not create more than 1 voucher for the same account', async function () {
@@ -663,14 +667,14 @@ describe('VoucherHub', function () {
         });
 
         it('Should debit voucher', async function () {
-            const initialBalance = await voucherHub.balanceOf(voucher.address);
+            const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
             await expect(await voucherHub.connect(voucher).debitVoucher(debitedValue))
                 .to.emit(voucherHub, 'Transfer')
                 .withArgs(voucher.address, ethers.ZeroAddress, debitedValue)
                 .to.emit(voucherHub, 'VoucherDebited')
                 .withArgs(voucher.address, debitedValue);
             expect(await voucherHub.balanceOf(voucher.address)).equals(
-                initialBalance - BigInt(debitedValue),
+                voucherInitialCreditBalance - BigInt(debitedValue),
             );
         });
     });
