@@ -487,7 +487,7 @@ describe('VoucherHub', function () {
             const voucher2 = await commonUtils.getVoucher(voucherAddress2);
             const voucherAsProxy2 = await commonUtils.getVoucherAsProxy(voucherAddress2);
 
-            const sRLCFinalBalance = await iexecPocoInstance.balanceOf(voucherHub.getAddress());
+            const SRLCFinalBalance = await iexecPocoInstance.balanceOf(voucherHub.getAddress());
             // Events
             expect(createVoucherTx1)
                 .to.emit(voucherHub, 'VoucherCreated')
@@ -528,7 +528,7 @@ describe('VoucherHub', function () {
             expect(await voucher2.getType(), 'Voucher 2 type mismatch').to.equal(voucherType1);
             expect(await voucherHub.balanceOf(voucher1.getAddress())).to.equal(voucherValue);
             expect(await voucherHub.balanceOf(voucher2.getAddress())).to.equal(voucherValue1);
-            expect(sRLCFinalBalance).to.equal(initVoucherHubBalance - voucherValue - voucherValue1);
+            expect(SRLCFinalBalance).to.equal(initVoucherHubBalance - voucherValue - voucherValue1);
         });
 
         it('Should not create more than 1 voucher for the same account', async function () {

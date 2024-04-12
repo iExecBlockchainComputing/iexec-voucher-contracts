@@ -1,8 +1,8 @@
 # Changelog
 
 ## vNEXT
-- Add voucher credit and sRLC manipulation. (#10)
-    - sRLC and iExec poco is mocked.
+- Add voucher credit and SRLC manipulation. (#10)
+    - SRLC and iExec poco is mocked.
     - set voucher credit as VoucherHub is ERC20.
 - Upgrade configuration: (#9)
     - Upgrade dependencies: hardhat, husky, iExec Poco.
