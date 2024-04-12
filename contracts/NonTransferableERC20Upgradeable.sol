@@ -4,6 +4,11 @@
 pragma solidity ^0.8.20;
 
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+
+/**
+ * @title NonTransferableERC20Upgradeable
+ * @notice This contracts follows the standard ERC-20 Upgradeable model, but it cannot be transferred. It is used solely to keep track of the SRLC's accounting in circulation for all emitted vouchers.
+ */
 contract NonTransferableERC20Upgradeable is ERC20Upgradeable {
     /**
      * @notice VCHR is not transferable.
