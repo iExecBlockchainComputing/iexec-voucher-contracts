@@ -7,40 +7,29 @@ import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/
 
 /**
  * @title NonTransferableERC20Upgradeable
- * @notice This contracts follows the standard ERC-20 Upgradeable model, but it cannot be transferred. It is used solely to keep track of the SRLC's accounting in circulation for all emitted vouchers.
+ * @notice This contracts follows the standard ERC-20 Upgradeable model, but it cannot be transferred.
  */
 contract NonTransferableERC20Upgradeable is ERC20Upgradeable {
     /**
-     * @notice VCHR is not transferable.
+     * @notice NonTransferableERC20Upgradeable is not transferable.
      */
-    function transfer(address to, uint256 value) public pure override returns (bool) {
-        to; // Silence unused
-        value; // variable warnings
-        revert("VoucherHub: Unsupported transfer");
+    function transfer(address, uint256) public pure override returns (bool) {
+        revert("NonTransferableERC20Upgradeable: Unsupported transfer");
     }
 
     /**
      *
      * @notice See `transfer` note above.
      */
-    function approve(address spender, uint256 amount) public pure override returns (bool) {
-        spender; // Silence unused warning
-        amount; // Silence unused warning
-        revert("VoucherHub: Unsupported approve");
+    function approve(address, uint256) public pure override returns (bool) {
+        revert("NonTransferableERC20Upgradeable: Unsupported approve");
     }
 
     /**
      *
      * @notice See `transfer` note above.
      */
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) public pure override returns (bool) {
-        from; // Silence
-        to; // unused variable
-        value; // warning
-        revert("VoucherHub: Unsupported transferFrom");
+    function transferFrom(address, address, uint256) public pure override returns (bool) {
+        revert("NonTransferableERC20Upgradeable: Unsupported transferFrom");
     }
 }

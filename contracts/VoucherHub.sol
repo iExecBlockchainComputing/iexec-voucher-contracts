@@ -77,6 +77,7 @@ contract VoucherHub is
         _grantRole(UPGRADE_MANAGER_ROLE, msg.sender);
         _grantRole(ASSET_ELIGIBILITY_MANAGER_ROLE, assetEligibilityManager);
         _grantRole(VOUCHER_MANAGER_ROLE, voucherManager);
+        // This ERC20 is used solely to keep track of the SRLC's accounting in circulation for all emitted vouchers.
         __ERC20_init("iExec Voucher token", "VCHR");
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();

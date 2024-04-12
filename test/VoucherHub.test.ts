@@ -682,25 +682,25 @@ describe('VoucherHub', function () {
         });
     });
 
-    describe('ERC20', function () {
+    describe('NonTransferableERC20Upgradeable', function () {
         it('Should not transfer', async function () {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
             await expect(voucherHub.transfer(anyone, 0)).to.be.revertedWith(
-                'VoucherHub: Unsupported transfer',
+                'NonTransferableERC20Upgradeable: Unsupported transfer',
             );
         });
 
         it('Should not approve', async function () {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
             await expect(voucherHub.approve(anyone, 0)).to.be.revertedWith(
-                'VoucherHub: Unsupported approve',
+                'NonTransferableERC20Upgradeable: Unsupported approve',
             );
         });
 
         it('Should not transferFrom', async function () {
             const { voucherHub, anyone } = await loadFixture(deployFixture);
             await expect(voucherHub.transferFrom(anyone, anyone, 0)).to.be.revertedWith(
-                'VoucherHub: Unsupported transferFrom',
+                'NonTransferableERC20Upgradeable: Unsupported transferFrom',
             );
         });
     });
