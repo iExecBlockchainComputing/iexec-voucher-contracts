@@ -223,11 +223,6 @@ contract VoucherHub is
         emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType, value);
     }
 
-    function debitVoucher(uint256 debitAmount) external {
-        _burn(msg.sender, debitAmount);
-        emit VoucherDebited(msg.sender, debitAmount);
-    }
-
     /**
      * Debit voucher balance when eligible assets are used.
      * @notice (1) If this function is called by an account which is not a voucher,

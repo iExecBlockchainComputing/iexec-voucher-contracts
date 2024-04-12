@@ -777,38 +777,6 @@ describe('VoucherHub', function () {
         });
     });
 
-    describe('Debit voucher', function () {
-        let [voucherOwner1, voucherOwner2, voucher, anyone]: SignerWithAddress[] = [];
-        let voucherHub: VoucherHub;
-
-        beforeEach(async function () {
-            ({ voucherHub, voucherOwner1, voucherOwner2, anyone } =
-                await loadFixture(deployFixture));
-            // Create voucher type
-            await voucherHubWithAssetEligibilityManagerSigner
-                .createVoucherType(description, duration)
-                .then((tx) => tx.wait());
-            // Create voucher
-            voucher = await voucherHubWithVoucherManagerSigner
-                .createVoucher(voucherOwner1, voucherType, voucherValue)
-                .then((tx) => tx.wait())
-                .then(() => voucherHub.getVoucher(voucherOwner1))
-                .then((voucherAddress) => ethers.getImpersonatedSigner(voucherAddress));
-        });
-
-        it('Should debit voucher', async function () {
-            const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
-            await expect(await voucherHub.connect(voucher).debitVoucher(debitedValue))
-                .to.emit(voucherHub, 'Transfer')
-                .withArgs(voucher.address, ethers.ZeroAddress, debitedValue)
-                .to.emit(voucherHub, 'VoucherDebited')
-                .withArgs(voucher.address, debitedValue);
-            expect(await voucherHub.balanceOf(voucher.address)).equals(
-                voucherInitialCreditBalance - BigInt(debitedValue),
-            );
-        });
-    });
-
     describe('Get voucher', function () {
         it('Should return address 0 when voucher is not created', async function () {
             const { voucherHub, owner } = await loadFixture(deployFixture);
