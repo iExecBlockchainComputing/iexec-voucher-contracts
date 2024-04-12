@@ -1,7 +1,10 @@
 # Changelog
 
 ## vNEXT
-- Match orders through voucher. (#10)
+- Match orders through voucher. (#12)
+- Add voucher credit and SRLC manipulation. (#10)
+    - SRLC and iExec poco is mocked.
+    - set voucher credit as VoucherHub is ERC20.
 - Upgrade configuration: (#9)
     - Upgrade dependencies: hardhat, husky, iExec Poco.
     - Ignore mocks in coverage.

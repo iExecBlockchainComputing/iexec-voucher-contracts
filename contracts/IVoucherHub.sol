@@ -12,7 +12,8 @@ interface IVoucherHub {
         address indexed voucher,
         address owner,
         uint256 expiration,
-        uint256 voucherType
+        uint256 voucherType,
+        uint256 value
     );
     event VoucherDebited(address indexed voucher, uint256 sponsoredValue);
     event VoucherTypeCreated(uint256 indexed id, string description, uint256 duration);

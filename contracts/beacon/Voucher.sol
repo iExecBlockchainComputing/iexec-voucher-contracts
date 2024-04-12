@@ -57,7 +57,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         $._voucherHub = voucherHub;
         $._expiration = expiration;
         $._type = voucherTypeId;
-        // TODO: deposit sRLC.
+        // TODO: deposit SRLC.
     }
 
     /**
