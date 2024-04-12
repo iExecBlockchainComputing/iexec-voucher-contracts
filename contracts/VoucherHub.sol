@@ -202,6 +202,7 @@ contract VoucherHub is
      * address should never be changed.
      * @param owner The address of the voucher owner.
      * @param voucherType The ID of the voucher type.
+     * @param value The amount of SRLC we need to credit to the voucher.
      * @return voucherAddress The address of the created voucher contract.
      */
     function createVoucher(
@@ -218,7 +219,7 @@ contract VoucherHub is
         Voucher(voucherAddress).initialize(owner, address(this), voucherExpiration, voucherType);
         IERC20($._iexecPoco).transfer(voucherAddress, value); // SRLC
         _mint(voucherAddress, value); // VCHR
-        emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType);
+        emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType, value);
     }
 
     function debitVoucher(uint256 debitAmount) external {

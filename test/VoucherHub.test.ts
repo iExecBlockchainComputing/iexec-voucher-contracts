@@ -376,7 +376,13 @@ describe('VoucherHub', function () {
                 .to.emit(voucher, 'OwnershipTransferred')
                 .withArgs(ethers.ZeroAddress, voucherOwner1.address)
                 .to.emit(voucherHub, 'VoucherCreated')
-                .withArgs(voucherAddress, voucherOwner1.address, expectedExpiration, voucherType);
+                .withArgs(
+                    voucherAddress,
+                    voucherOwner1.address,
+                    expectedExpiration,
+                    voucherType,
+                    voucherValue,
+                );
             // Voucher as proxy
             expect(await voucherAsProxy.implementation(), 'Implementation mismatch').to.equal(
                 await beacon.implementation(),
@@ -498,6 +504,7 @@ describe('VoucherHub', function () {
                     voucherOwner1.address,
                     expectedExpirationVoucher1,
                     voucherType,
+                    voucherValue,
                 );
             expect(createVoucherTx2)
                 .to.emit(voucherHub, 'VoucherCreated')
@@ -506,6 +513,7 @@ describe('VoucherHub', function () {
                     voucherOwner2.address,
                     expectedExpirationVoucher2,
                     voucherType1,
+                    voucherValue1,
                 );
             // Voucher as proxy
             expect(
