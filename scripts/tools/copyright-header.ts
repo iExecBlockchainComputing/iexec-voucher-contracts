@@ -14,7 +14,7 @@ const copyrightLine = `${spdxCopyright}: ${year} IEXEC BLOCKCHAIN TECH <contact@
 const licenseLine = 'SPDX-License-Identifier: Apache-2.0';
 
 (async function () {
-    // process.argv == ['ts-node', 'tools/copyright-header.ts', 'file1', 'file2', ...]
+    // process.argv == ['ts-node', 'copyright-header.ts', 'file1', 'file2', ...]
     const filepaths = process.argv.slice(2);
     filepaths.forEach((filepath) => {
         const content = fs.readFileSync(filepath, 'utf-8');
