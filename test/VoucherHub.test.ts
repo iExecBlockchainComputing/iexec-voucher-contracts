@@ -19,7 +19,6 @@ const duration = 3600;
 const voucherValue = 100;
 const asset = random();
 const assetPrice = 1;
-const debitedValue = 25;
 const initVoucherHubBalance = 10 * voucherValue; // arbitrary value, but should support couple voucher creations
 
 describe('VoucherHub', function () {
