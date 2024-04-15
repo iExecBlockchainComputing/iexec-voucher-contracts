@@ -725,7 +725,7 @@ describe('VoucherHub', function () {
             await expect(await debitVoucher()).to.not.emit(voucherHub, 'VoucherDebited');
         });
 
-        it('Should debit zero when empty voucher balance', async function () {
+        it('Should debit zero when voucher balance is empty', async function () {
             const emptyVoucher = await voucherHubWithVoucherManagerSigner
                 .createVoucher(voucherOwner2, voucherType, 0)
                 .then((tx) => tx.wait())
@@ -747,7 +747,7 @@ describe('VoucherHub', function () {
             ).to.not.emit(voucherHub, 'VoucherDebited');
         });
 
-        it('Should debit zero when no eligible asset', async function () {
+        it('Should debit zero with no eligible asset', async function () {
             const balanceBefore = await voucherHub.balanceOf(voucher.address);
             const unEligibleAsset = random();
 
@@ -767,7 +767,7 @@ describe('VoucherHub', function () {
             expect(await voucherHub.balanceOf(voucher.address)).equals(balanceBefore);
         });
 
-        it('Should not debit voucher when invalid voucher type ID', async function () {
+        it('Should not debit voucher with an invalid voucher type ID', async function () {
             await expect(
                 voucherHub
                     .connect(anyone)

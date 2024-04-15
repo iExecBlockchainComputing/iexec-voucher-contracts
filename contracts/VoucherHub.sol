@@ -223,7 +223,7 @@ contract VoucherHub is
     }
 
     /**
-     * Debit voucher balance when eligible assets are used.
+     * Debit voucher balance when used assets are eligible to voucher sponsoring.
      * @notice (1) If this function is called by an account which is not a voucher,
      * it will have no effect other than consummnig gas since balance would be
      * empty (tokens are only minted for vouchers).
