@@ -109,7 +109,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
             requestOrder
         );
         $._sponsoredAmounts[dealId] = sponsoredAmount;
-        emit OrdersVoucherMatched(dealId);
+        emit OrdersMatchedWithVoucher(dealId);
         return dealId;
     }
 
