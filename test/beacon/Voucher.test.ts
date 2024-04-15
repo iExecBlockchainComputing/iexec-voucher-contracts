@@ -357,6 +357,7 @@ describe('Voucher', function () {
             expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
                 requesterInitialSrlcBalanceBefore,
             );
+            expect(await voucher.getSponsoredAmount(dealId)).to.equal(dealPrice);
         });
 
         it('Should match orders with non-sponsored amount', async () => {
@@ -383,6 +384,7 @@ describe('Voucher', function () {
             expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
                 requesterInitialSrlcBalance - dealPrice,
             );
+            expect(await voucher.getSponsoredAmount(dealId)).to.equal(0);
         });
 
         it('Should not match orders when non-sponsored amount not transferable', async () => {

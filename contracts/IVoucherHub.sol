@@ -36,7 +36,7 @@ interface IVoucherHub {
         uint256 datasetPrice,
         address workerpool,
         uint256 workerpoolPrice
-    ) external returns (uint256 sponsoredValue);
+    ) external returns (uint256 sponsoredAmount);
 
     function getVoucher(address account) external view returns (address);
 

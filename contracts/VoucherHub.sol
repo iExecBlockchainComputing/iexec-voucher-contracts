@@ -248,22 +248,22 @@ contract VoucherHub is
         uint256 datasetPrice,
         address workerpool,
         uint256 workerpoolPrice
-    ) external whenVoucherTypeExists(voucherTypeId) returns (uint256 sponsoredValue) {
+    ) external whenVoucherTypeExists(voucherTypeId) returns (uint256 sponsoredAmount) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         mapping(address asset => bool) storage eligible = $.matchOrdersEligibility[voucherTypeId];
         if (eligible[app]) {
-            sponsoredValue += appPrice;
+            sponsoredAmount += appPrice;
         }
         if (dataset != address(0) && eligible[dataset]) {
-            sponsoredValue += datasetPrice;
+            sponsoredAmount += datasetPrice;
         }
         if (eligible[workerpool]) {
-            sponsoredValue += workerpoolPrice;
+            sponsoredAmount += workerpoolPrice;
         }
-        sponsoredValue = Math.min(balanceOf(msg.sender), sponsoredValue);
-        if (sponsoredValue > 0) {
-            _burn(msg.sender, sponsoredValue);
-            emit VoucherDebited(msg.sender, sponsoredValue);
+        sponsoredAmount = Math.min(balanceOf(msg.sender), sponsoredAmount);
+        if (sponsoredAmount > 0) {
+            _burn(msg.sender, sponsoredAmount);
+            emit VoucherDebited(msg.sender, sponsoredAmount);
         }
     }
 

@@ -21,6 +21,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 _expiration;
         uint256 _type;
         mapping(address => bool) _authorizedAccounts;
+        mapping(bytes32 dealId => uint256) _sponsoredAmounts;
     }
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
@@ -134,6 +135,15 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
+     * Get amount sponsored in a deal.
+     * @param dealId The ID of the deal.
+     */
+    function getSponsoredAmount(bytes32 dealId) external view returns (uint256) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._sponsoredAmounts[dealId];
+    }
+
+    /**
      * Match orders on Poco. Eligible assets prices will be debited on the
      * voucher if possible, then non-sponsored amount will be debited on the
      * iExec account of the requester.
@@ -154,7 +164,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
         VoucherStorage storage $ = _getVoucherStorage();
         IVoucherHub voucherHub = IVoucherHub($._voucherHub);
-        uint256 sponsoredValue = voucherHub.debitVoucher(
+        uint256 sponsoredAmount = voucherHub.debitVoucher(
             $._type,
             appOrder.app,
             appPrice,
@@ -165,13 +175,13 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         );
         uint256 dealPrice = appPrice + datasetPrice + workerpoolPrice;
         address iexecPoco = voucherHub.getIexecPoco();
-        if (sponsoredValue != dealPrice) {
+        if (sponsoredAmount != dealPrice) {
             // Transfer non-sponsored amount from the iExec account of the
             // requester to the iExec account of the voucher
             IERC20(iexecPoco).transferFrom(
                 requestOrder.requester,
                 address(this),
-                dealPrice - sponsoredValue
+                dealPrice - sponsoredAmount
             );
         }
         dealId = IexecPoco1(iexecPoco).sponsorMatchOrders(
@@ -180,6 +190,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
             workerpoolOrder,
             requestOrder
         );
+        $._sponsoredAmounts[dealId] = sponsoredAmount;
         emit VoucherMatchOrders(dealId);
         return dealId;
     }
