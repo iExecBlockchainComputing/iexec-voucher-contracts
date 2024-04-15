@@ -23,7 +23,6 @@ const appPrice = 1;
 const datasetPrice = 2;
 const workerpoolPrice = 3;
 const dealId = ethers.id('deal');
-const debitedValue = 25;
 const initVoucherHubBalance = 1000; // enough to create couple vouchers
 
 describe('Voucher', function () {
@@ -336,9 +335,9 @@ describe('Voucher', function () {
                     .addEligibleAsset(voucherType, asset)
                     .then((x) => x.wait());
             }
-            const balanceBefore = await voucher.getBalance();
-            const voucherIexecBalanceBefore = await getVoucherBalanceOnIexecPoco();
-            const requesterIexecBalanceBefore = await getRequesterBalanceOnIexecPoco();
+            const voucherInitialCreditBalance = await voucher.getBalance();
+            const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
+            const requesterInitialSrlcBalanceBefore = await getRequesterBalanceOnIexecPoco();
 
             expect(
                 await voucher.matchOrders.staticCall(
@@ -352,15 +351,17 @@ describe('Voucher', function () {
                 .to.emit(voucher, 'VoucherMatchOrders')
                 .withArgs(dealId);
             expect(await voucher.getBalance())
-                .to.be.equal(balanceBefore - dealPrice)
+                .to.be.equal(voucherInitialCreditBalance - dealPrice)
                 .to.be.equal(await getVoucherBalanceOnIexecPoco())
-                .to.be.equal(voucherIexecBalanceBefore - dealPrice);
-            expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(requesterIexecBalanceBefore);
+                .to.be.equal(voucherInitialSrlcBalance - dealPrice);
+            expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
+                requesterInitialSrlcBalanceBefore,
+            );
         });
 
         it('Should match orders with non-sponsored amount', async () => {
-            const balanceBefore = await voucher.getBalance();
-            const voucherIexecBalanceBefore = await getVoucherBalanceOnIexecPoco();
+            const voucherInitialCreditBalance = await voucher.getBalance();
+            const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
             expect(dealPrice).to.be.greaterThan(0); // just make sure the deal will not be free
             // Deposit in iExec account of requester
             await iexecPocoInstance.transfer(requester, dealPrice).then((tx) => tx.wait());
@@ -369,18 +370,18 @@ describe('Voucher', function () {
                 .connect(requester)
                 .approve(await voucher.getAddress(), dealPrice)
                 .then((tx) => tx.wait());
-            const requesterIexecBalanceBefore = await getRequesterBalanceOnIexecPoco();
+            const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
 
             await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
                 .to.emit(iexecPocoInstance, 'Transfer')
                 .withArgs(requester.address, await voucher.getAddress(), dealPrice)
                 .to.emit(voucher, 'VoucherMatchOrders');
             expect(await voucher.getBalance())
-                .to.be.equal(balanceBefore)
+                .to.be.equal(voucherInitialCreditBalance)
                 .to.be.equal(await getVoucherBalanceOnIexecPoco())
-                .to.be.equal(voucherIexecBalanceBefore);
+                .to.be.equal(voucherInitialSrlcBalance);
             expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
-                requesterIexecBalanceBefore - dealPrice,
+                requesterInitialSrlcBalance - dealPrice,
             );
         });
 

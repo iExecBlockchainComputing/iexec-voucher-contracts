@@ -682,7 +682,7 @@ describe('VoucherHub', function () {
 
         it('Should debit voucher', async function () {
             const sponsoredValue = BigInt(assetPrice * 3);
-            const balanceBefore = await voucherHub.balanceOf(voucher.address);
+            const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
 
             const args = [voucherType, asset, assetPrice, asset, assetPrice, asset, assetPrice] as [
                 voucherTypeId: BigNumberish,
@@ -702,11 +702,12 @@ describe('VoucherHub', function () {
                 .to.emit(voucherHub, 'VoucherDebited')
                 .withArgs(voucher.address, sponsoredValue);
             expect(await voucherHub.balanceOf(voucher.address)).equals(
-                balanceBefore - sponsoredValue,
+                voucherInitialCreditBalance - sponsoredValue,
             );
         });
 
         it('Should debit zero when not voucher', async function () {
+            const initialCreditBalance = await voucherHub.balanceOf(anyone.address);
             const debitVoucher = () =>
                 voucherHub
                     .connect(anyone)
@@ -723,6 +724,9 @@ describe('VoucherHub', function () {
             // so we call several times to check different assertions
             await expect(await debitVoucher()).to.not.be.reverted;
             await expect(await debitVoucher()).to.not.emit(voucherHub, 'VoucherDebited');
+            expect(await voucherHub.balanceOf(anyone.address))
+                .to.equal(initialCreditBalance)
+                .to.equal(0);
         });
 
         it('Should debit zero when voucher balance is empty', async function () {
@@ -731,6 +735,7 @@ describe('VoucherHub', function () {
                 .then((tx) => tx.wait())
                 .then(() => voucherHub.getVoucher(voucherOwner2))
                 .then((voucherAddress) => ethers.getImpersonatedSigner(voucherAddress));
+            const initialCreditBalance = await voucherHub.balanceOf(emptyVoucher.address);
 
             await expect(
                 await voucherHub
@@ -745,10 +750,13 @@ describe('VoucherHub', function () {
                         assetPrice,
                     ),
             ).to.not.emit(voucherHub, 'VoucherDebited');
+            expect(await voucherHub.balanceOf(emptyVoucher.address))
+                .to.equal(initialCreditBalance)
+                .to.equal(0);
         });
 
         it('Should debit zero with no eligible asset', async function () {
-            const balanceBefore = await voucherHub.balanceOf(voucher.address);
+            const initialCreditBalance = await voucherHub.balanceOf(voucher.address);
             const unEligibleAsset = random();
 
             await expect(
@@ -764,7 +772,7 @@ describe('VoucherHub', function () {
                         assetPrice,
                     ),
             ).to.not.emit(voucherHub, 'VoucherDebited');
-            expect(await voucherHub.balanceOf(voucher.address)).equals(balanceBefore);
+            expect(await voucherHub.balanceOf(voucher.address)).to.equal(initialCreditBalance);
         });
 
         it('Should not debit voucher with an invalid voucher type ID', async function () {
