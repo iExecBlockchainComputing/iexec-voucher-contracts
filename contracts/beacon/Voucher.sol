@@ -62,88 +62,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
-     * Retrieve the address of the voucher hub associated with the voucher.
-     * @return voucherHubAddress The address of the voucher hub.
-     */
-    function getVoucherHub() public view returns (address) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return $._voucherHub;
-    }
-
-    /**
-     * Retrieve the expiration timestamp of the voucher.
-     * @return expirationTimestamp The expiration timestamp.
-     */
-    function getExpiration() external view returns (uint256) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return $._expiration;
-    }
-
-    /**
-     * Retrieve the type of the voucher.
-     * @return voucherType The type of the voucher.
-     */
-    function getType() external view returns (uint256) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return $._type;
-    }
-
-    /**
-     * Get voucher balance.
-     */
-    function getBalance() external view returns (uint256) {
-        return IERC20(getVoucherHub()).balanceOf(address(this));
-    }
-
-    /**
-     * Sets authorization for an account.
-     * @param account The account to authorize.
-     */
-    function authorizeAccount(address account) external onlyOwner {
-        _setAccountAuthorization(account, true);
-        emit AccountAuthorized(account);
-    }
-
-    /**
-     * Unsets authorization for an account.
-     * @param account The account to remove authorization from.
-     */
-    function unauthorizeAccount(address account) external onlyOwner {
-        _setAccountAuthorization(account, false);
-        emit AccountUnauthorized(account);
-    }
-
-    /**
-     * Checks if an account is authorized for.
-     * @param account The account to check.
-     * @return isAuthorized True if the account is authorized, false otherwise.
-     */
-    function isAccountAuthorized(address account) external view returns (bool) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return account == owner() || $._authorizedAccounts[account];
-    }
-
-    /**
-     * Internal function to set authorization for an account.
-     * @param account The account to set authorization for.
-     * @param isAuthorized Whether to authorize or unauthorize the account.
-     */
-    function _setAccountAuthorization(address account, bool isAuthorized) private {
-        require(account != owner(), "Voucher: owner is already authorized.");
-        VoucherStorage storage $ = _getVoucherStorage();
-        $._authorizedAccounts[account] = isAuthorized;
-    }
-
-    /**
-     * Get amount sponsored in a deal.
-     * @param dealId The ID of the deal.
-     */
-    function getSponsoredAmount(bytes32 dealId) external view returns (uint256) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return $._sponsoredAmounts[dealId];
-    }
-
-    /**
      * Match orders on Poco. Eligible assets prices will be debited from the
      * voucher if possible, then non-sponsored amount will be debited from the
      * iExec account of the requester.
@@ -193,5 +111,88 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         $._sponsoredAmounts[dealId] = sponsoredAmount;
         emit VoucherMatchOrders(dealId);
         return dealId;
+    }
+
+    /**
+     * Retrieve the address of the voucher hub associated with the voucher.
+     * @return voucherHubAddress The address of the voucher hub.
+     */
+    function getVoucherHub() public view returns (address) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._voucherHub;
+    }
+
+    /**
+     * Retrieve the expiration timestamp of the voucher.
+     * @return expirationTimestamp The expiration timestamp.
+     */
+    function getExpiration() external view returns (uint256) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._expiration;
+    }
+
+    /**
+     * Retrieve the type of the voucher.
+     * @return voucherType The type of the voucher.
+     */
+    function getType() external view returns (uint256) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._type;
+    }
+
+    /**
+     * Get amount sponsored in a deal.
+     * @param dealId The ID of the deal.
+     */
+    function getSponsoredAmount(bytes32 dealId) external view returns (uint256) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._sponsoredAmounts[dealId];
+    }
+
+    /**
+     * Get voucher balance.
+     */
+    function getBalance() external view returns (uint256) {
+        return IERC20(getVoucherHub()).balanceOf(address(this));
+    }
+
+    // TODO: Move "authorize" functions for order consistency
+    /**
+     * Sets authorization for an account.
+     * @param account The account to authorize.
+     */
+    function authorizeAccount(address account) external onlyOwner {
+        _setAccountAuthorization(account, true);
+        emit AccountAuthorized(account);
+    }
+
+    /**
+     * Unsets authorization for an account.
+     * @param account The account to remove authorization from.
+     */
+    function unauthorizeAccount(address account) external onlyOwner {
+        _setAccountAuthorization(account, false);
+        emit AccountUnauthorized(account);
+    }
+
+    /**
+     * Checks if an account is authorized for.
+     * @param account The account to check.
+     * @return isAuthorized True if the account is authorized, false otherwise.
+     */
+    function isAccountAuthorized(address account) external view returns (bool) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return account == owner() || $._authorizedAccounts[account];
+    }
+
+    /**
+     * Internal function to set authorization for an account.
+     * @param account The account to set authorization for.
+     * @param isAuthorized Whether to authorize or unauthorize the account.
+     */
+    function _setAccountAuthorization(address account, bool isAuthorized) private {
+        require(account != owner(), "Voucher: owner is already authorized.");
+        VoucherStorage storage $ = _getVoucherStorage();
+        $._authorizedAccounts[account] = isAuthorized;
     }
 }

@@ -118,6 +118,7 @@ contract VoucherHub is
         emit VoucherTypeDurationUpdated(id, duration);
     }
 
+    // TODO: Move bellow view methods to bottom
     /**
      * Get the voucher type details by ID.
      */
