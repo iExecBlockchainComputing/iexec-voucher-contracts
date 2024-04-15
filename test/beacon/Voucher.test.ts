@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -8,12 +9,20 @@ import * as commonUtils from '../../scripts/common';
 import * as voucherHubUtils from '../../scripts/voucherHubUtils';
 import * as voucherUtils from '../../scripts/voucherUtils';
 import { IexecPocoMock, IexecPocoMock__factory, Voucher, VoucherHub } from '../../typechain-types';
+import { random } from '../utils/address-utils';
+import { createMockOrder } from '../utils/poco-utils';
 
 const voucherType = 0;
 const duration = 3600;
 const description = 'Early Access';
 const voucherValue = 100;
-const debitedValue = 25;
+const app = random();
+const dataset = random();
+const workerpool = random();
+const appPrice = 1;
+const datasetPrice = 2;
+const workerpoolPrice = 3;
+const dealId = ethers.id('deal');
 const initVoucherHubBalance = 1000; // enough to create couple vouchers
 
 describe('Voucher', function () {
@@ -284,6 +293,117 @@ describe('Voucher', function () {
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
             expect(await voucher.getBalance()).to.equal(voucherValue);
+        });
+    });
+
+    describe('Match orders', async function () {
+        const getVoucherBalanceOnIexecPoco = () =>
+            iexecPocoInstance.balanceOf(voucher.getAddress());
+        const getRequesterBalanceOnIexecPoco = () =>
+            iexecPocoInstance.balanceOf(requester.getAddress());
+        const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice);
+        const mockOrder = createMockOrder();
+        const appOrder = { ...mockOrder, app: app, appprice: appPrice };
+        const datasetOrder = {
+            ...mockOrder,
+            dataset: dataset,
+            datasetprice: datasetPrice,
+        };
+        const workerpoolOrder = {
+            ...mockOrder,
+            workerpool: workerpool,
+            workerpoolprice: workerpoolPrice,
+        };
+        let requestOrder = { ...mockOrder };
+        let [voucherOwner1, requester]: SignerWithAddress[] = [];
+        let voucherHub: VoucherHub;
+        let voucher: Voucher;
+
+        beforeEach(async () => {
+            ({ voucherHub, voucherOwner1, requester } = await loadFixture(deployFixture));
+            requestOrder.requester = requester.address;
+            voucher = await voucherHubWithVoucherManagerSigner
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait())
+                .then(() => voucherHub.getVoucher(voucherOwner1))
+                .then((voucherAddress) => commonUtils.getVoucher(voucherAddress));
+        });
+
+        it('Should match orders with full sponsored amount', async () => {
+            for (const asset of [app, dataset, workerpool]) {
+                await voucherHubWithAssetEligibilityManagerSigner
+                    .addEligibleAsset(voucherType, asset)
+                    .then((x) => x.wait());
+            }
+            const voucherInitialCreditBalance = await voucher.getBalance();
+            const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
+            const requesterInitialSrlcBalanceBefore = await getRequesterBalanceOnIexecPoco();
+
+            expect(
+                await voucher.matchOrders.staticCall(
+                    appOrder,
+                    datasetOrder,
+                    workerpoolOrder,
+                    requestOrder,
+                ),
+            ).to.be.equal(dealId);
+            await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
+                .to.emit(voucher, 'OrdersMatchedWithVoucher')
+                .withArgs(dealId);
+            expect(await voucher.getBalance())
+                .to.be.equal(voucherInitialCreditBalance - dealPrice)
+                .to.be.equal(await getVoucherBalanceOnIexecPoco())
+                .to.be.equal(voucherInitialSrlcBalance - dealPrice);
+            expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
+                requesterInitialSrlcBalanceBefore,
+            );
+            expect(await voucher.getSponsoredAmount(dealId)).to.equal(dealPrice);
+        });
+
+        it('Should match orders with full non-sponsored amount', async () => {
+            const voucherInitialCreditBalance = await voucher.getBalance();
+            const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
+            expect(dealPrice).to.be.greaterThan(0); // just make sure the deal will not be free
+            // Deposit in iExec account of requester
+            await iexecPocoInstance.transfer(requester, dealPrice).then((tx) => tx.wait());
+            // Allow voucher to spend non-sponsored amount
+            await iexecPocoInstance
+                .connect(requester)
+                .approve(await voucher.getAddress(), dealPrice)
+                .then((tx) => tx.wait());
+            const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
+
+            await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
+                .to.emit(iexecPocoInstance, 'Transfer')
+                .withArgs(requester.address, await voucher.getAddress(), dealPrice)
+                .to.emit(voucher, 'OrdersMatchedWithVoucher');
+            expect(await voucher.getBalance())
+                .to.be.equal(voucherInitialCreditBalance)
+                .to.be.equal(await getVoucherBalanceOnIexecPoco())
+                .to.be.equal(voucherInitialSrlcBalance);
+            expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
+                requesterInitialSrlcBalance - dealPrice,
+            );
+            expect(await voucher.getSponsoredAmount(dealId)).to.equal(0);
+        });
+
+        it('Should not match orders when non-sponsored amount not transferable', async () => {
+            await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
+                .to.be.revertedWithCustomError(iexecPocoInstance, 'ERC20InsufficientAllowance')
+                .withArgs(await voucher.getAddress(), 0, dealPrice);
+        });
+
+        it('Should not match orders when iExec Poco matching fails', async () => {
+            await iexecPocoInstance.willRevertOnSponsorMatchOrders().then((tx) => tx.wait());
+
+            await expect(
+                voucher.matchOrders(
+                    { ...appOrder, appprice: 0 },
+                    { ...datasetOrder, datasetprice: 0 },
+                    { ...workerpoolOrder, workerpoolprice: 0 },
+                    requestOrder,
+                ),
+            ).to.be.revertedWith('IexecPocoMock: Failed to sponsorMatchOrders');
         });
     });
 });

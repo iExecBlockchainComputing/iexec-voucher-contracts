@@ -4,19 +4,21 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
+import { AddressLike, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 import * as commonUtils from '../scripts/common';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import { IexecPocoMock, IexecPocoMock__factory, Voucher } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
+import { random } from './utils/address-utils';
 
 const voucherType = 0;
 const description = 'Early Access';
 const duration = 3600;
-const asset = ethers.Wallet.createRandom().address;
 const voucherValue = 100;
-const debitedValue = 25;
+const asset = random();
+const assetPrice = 1;
 const initVoucherHubBalance = 10 * voucherValue; // arbitrary value, but should support couple voucher creations
 
 describe('VoucherHub', function () {
@@ -666,6 +668,10 @@ describe('VoucherHub', function () {
             await voucherHubWithAssetEligibilityManagerSigner
                 .createVoucherType(description, duration)
                 .then((tx) => tx.wait());
+            // Add eligible asset
+            await voucherHubWithAssetEligibilityManagerSigner
+                .addEligibleAsset(voucherType, asset)
+                .then((tx) => tx.wait());
             // Create voucher
             voucher = await voucherHubWithVoucherManagerSigner
                 .createVoucher(voucherOwner1, voucherType, voucherValue)
@@ -675,15 +681,109 @@ describe('VoucherHub', function () {
         });
 
         it('Should debit voucher', async function () {
+            const sponsoredValue = BigInt(assetPrice * 3);
             const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
-            await expect(await voucherHub.connect(voucher).debitVoucher(debitedValue))
-                .to.emit(voucherHub, 'Transfer')
-                .withArgs(voucher.address, ethers.ZeroAddress, debitedValue)
-                .to.emit(voucherHub, 'VoucherDebited')
-                .withArgs(voucher.address, debitedValue);
-            expect(await voucherHub.balanceOf(voucher.address)).equals(
-                voucherInitialCreditBalance - BigInt(debitedValue),
+
+            const args = [voucherType, asset, assetPrice, asset, assetPrice, asset, assetPrice] as [
+                voucherTypeId: BigNumberish,
+                app: AddressLike,
+                appPrice: BigNumberish,
+                dataset: AddressLike,
+                datasetPrice: BigNumberish,
+                workerpool: AddressLike,
+                workerpoolPrice: BigNumberish,
+            ];
+            expect(await voucherHub.connect(voucher).debitVoucher.staticCall(...args)).to.be.equal(
+                sponsoredValue,
             );
+            await expect(await voucherHub.connect(voucher).debitVoucher(...args))
+                .to.emit(voucherHub, 'Transfer')
+                .withArgs(voucher.address, ethers.ZeroAddress, sponsoredValue)
+                .to.emit(voucherHub, 'VoucherDebited')
+                .withArgs(voucher.address, sponsoredValue);
+            expect(await voucherHub.balanceOf(voucher.address)).equals(
+                voucherInitialCreditBalance - sponsoredValue,
+            );
+        });
+
+        it('Should debit zero when sender is not a voucher', async function () {
+            const initialCreditBalance = await voucherHub.balanceOf(anyone.address);
+            const debitVoucher = () =>
+                voucherHub
+                    .connect(anyone)
+                    .debitVoucher(
+                        voucherType,
+                        asset,
+                        assetPrice,
+                        asset,
+                        assetPrice,
+                        asset,
+                        assetPrice,
+                    );
+            // The matcher 'emit' cannot be chained after or before 'reverted'
+            // so we call several times to check different assertions
+            await expect(await debitVoucher()).to.not.be.reverted;
+            await expect(await debitVoucher()).to.not.emit(voucherHub, 'VoucherDebited');
+            expect(await voucherHub.balanceOf(anyone.address))
+                .to.equal(initialCreditBalance)
+                .to.equal(0);
+        });
+
+        it('Should debit zero when voucher balance is empty', async function () {
+            const emptyVoucher = await voucherHubWithVoucherManagerSigner
+                .createVoucher(voucherOwner2, voucherType, 0)
+                .then((tx) => tx.wait())
+                .then(() => voucherHub.getVoucher(voucherOwner2))
+                .then((voucherAddress) => ethers.getImpersonatedSigner(voucherAddress));
+            const initialCreditBalance = await voucherHub.balanceOf(emptyVoucher.address);
+
+            await expect(
+                await voucherHub
+                    .connect(emptyVoucher)
+                    .debitVoucher(
+                        voucherType,
+                        asset,
+                        assetPrice,
+                        asset,
+                        assetPrice,
+                        asset,
+                        assetPrice,
+                    ),
+            ).to.not.emit(voucherHub, 'VoucherDebited');
+            expect(await voucherHub.balanceOf(emptyVoucher.address))
+                .to.equal(initialCreditBalance)
+                .to.equal(0);
+        });
+
+        it('Should debit zero with no eligible asset', async function () {
+            const initialCreditBalance = await voucherHub.balanceOf(voucher.address);
+            const unEligibleAsset = random();
+
+            await expect(
+                voucherHub
+                    .connect(voucher)
+                    .debitVoucher(
+                        voucherType,
+                        unEligibleAsset,
+                        assetPrice,
+                        unEligibleAsset,
+                        assetPrice,
+                        unEligibleAsset,
+                        assetPrice,
+                    ),
+            ).to.not.emit(voucherHub, 'VoucherDebited');
+            expect(await voucherHub.balanceOf(voucher.address)).to.equal(initialCreditBalance);
+        });
+
+        it('Should not debit voucher with an invalid voucher type ID', async function () {
+            const initialCreditBalance = await voucherHub.balanceOf(anyone.address);
+
+            await expect(
+                voucherHub
+                    .connect(anyone)
+                    .debitVoucher(999, asset, assetPrice, asset, assetPrice, asset, assetPrice),
+            ).to.not.emit(voucherHub, 'VoucherDebited');
+            expect(await voucherHub.balanceOf(anyone.address)).to.equal(initialCreditBalance);
         });
     });
 
