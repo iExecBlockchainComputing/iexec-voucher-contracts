@@ -20,9 +20,8 @@ contract IexecPocoMock is ERC20 {
         IexecLibOrders_v5.AppOrder calldata appOrder,
         IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
-        IexecLibOrders_v5.RequestOrder calldata requestOrder
+        IexecLibOrders_v5.RequestOrder calldata
     ) external returns (bytes32 dealId) {
-        requestOrder; // Silent warning
         if (shouldRevertOnSponsorMatchOrders) {
             revert("IexecPocoMock: Failed to sponsorMatchOrders");
         }

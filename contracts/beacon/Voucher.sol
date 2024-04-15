@@ -144,8 +144,8 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
-     * Match orders on Poco. Eligible assets prices will be debited on the
-     * voucher if possible, then non-sponsored amount will be debited on the
+     * Match orders on Poco. Eligible assets prices will be debited from the
+     * voucher if possible, then non-sponsored amount will be debited from the
      * iExec account of the requester.
      *
      * @param appOrder The app order.
