@@ -348,7 +348,7 @@ describe('Voucher', function () {
                 ),
             ).to.be.equal(dealId);
             await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
-                .to.emit(voucher, 'VoucherMatchOrders')
+                .to.emit(voucher, 'OrdersVoucherMatched')
                 .withArgs(dealId);
             expect(await voucher.getBalance())
                 .to.be.equal(voucherInitialCreditBalance - dealPrice)
@@ -376,7 +376,7 @@ describe('Voucher', function () {
             await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
                 .to.emit(iexecPocoInstance, 'Transfer')
                 .withArgs(requester.address, await voucher.getAddress(), dealPrice)
-                .to.emit(voucher, 'VoucherMatchOrders');
+                .to.emit(voucher, 'OrdersVoucherMatched');
             expect(await voucher.getBalance())
                 .to.be.equal(voucherInitialCreditBalance)
                 .to.be.equal(await getVoucherBalanceOnIexecPoco())
