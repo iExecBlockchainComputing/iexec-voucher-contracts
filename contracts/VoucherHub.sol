@@ -8,18 +8,18 @@ import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {AccessControlDefaultAdminRulesUpgradeable} from "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {Voucher} from "./beacon/Voucher.sol";
 import {VoucherProxy} from "./beacon/VoucherProxy.sol";
+import {NonTransferableERC20Upgradeable} from "./NonTransferableERC20Upgradeable.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
 
 contract VoucherHub is
     AccessControlDefaultAdminRulesUpgradeable,
-    ERC20Upgradeable,
     UUPSUpgradeable,
-    IVoucherHub
+    IVoucherHub,
+    NonTransferableERC20Upgradeable
 {
     // Grant/revoke roles through delayed 2 steps process.
     // Used to grant the rest of the roles.
@@ -77,6 +77,7 @@ contract VoucherHub is
         _grantRole(UPGRADE_MANAGER_ROLE, msg.sender);
         _grantRole(ASSET_ELIGIBILITY_MANAGER_ROLE, assetEligibilityManager);
         _grantRole(VOUCHER_MANAGER_ROLE, voucherManager);
+        // This ERC20 is used solely to keep track of the SRLC's accounting in circulation for all emitted vouchers.
         __ERC20_init("iExec Voucher token", "VCHR");
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();
@@ -88,40 +89,6 @@ contract VoucherHub is
                 abi.encode($._voucherBeacon) // constructor args
             )
         );
-    }
-
-    /**
-     * @notice VCHR is not transferable.
-     */
-    function transfer(address to, uint256 value) public pure override returns (bool) {
-        to; // Silence unsused
-        value; // variable warnings
-        revert("VoucherHub: Unsupported transfer");
-    }
-
-    /**
-     *
-     * @notice See `transfer` note above.
-     */
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) public pure override returns (bool) {
-        from; // Silence
-        to; // unsused variable
-        value; // warning
-        revert("VoucherHub: Unsupported transferFrom");
-    }
-
-    /**
-     *
-     * @notice See `transfer` note above.
-     */
-    function approve(address spender, uint256 amount) public override returns (bool) {
-        spender; // Silence unused warning
-        amount; // Silence unused warning
-        revert("VoucherHub: Unsupported approve");
     }
 
     function createVoucherType(
@@ -235,6 +202,7 @@ contract VoucherHub is
      * address should never be changed.
      * @param owner The address of the voucher owner.
      * @param voucherType The ID of the voucher type.
+     * @param value The amount of SRLC we need to credit to the voucher.
      * @return voucherAddress The address of the created voucher contract.
      */
     function createVoucher(
@@ -251,7 +219,7 @@ contract VoucherHub is
         Voucher(voucherAddress).initialize(owner, address(this), voucherExpiration, voucherType);
         IERC20($._iexecPoco).transfer(voucherAddress, value); // SRLC
         _mint(voucherAddress, value); // VCHR
-        emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType);
+        emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType, value);
     }
 
     function debitVoucher(uint256 debitAmount) external {

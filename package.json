@@ -13,7 +13,7 @@
   },
   "homepage": "https://github.com/iExecBlockchainComputing/iexec-voucher-contracts#readme",
   "scripts": {
-    "postinstall": "ts-node scripts/modify-solidity-coverage-lib-api-js.ts",
+    "postinstall": "ts-node scripts/utils/modify-solidity-coverage-lib-api-js.ts",
     "prepare": "husky",
     "build": "npx hardhat compile",
     "build:forge": "forge build",

@@ -69,7 +69,7 @@ describe('Voucher', function () {
     }
 
     describe('Upgrade', function () {
-        it('Should upgrade all vouchers', async () => {
+        it('Should upgrade all vouchers', async function () {
             const { beacon, voucherHub, owner, voucherOwner1, voucherOwner2 } =
                 await loadFixture(deployFixture);
             const voucherType1 = 1;
@@ -148,7 +148,7 @@ describe('Voucher', function () {
             expect(await voucher2_V2.getNewStateVariable()).to.equal(2);
         });
 
-        it('Should not upgrade voucher when unauthorized', async () => {
+        it('Should not upgrade voucher when unauthorized', async function () {
             const { beacon, anyone } = await loadFixture(deployFixture);
             // Save implementation.
             const initialImplementation = await beacon.implementation();
@@ -165,7 +165,7 @@ describe('Voucher', function () {
     });
 
     describe('Authorization', function () {
-        it('Should authorize an account', async () => {
+        it('Should authorize an account', async function () {
             const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner1,
@@ -189,7 +189,7 @@ describe('Voucher', function () {
             expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
         });
 
-        it('Should deauthorize an account', async () => {
+        it('Should deauthorize an account', async function () {
             const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner1,
@@ -215,7 +215,7 @@ describe('Voucher', function () {
             expect(await voucher.isAccountAuthorized(anyone.address)).to.be.false;
         });
 
-        it('Should not authorize an account if the account is not the owner', async () => {
+        it('Should not authorize an account if the account is not the owner', async function () {
             const { voucherHub, voucherManager, voucherOwner1, anyone } =
                 await loadFixture(deployFixture);
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
@@ -233,7 +233,7 @@ describe('Voucher', function () {
             ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
         });
 
-        it('Should not unauthorize an account if the account is not the owner', async () => {
+        it('Should not unauthorize an account if the account is not the owner', async function () {
             const { voucherHub, voucherManager, voucherOwner1, anyone } =
                 await loadFixture(deployFixture);
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
@@ -255,7 +255,7 @@ describe('Voucher', function () {
                 .to.be.true;
         });
 
-        it('Should not authorize owner account', async () => {
+        it('Should not authorize owner account', async function () {
             const { voucherHub, voucherManager, voucherOwner1 } = await loadFixture(deployFixture);
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner1,
@@ -273,7 +273,7 @@ describe('Voucher', function () {
     });
 
     describe('Voucher Balance', function () {
-        it('Should have correct initial voucher balance', async () => {
+        it('Should get balance', async function () {
             const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner1,

@@ -6,6 +6,11 @@ import '@nomicfoundation/hardhat-toolbox';
 import '@openzeppelin/hardhat-upgrades';
 import 'hardhat-dependency-compiler';
 import { HardhatUserConfig } from 'hardhat/config';
+import {
+    HARDHAT_NETWORK_MNEMONIC,
+    defaultHardhatNetworkParams,
+    defaultLocalhostNetworkParams,
+} from 'hardhat/internal/core/config/default-config';
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -26,6 +31,13 @@ const config: HardhatUserConfig = {
             hardfork: 'berlin', // No EIP-1559 before London fork
             gasPrice: 0,
             blockGasLimit: 6_700_000,
+        },
+        'external-hardhat': {
+            ...defaultHardhatNetworkParams,
+            ...defaultLocalhostNetworkParams,
+            accounts: {
+                mnemonic: HARDHAT_NETWORK_MNEMONIC,
+            },
         },
     },
     dependencyCompiler: {
