@@ -776,11 +776,14 @@ describe('VoucherHub', function () {
         });
 
         it('Should not debit voucher with an invalid voucher type ID', async function () {
+            const initialCreditBalance = await voucherHub.balanceOf(anyone.address);
+
             await expect(
                 voucherHub
                     .connect(anyone)
                     .debitVoucher(999, asset, assetPrice, asset, assetPrice, asset, assetPrice),
-            ).to.be.revertedWith('VoucherHub: type index out of bounds');
+            ).to.not.emit(voucherHub, 'VoucherDebited');
+            expect(await voucherHub.balanceOf(anyone.address)).to.equal(initialCreditBalance);
         });
     });
 

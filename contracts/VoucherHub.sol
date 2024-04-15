@@ -249,7 +249,7 @@ contract VoucherHub is
         uint256 datasetPrice,
         address workerpool,
         uint256 workerpoolPrice
-    ) external whenVoucherTypeExists(voucherTypeId) returns (uint256 sponsoredAmount) {
+    ) external returns (uint256 sponsoredAmount) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         mapping(address asset => bool) storage eligible = $.matchOrdersEligibility[voucherTypeId];
         if (eligible[app]) {
