@@ -329,7 +329,7 @@ describe('Voucher', function () {
                 .then((voucherAddress) => commonUtils.getVoucher(voucherAddress));
         });
 
-        it('Should match orders', async () => {
+        it('Should match orders with full sponsored amount', async () => {
             for (const asset of [app, dataset, workerpool]) {
                 await voucherHubWithAssetEligibilityManagerSigner
                     .addEligibleAsset(voucherType, asset)
@@ -360,7 +360,7 @@ describe('Voucher', function () {
             expect(await voucher.getSponsoredAmount(dealId)).to.equal(dealPrice);
         });
 
-        it('Should match orders with non-sponsored amount', async () => {
+        it('Should match orders with full non-sponsored amount', async () => {
             const voucherInitialCreditBalance = await voucher.getBalance();
             const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
             expect(dealPrice).to.be.greaterThan(0); // just make sure the deal will not be free

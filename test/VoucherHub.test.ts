@@ -706,7 +706,7 @@ describe('VoucherHub', function () {
             );
         });
 
-        it('Should debit zero when not voucher', async function () {
+        it('Should debit zero when sender is not a voucher', async function () {
             const initialCreditBalance = await voucherHub.balanceOf(anyone.address);
             const debitVoucher = () =>
                 voucherHub
