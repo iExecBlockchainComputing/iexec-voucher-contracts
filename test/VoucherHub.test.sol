@@ -4,7 +4,8 @@
 pragma solidity ^0.8.20;
 
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
-import {Test} from "forge-std/Test.sol";
+import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import {Test, console2} from "forge-std/Test.sol";
 
 import {VoucherHub} from "../contracts/VoucherHub.sol";
 import {Voucher} from "../contracts/beacon/Voucher.sol";
@@ -21,10 +22,10 @@ contract ContractVoucherHubTest is Test {
         address anyone;
 
         UpgradeableBeacon beacon = UpgradeableBeacon(
-            Upgrades.deployBeacon("Voucher.sol:Voucher", owner)
+            Upgrades.deployBeacon("Voucher.sol:Voucher", beaconOwner)
         );
 
-        iExecPoco = new IexecPocoMock();
+        IexecPocoMock iExecPoco = new IexecPocoMock();
 
         address proxy = Upgrades.deployUUPSProxy(
             "VoucherHub.sol",
@@ -33,6 +34,6 @@ contract ContractVoucherHubTest is Test {
                 (assetEligibilityManager, voucherManager, address(iExecPoco), address(beacon))
             )
         );
-        console.log("proxy address: %s", proxy);
+        console2.log("proxy address: %s", proxy);
     }
 }
