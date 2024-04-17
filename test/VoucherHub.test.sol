@@ -8,14 +8,31 @@ import {Test} from "forge-std/Test.sol";
 
 import {VoucherHub} from "../contracts/VoucherHub.sol";
 import {Voucher} from "../contracts/beacon/Voucher.sol";
+import {IexecPocoMock} from "../contracts/mocks/IexecPocoMock.sol";
 
 contract ContractVoucherHubTest is Test {
     // This function is called before each unit test
     function setUp() public {
-        // deploy sui bridge
-        address _beacon = Upgrades.deployBeacon(
-            "SuiBridge.sol",
-            abi.encodeCall(SuiBridge.initialize, (_committee, address(0), address(0), address(0)))
+        address beaconOwner;
+        address assetEligibilityManager;
+        address voucherManager;
+        address voucherOwner1;
+        address voucherOwner2;
+        address anyone;
+
+        UpgradeableBeacon beacon = UpgradeableBeacon(
+            Upgrades.deployBeacon("Voucher.sol:Voucher", owner)
         );
+
+        iExecPoco = new IexecPocoMock();
+
+        address proxy = Upgrades.deployUUPSProxy(
+            "VoucherHub.sol",
+            abi.encodeCall(
+                VoucherHub.initialize,
+                (assetEligibilityManager, voucherManager, address(iExecPoco), address(beacon))
+            )
+        );
+        console.log("proxy address: %s", proxy);
     }
 }
