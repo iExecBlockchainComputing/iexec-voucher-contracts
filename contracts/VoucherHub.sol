@@ -35,6 +35,10 @@ contract VoucherHub is
     // Create & top up Vouchers.
     bytes32 public constant VOUCHER_MANAGER_ROLE = keccak256("VOUCHER_MANAGER_ROLE");
 
+    // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 private constant VOUCHER_HUB_STORAGE_LOCATION =
+        0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800;
+
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
         address _iexecPoco;
@@ -45,20 +49,10 @@ contract VoucherHub is
         mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
     }
 
-    // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 private constant VOUCHER_HUB_STORAGE_LOCATION =
-        0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800;
-
     modifier whenVoucherTypeExists(uint256 id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require(id < $.voucherTypes.length, "VoucherHub: type index out of bounds");
         _;
-    }
-
-    function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
-        assembly {
-            $.slot := VOUCHER_HUB_STORAGE_LOCATION
-        }
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -118,25 +112,6 @@ contract VoucherHub is
         emit VoucherTypeDurationUpdated(id, duration);
     }
 
-    // TODO: Move bellow view methods to bottom
-    /**
-     * Get the voucher type details by ID.
-     */
-    function getVoucherType(
-        uint256 id
-    ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.voucherTypes[id];
-    }
-
-    /**
-     * Get voucher types count.
-     */
-    function getVoucherTypeCount() public view returns (uint256) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.voucherTypes.length;
-    }
-
     /**
      * Add an eligible asset to a voucher type.
      * @param voucherTypeId The ID of the voucher type.
@@ -161,35 +136,6 @@ contract VoucherHub is
     ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
         _setAssetEligibility(voucherTypeId, asset, false);
         emit EligibleAssetRemoved(voucherTypeId, asset);
-    }
-
-    /**
-     * Check if an asset is eligible to match orders sponsoring.
-     * @param voucherTypeId The ID of the voucher type.
-     * @param asset The address of the asset to check.
-     */
-    function isAssetEligibleToMatchOrdersSponsoring(
-        uint256 voucherTypeId,
-        address asset
-    ) public view returns (bool) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.matchOrdersEligibility[voucherTypeId][asset];
-    }
-
-    /**
-     * Get iExec Poco address used by vouchers.
-     */
-    function getIexecPoco() public view returns (address) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $._iexecPoco;
-    }
-
-    /**
-     * Get voucher beacon address.
-     */
-    function getVoucherBeacon() public view returns (address) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $._voucherBeacon;
     }
 
     /**
@@ -268,9 +214,56 @@ contract VoucherHub is
         }
     }
 
+    // TODO make view functions external whenever possible.
+
     /**
-     * TODO return Voucher structure.
-     *
+     * Get iExec Poco address used by vouchers.
+     */
+    function getIexecPoco() public view returns (address) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $._iexecPoco;
+    }
+
+    /**
+     * Get voucher beacon address.
+     */
+    function getVoucherBeacon() public view returns (address) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $._voucherBeacon;
+    }
+
+    /**
+     * Get the voucher type details by ID.
+     */
+    function getVoucherType(
+        uint256 id
+    ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $.voucherTypes[id];
+    }
+
+    /**
+     * Get voucher types count.
+     */
+    function getVoucherTypeCount() public view returns (uint256) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $.voucherTypes.length;
+    }
+
+    /**
+     * Check if an asset is eligible to match orders sponsoring.
+     * @param voucherTypeId The ID of the voucher type.
+     * @param asset The address of the asset to check.
+     */
+    function isAssetEligibleToMatchOrdersSponsoring(
+        uint256 voucherTypeId,
+        address asset
+    ) public view returns (bool) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $.matchOrdersEligibility[voucherTypeId][asset];
+    }
+
+    /**
      * Get voucher address of a given account.
      * Returns address(0) if voucher is not found.
      * @param account voucher's owner address.
@@ -291,6 +284,12 @@ contract VoucherHub is
     function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
+    }
+
+    function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
+        assembly {
+            $.slot := VOUCHER_HUB_STORAGE_LOCATION
+        }
     }
 
     function _getCreate2Salt(address account) private pure returns (bytes32) {

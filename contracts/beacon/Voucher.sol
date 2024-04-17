@@ -15,6 +15,11 @@ import {IVoucher} from "./IVoucher.sol";
  * Deployed along the Beacon contract using "Upgrades" plugin of OZ.
  */
 contract Voucher is OwnableUpgradeable, IVoucher {
+    // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
+    // & ~bytes32(uint256(0xff));
+    bytes32 private constant VOUCHER_STORAGE_LOCATION =
+        0xc2e244293dc04d6c7fa946e063317ff8e6770fd48cbaff411a60f1efc8a7e800;
+
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
         address _voucherHub;
@@ -22,17 +27,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 _type;
         mapping(address => bool) _authorizedAccounts;
         mapping(bytes32 dealId => uint256) _sponsoredAmounts;
-    }
-
-    // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
-    // & ~bytes32(uint256(0xff));
-    bytes32 private constant VOUCHER_STORAGE_LOCATION =
-        0xc2e244293dc04d6c7fa946e063317ff8e6770fd48cbaff411a60f1efc8a7e800;
-
-    function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
-        assembly {
-            $.slot := VOUCHER_STORAGE_LOCATION
-        }
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -62,6 +56,24 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
+     * Sets authorization for an account.
+     * @param account The account to authorize.
+     */
+    function authorizeAccount(address account) external onlyOwner {
+        _setAccountAuthorization(account, true);
+        emit AccountAuthorized(account);
+    }
+
+    /**
+     * Unsets authorization for an account.
+     * @param account The account to remove authorization from.
+     */
+    function unauthorizeAccount(address account) external onlyOwner {
+        _setAccountAuthorization(account, false);
+        emit AccountUnauthorized(account);
+    }
+
+    /**
      * Match orders on Poco. Eligible assets prices will be debited from the
      * voucher if possible, then non-sponsored amount will be debited from the
      * iExec account of the requester.
@@ -77,6 +89,8 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
         IexecLibOrders_v5.RequestOrder calldata requestOrder
     ) external returns (bytes32 dealId) {
+        // TODO add onlyAuthorized
+        // TODO check expiration
         uint256 appPrice = appOrder.appprice;
         uint256 datasetPrice = datasetOrder.datasetprice;
         uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
@@ -123,15 +137,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
-     * Retrieve the expiration timestamp of the voucher.
-     * @return expirationTimestamp The expiration timestamp.
-     */
-    function getExpiration() external view returns (uint256) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return $._expiration;
-    }
-
-    /**
      * Retrieve the type of the voucher.
      * @return voucherType The type of the voucher.
      */
@@ -141,12 +146,12 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
-     * Get amount sponsored in a deal.
-     * @param dealId The ID of the deal.
+     * Retrieve the expiration timestamp of the voucher.
+     * @return expirationTimestamp The expiration timestamp.
      */
-    function getSponsoredAmount(bytes32 dealId) external view returns (uint256) {
+    function getExpiration() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
-        return $._sponsoredAmounts[dealId];
+        return $._expiration;
     }
 
     /**
@@ -154,25 +159,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      */
     function getBalance() external view returns (uint256) {
         return IERC20(getVoucherHub()).balanceOf(address(this));
-    }
-
-    // TODO: Move "authorize" functions for order consistency
-    /**
-     * Sets authorization for an account.
-     * @param account The account to authorize.
-     */
-    function authorizeAccount(address account) external onlyOwner {
-        _setAccountAuthorization(account, true);
-        emit AccountAuthorized(account);
-    }
-
-    /**
-     * Unsets authorization for an account.
-     * @param account The account to remove authorization from.
-     */
-    function unauthorizeAccount(address account) external onlyOwner {
-        _setAccountAuthorization(account, false);
-        emit AccountUnauthorized(account);
     }
 
     /**
@@ -186,6 +172,15 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
+     * Get amount sponsored in a deal.
+     * @param dealId The ID of the deal.
+     */
+    function getSponsoredAmount(bytes32 dealId) external view returns (uint256) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._sponsoredAmounts[dealId];
+    }
+
+    /**
      * Internal function to set authorization for an account.
      * @param account The account to set authorization for.
      * @param isAuthorized Whether to authorize or unauthorize the account.
@@ -194,5 +189,11 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         require(account != owner(), "Voucher: owner is already authorized.");
         VoucherStorage storage $ = _getVoucherStorage();
         $._authorizedAccounts[account] = isAuthorized;
+    }
+
+    function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
+        assembly {
+            $.slot := VOUCHER_STORAGE_LOCATION
+        }
     }
 }

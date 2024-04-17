@@ -37,7 +37,7 @@ describe('Voucher', function () {
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
         const [
-            owner, // TODO rename to admin.
+            admin,
             assetEligibilityManager,
             voucherManager,
             voucherOwner1,
@@ -45,9 +45,9 @@ describe('Voucher', function () {
             requester,
             anyone,
         ] = await ethers.getSigners();
-        const beacon = await voucherUtils.deployBeaconAndImplementation(owner.address);
+        const beacon = await voucherUtils.deployBeaconAndImplementation(admin.address);
         iexecPocoInstance = await new IexecPocoMock__factory()
-            .connect(owner)
+            .connect(admin)
             .deploy()
             .then((x) => x.waitForDeployment());
         iexecPoco = await iexecPocoInstance.getAddress();
@@ -67,7 +67,7 @@ describe('Voucher', function () {
         return {
             beacon,
             voucherHub,
-            owner,
+            admin,
             assetEligibilityManager,
             voucherManager,
             voucherOwner1,
@@ -79,7 +79,7 @@ describe('Voucher', function () {
 
     describe('Upgrade', function () {
         it('Should upgrade all vouchers', async function () {
-            const { beacon, voucherHub, owner, voucherOwner1, voucherOwner2 } =
+            const { beacon, voucherHub, admin, voucherOwner1, voucherOwner2 } =
                 await loadFixture(deployFixture);
             const voucherType1 = 1;
             const duration1 = 7200;
@@ -118,7 +118,7 @@ describe('Voucher', function () {
             // Save old implementation.
             const initialImplementation = await beacon.implementation();
             // Upgrade beacon.
-            const voucherImplV2Factory = await ethers.getContractFactory('VoucherV2Mock', owner);
+            const voucherImplV2Factory = await ethers.getContractFactory('VoucherV2Mock', admin);
             await voucherUtils.upgradeBeacon(beacon, voucherImplV2Factory);
             const voucher1_V2 = await commonUtils.getVoucherV2(voucherAddress1);
             const voucher2_V2 = await commonUtils.getVoucherV2(voucherAddress2);
@@ -224,7 +224,7 @@ describe('Voucher', function () {
             expect(await voucher.isAccountAuthorized(anyone.address)).to.be.false;
         });
 
-        it('Should not authorize an account if the account is not the owner', async function () {
+        it('Should not authorize account if sender is not the owner', async function () {
             const { voucherHub, voucherManager, voucherOwner1, anyone } =
                 await loadFixture(deployFixture);
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
@@ -242,7 +242,7 @@ describe('Voucher', function () {
             ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
         });
 
-        it('Should not unauthorize an account if the account is not the owner', async function () {
+        it('Should not unauthorize account if sender is not the owner', async function () {
             const { voucherHub, voucherManager, voucherOwner1, anyone } =
                 await loadFixture(deployFixture);
             const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
