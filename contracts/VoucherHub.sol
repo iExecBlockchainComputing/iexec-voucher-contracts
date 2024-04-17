@@ -118,25 +118,6 @@ contract VoucherHub is
         emit VoucherTypeDurationUpdated(id, duration);
     }
 
-    // TODO: Move bellow view methods to bottom
-    /**
-     * Get the voucher type details by ID.
-     */
-    function getVoucherType(
-        uint256 id
-    ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.voucherTypes[id];
-    }
-
-    /**
-     * Get voucher types count.
-     */
-    function getVoucherTypeCount() public view returns (uint256) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.voucherTypes.length;
-    }
-
     /**
      * Add an eligible asset to a voucher type.
      * @param voucherTypeId The ID of the voucher type.
@@ -161,35 +142,6 @@ contract VoucherHub is
     ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
         _setAssetEligibility(voucherTypeId, asset, false);
         emit EligibleAssetRemoved(voucherTypeId, asset);
-    }
-
-    /**
-     * Check if an asset is eligible to match orders sponsoring.
-     * @param voucherTypeId The ID of the voucher type.
-     * @param asset The address of the asset to check.
-     */
-    function isAssetEligibleToMatchOrdersSponsoring(
-        uint256 voucherTypeId,
-        address asset
-    ) public view returns (bool) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.matchOrdersEligibility[voucherTypeId][asset];
-    }
-
-    /**
-     * Get iExec Poco address used by vouchers.
-     */
-    function getIexecPoco() public view returns (address) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $._iexecPoco;
-    }
-
-    /**
-     * Get voucher beacon address.
-     */
-    function getVoucherBeacon() public view returns (address) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $._voucherBeacon;
     }
 
     /**
@@ -268,9 +220,56 @@ contract VoucherHub is
         }
     }
 
+    // TODO make view functions external whenever possible.
+
     /**
-     * TODO return Voucher structure.
-     *
+     * Get iExec Poco address used by vouchers.
+     */
+    function getIexecPoco() public view returns (address) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $._iexecPoco;
+    }
+
+    /**
+     * Get voucher beacon address.
+     */
+    function getVoucherBeacon() public view returns (address) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $._voucherBeacon;
+    }
+
+    /**
+     * Get the voucher type details by ID.
+     */
+    function getVoucherType(
+        uint256 id
+    ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $.voucherTypes[id];
+    }
+
+    /**
+     * Get voucher types count.
+     */
+    function getVoucherTypeCount() public view returns (uint256) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $.voucherTypes.length;
+    }
+
+    /**
+     * Check if an asset is eligible to match orders sponsoring.
+     * @param voucherTypeId The ID of the voucher type.
+     * @param asset The address of the asset to check.
+     */
+    function isAssetEligibleToMatchOrdersSponsoring(
+        uint256 voucherTypeId,
+        address asset
+    ) public view returns (bool) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $.matchOrdersEligibility[voucherTypeId][asset];
+    }
+
+    /**
      * Get voucher address of a given account.
      * Returns address(0) if voucher is not found.
      * @param account voucher's owner address.
