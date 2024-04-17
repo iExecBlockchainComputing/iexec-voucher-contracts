@@ -12,6 +12,7 @@ contract VoucherV2Mock is OwnableUpgradeable {
         uint256 _expiration;
         uint256 _type;
         mapping(address => bool) _authorizedAccounts;
+        mapping(bytes32 dealId => uint256) _sponsoredAmounts;
         uint256 _newStateVariable;
     }
 

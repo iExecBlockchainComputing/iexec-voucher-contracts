@@ -118,6 +118,7 @@ contract VoucherHub is
         emit VoucherTypeDurationUpdated(id, duration);
     }
 
+    // TODO: Move bellow view methods to bottom
     /**
      * Get the voucher type details by ID.
      */
@@ -222,9 +223,49 @@ contract VoucherHub is
         emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType, value);
     }
 
-    function debitVoucher(uint256 debitAmount) external {
-        _burn(msg.sender, debitAmount);
-        emit VoucherDebited(msg.sender, debitAmount);
+    /**
+     * Debit voucher balance when used assets are eligible to voucher sponsoring.
+     * @notice (1) If this function is called by an account which is not a voucher,
+     * it will have no effect other than consummnig gas since balance would be
+     * empty (tokens are only minted for vouchers).
+     * (2) This function should not revert even if the amount debited is zero when
+     * no asset is eligible or balance from caller is empty. Thanks to that it is
+     * possible to try to debit the voucher in best effort mode (In short: "use
+     * voucher if possible"), before trying other payment methods.
+     *
+     * @param voucherTypeId The type ID of the voucher to debit.
+     * @param app The app address.
+     * @param appPrice The app price.
+     * @param dataset The dataset address.
+     * @param datasetPrice The dataset price.
+     * @param workerpool The workerpool address.
+     * @param workerpoolPrice The workerpool price.
+     */
+    function debitVoucher(
+        uint256 voucherTypeId,
+        address app,
+        uint256 appPrice,
+        address dataset,
+        uint256 datasetPrice,
+        address workerpool,
+        uint256 workerpoolPrice
+    ) external returns (uint256 sponsoredAmount) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        mapping(address asset => bool) storage eligible = $.matchOrdersEligibility[voucherTypeId];
+        if (eligible[app]) {
+            sponsoredAmount += appPrice;
+        }
+        if (dataset != address(0) && eligible[dataset]) {
+            sponsoredAmount += datasetPrice;
+        }
+        if (eligible[workerpool]) {
+            sponsoredAmount += workerpoolPrice;
+        }
+        sponsoredAmount = Math.min(balanceOf(msg.sender), sponsoredAmount);
+        if (sponsoredAmount > 0) {
+            _burn(msg.sender, sponsoredAmount);
+            emit VoucherDebited(msg.sender, sponsoredAmount);
+        }
     }
 
     /**
