@@ -281,15 +281,15 @@ contract VoucherHub is
         address newImplementation
     ) internal override onlyRole(UPGRADE_MANAGER_ROLE) {}
 
+    function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
+    }
+
     function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
         assembly {
             $.slot := VOUCHER_HUB_STORAGE_LOCATION
         }
-    }
-
-    function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
     }
 
     function _getCreate2Salt(address account) private pure returns (bytes32) {

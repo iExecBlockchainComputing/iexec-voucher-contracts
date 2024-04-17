@@ -22,6 +22,16 @@ interface IVoucherHub {
     event EligibleAssetAdded(uint256 indexed id, address asset);
     event EligibleAssetRemoved(uint256 indexed id, address asset);
 
+    function createVoucherType(string memory description, uint256 duration) external;
+
+    function updateVoucherTypeDescription(uint256 id, string memory description) external;
+
+    function updateVoucherTypeDuration(uint256 id, uint256 duration) external;
+
+    function addEligibleAsset(uint256 voucherTypeId, address asset) external;
+
+    function removeEligibleAsset(uint256 voucherTypeId, address asset) external;
+
     function createVoucher(
         address owner,
         uint256 voucherType,
@@ -38,22 +48,18 @@ interface IVoucherHub {
         uint256 workerpoolPrice
     ) external returns (uint256 sponsoredAmount);
 
-    function getVoucher(address account) external view returns (address);
+    function getIexecPoco() external view returns (address);
 
     function getVoucherBeacon() external view returns (address);
 
-    function getIexecPoco() external view returns (address);
-
-    function getVoucherTypeCount() external view returns (uint256);
-
     function getVoucherType(uint256 id) external view returns (VoucherType memory);
 
-    function addEligibleAsset(uint256 voucherTypeId, address asset) external;
-
-    function removeEligibleAsset(uint256 voucherTypeId, address asset) external;
+    function getVoucherTypeCount() external view returns (uint256);
 
     function isAssetEligibleToMatchOrdersSponsoring(
         uint256 voucherTypeId,
         address asset
     ) external view returns (bool);
+
+    function getVoucher(address account) external view returns (address);
 }
