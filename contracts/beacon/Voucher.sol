@@ -56,6 +56,24 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
+     * Sets authorization for an account.
+     * @param account The account to authorize.
+     */
+    function authorizeAccount(address account) external onlyOwner {
+        _setAccountAuthorization(account, true);
+        emit AccountAuthorized(account);
+    }
+
+    /**
+     * Unsets authorization for an account.
+     * @param account The account to remove authorization from.
+     */
+    function unauthorizeAccount(address account) external onlyOwner {
+        _setAccountAuthorization(account, false);
+        emit AccountUnauthorized(account);
+    }
+
+    /**
      * Match orders on Poco. Eligible assets prices will be debited from the
      * voucher if possible, then non-sponsored amount will be debited from the
      * iExec account of the requester.
@@ -108,24 +126,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
-     * Sets authorization for an account.
-     * @param account The account to authorize.
-     */
-    function authorizeAccount(address account) external onlyOwner {
-        _setAccountAuthorization(account, true);
-        emit AccountAuthorized(account);
-    }
-
-    /**
-     * Unsets authorization for an account.
-     * @param account The account to remove authorization from.
-     */
-    function unauthorizeAccount(address account) external onlyOwner {
-        _setAccountAuthorization(account, false);
-        emit AccountUnauthorized(account);
-    }
-
-    /**
      * Retrieve the expiration timestamp of the voucher.
      * @return expirationTimestamp The expiration timestamp.
      */
@@ -144,6 +144,16 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
+     * Checks if an account is authorized for.
+     * @param account The account to check.
+     * @return isAuthorized True if the account is authorized, false otherwise.
+     */
+    function isAccountAuthorized(address account) external view returns (bool) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return account == owner() || $._authorizedAccounts[account];
+    }
+
+    /**
      * Get amount sponsored in a deal.
      * @param dealId The ID of the deal.
      */
@@ -157,16 +167,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      */
     function getBalance() external view returns (uint256) {
         return IERC20(getVoucherHub()).balanceOf(address(this));
-    }
-
-    /**
-     * Checks if an account is authorized for.
-     * @param account The account to check.
-     * @return isAuthorized True if the account is authorized, false otherwise.
-     */
-    function isAccountAuthorized(address account) external view returns (bool) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return account == owner() || $._authorizedAccounts[account];
     }
 
     /**
