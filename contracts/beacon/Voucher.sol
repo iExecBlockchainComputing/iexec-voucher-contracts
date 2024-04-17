@@ -178,12 +178,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         return $._voucherHub;
     }
 
-    function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
-        assembly {
-            $.slot := VOUCHER_STORAGE_LOCATION
-        }
-    }
-
     /**
      * Internal function to set authorization for an account.
      * @param account The account to set authorization for.
@@ -193,5 +187,11 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         require(account != owner(), "Voucher: owner is already authorized.");
         VoucherStorage storage $ = _getVoucherStorage();
         $._authorizedAccounts[account] = isAuthorized;
+    }
+
+    function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
+        assembly {
+            $.slot := VOUCHER_STORAGE_LOCATION
+        }
     }
 }
