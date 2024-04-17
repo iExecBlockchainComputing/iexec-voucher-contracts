@@ -35,6 +35,10 @@ contract VoucherHub is
     // Create & top up Vouchers.
     bytes32 public constant VOUCHER_MANAGER_ROLE = keccak256("VOUCHER_MANAGER_ROLE");
 
+    // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 private constant VOUCHER_HUB_STORAGE_LOCATION =
+        0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800;
+
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
         address _iexecPoco;
@@ -45,20 +49,10 @@ contract VoucherHub is
         mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
     }
 
-    // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 private constant VOUCHER_HUB_STORAGE_LOCATION =
-        0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800;
-
     modifier whenVoucherTypeExists(uint256 id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require(id < $.voucherTypes.length, "VoucherHub: type index out of bounds");
         _;
-    }
-
-    function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
-        assembly {
-            $.slot := VOUCHER_HUB_STORAGE_LOCATION
-        }
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -286,6 +280,12 @@ contract VoucherHub is
     function _authorizeUpgrade(
         address newImplementation
     ) internal override onlyRole(UPGRADE_MANAGER_ROLE) {}
+
+    function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
+        assembly {
+            $.slot := VOUCHER_HUB_STORAGE_LOCATION
+        }
+    }
 
     function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
         VoucherHubStorage storage $ = _getVoucherHubStorage();

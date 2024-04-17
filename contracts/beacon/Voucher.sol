@@ -15,6 +15,11 @@ import {IVoucher} from "./IVoucher.sol";
  * Deployed along the Beacon contract using "Upgrades" plugin of OZ.
  */
 contract Voucher is OwnableUpgradeable, IVoucher {
+    // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
+    // & ~bytes32(uint256(0xff));
+    bytes32 private constant VOUCHER_STORAGE_LOCATION =
+        0xc2e244293dc04d6c7fa946e063317ff8e6770fd48cbaff411a60f1efc8a7e800;
+
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
         address _voucherHub;
@@ -22,17 +27,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 _type;
         mapping(address => bool) _authorizedAccounts;
         mapping(bytes32 dealId => uint256) _sponsoredAmounts;
-    }
-
-    // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
-    // & ~bytes32(uint256(0xff));
-    bytes32 private constant VOUCHER_STORAGE_LOCATION =
-        0xc2e244293dc04d6c7fa946e063317ff8e6770fd48cbaff411a60f1efc8a7e800;
-
-    function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
-        assembly {
-            $.slot := VOUCHER_STORAGE_LOCATION
-        }
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -182,6 +176,12 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     function getVoucherHub() public view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._voucherHub;
+    }
+
+    function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
+        assembly {
+            $.slot := VOUCHER_STORAGE_LOCATION
+        }
     }
 
     /**
