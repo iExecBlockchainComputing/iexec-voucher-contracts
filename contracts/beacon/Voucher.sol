@@ -89,6 +89,8 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
         IexecLibOrders_v5.RequestOrder calldata requestOrder
     ) external returns (bytes32 dealId) {
+        // TODO add onlyAuthorized
+        // TODO check expiration
         uint256 appPrice = appOrder.appprice;
         uint256 datasetPrice = datasetOrder.datasetprice;
         uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
