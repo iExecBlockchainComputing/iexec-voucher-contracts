@@ -128,12 +128,12 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
-     * Retrieve the expiration timestamp of the voucher.
-     * @return expirationTimestamp The expiration timestamp.
+     * Retrieve the address of the voucher hub associated with the voucher.
+     * @return voucherHubAddress The address of the voucher hub.
      */
-    function getExpiration() external view returns (uint256) {
+    function getVoucherHub() public view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
-        return $._expiration;
+        return $._voucherHub;
     }
 
     /**
@@ -143,6 +143,22 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     function getType() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._type;
+    }
+
+    /**
+     * Retrieve the expiration timestamp of the voucher.
+     * @return expirationTimestamp The expiration timestamp.
+     */
+    function getExpiration() external view returns (uint256) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._expiration;
+    }
+
+    /**
+     * Get voucher balance.
+     */
+    function getBalance() external view returns (uint256) {
+        return IERC20(getVoucherHub()).balanceOf(address(this));
     }
 
     /**
@@ -162,22 +178,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     function getSponsoredAmount(bytes32 dealId) external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._sponsoredAmounts[dealId];
-    }
-
-    /**
-     * Get voucher balance.
-     */
-    function getBalance() external view returns (uint256) {
-        return IERC20(getVoucherHub()).balanceOf(address(this));
-    }
-
-    /**
-     * Retrieve the address of the voucher hub associated with the voucher.
-     * @return voucherHubAddress The address of the voucher hub.
-     */
-    function getVoucherHub() public view returns (address) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return $._voucherHub;
     }
 
     /**
