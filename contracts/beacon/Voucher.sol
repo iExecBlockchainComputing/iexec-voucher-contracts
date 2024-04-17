@@ -114,12 +114,21 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
-     * Retrieve the address of the voucher hub associated with the voucher.
-     * @return voucherHubAddress The address of the voucher hub.
+     * Sets authorization for an account.
+     * @param account The account to authorize.
      */
-    function getVoucherHub() public view returns (address) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return $._voucherHub;
+    function authorizeAccount(address account) external onlyOwner {
+        _setAccountAuthorization(account, true);
+        emit AccountAuthorized(account);
+    }
+
+    /**
+     * Unsets authorization for an account.
+     * @param account The account to remove authorization from.
+     */
+    function unauthorizeAccount(address account) external onlyOwner {
+        _setAccountAuthorization(account, false);
+        emit AccountUnauthorized(account);
     }
 
     /**
@@ -156,25 +165,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         return IERC20(getVoucherHub()).balanceOf(address(this));
     }
 
-    // TODO: Move "authorize" functions for order consistency
-    /**
-     * Sets authorization for an account.
-     * @param account The account to authorize.
-     */
-    function authorizeAccount(address account) external onlyOwner {
-        _setAccountAuthorization(account, true);
-        emit AccountAuthorized(account);
-    }
-
-    /**
-     * Unsets authorization for an account.
-     * @param account The account to remove authorization from.
-     */
-    function unauthorizeAccount(address account) external onlyOwner {
-        _setAccountAuthorization(account, false);
-        emit AccountUnauthorized(account);
-    }
-
     /**
      * Checks if an account is authorized for.
      * @param account The account to check.
@@ -183,6 +173,15 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     function isAccountAuthorized(address account) external view returns (bool) {
         VoucherStorage storage $ = _getVoucherStorage();
         return account == owner() || $._authorizedAccounts[account];
+    }
+
+    /**
+     * Retrieve the address of the voucher hub associated with the voucher.
+     * @return voucherHubAddress The address of the voucher hub.
+     */
+    function getVoucherHub() public view returns (address) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._voucherHub;
     }
 
     /**
