@@ -25,7 +25,7 @@ export async function deploy(
     assetEligibilityManager: string,
     voucherManager: string,
     iexecPoco: string,
-) {
+): Promise<string> {
     // Deploy Voucher beacon and implementation.
     const beacon: UpgradeableBeacon = await voucherUtils.deployBeaconAndImplementation(beaconOwner);
     const beaconAddress = await beacon.getAddress();
@@ -43,4 +43,5 @@ export async function deploy(
     if ((await voucherHub.getVoucherBeacon()) !== beaconAddress) {
         throw new Error('Deployment error');
     }
+    return await voucherHub.getAddress();
 }
