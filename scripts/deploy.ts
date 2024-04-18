@@ -20,7 +20,7 @@ async function main() {
     deploy(beaconOwner, assetEligibilityManager, voucherManager, iexecPoco);
 }
 
-async function deploy(
+export async function deploy(
     beaconOwner: string,
     assetEligibilityManager: string,
     voucherManager: string,
