@@ -2,6 +2,7 @@
 
 ## vNEXT
 - Upload coverage reports to Codecov. (#14)
+- Clean some TODOs. (#13)
 - Match orders through voucher. (#12)
 - Add external-hardhat network configuration. (#11)
 - Add voucher credit and SRLC manipulation. (#10)
