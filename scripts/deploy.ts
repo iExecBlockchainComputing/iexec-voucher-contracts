@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
+import fs from 'fs';
 import { UpgradeableBeacon } from '../typechain-types';
 import * as voucherHubUtils from './voucherHubUtils';
 import * as voucherUtils from './voucherUtils';
@@ -38,10 +39,15 @@ export async function deploy(
         iexecPoco,
         beaconAddress,
     );
-    console.log(`VoucherHub deployed to: ${await voucherHub.getAddress()}`);
+    const voucherHubAddress = await voucherHub.getAddress();
+    console.log(`VoucherHub deployed to: ${voucherHubAddress}`);
     // Check
     if ((await voucherHub.getVoucherBeacon()) !== beaconAddress) {
         throw new Error('Deployment error');
     }
-    return await voucherHub.getAddress();
+    // TODO use hardhat-deploy
+    // Save voucherHub address
+    fs.mkdirSync('deployments/hardhat/', { recursive: true });
+    fs.writeFileSync('deployments/hardhat/VoucherHub.json', `{"address": "${voucherHubAddress}"}`);
+    return voucherHubAddress;
 }
