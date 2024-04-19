@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import fs from 'fs';
+import { ethers } from 'hardhat';
 import { UpgradeableBeacon } from '../typechain-types';
 import * as voucherHubUtils from './voucherHubUtils';
 import * as voucherUtils from './voucherUtils';
@@ -47,7 +48,9 @@ export async function deploy(
     }
     // TODO use hardhat-deploy
     // Save voucherHub address
-    fs.mkdirSync('deployments/hardhat/', { recursive: true });
-    fs.writeFileSync('deployments/hardhat/VoucherHub.json', `{"address": "${voucherHubAddress}"}`);
+    const network = (await ethers.provider.getNetwork()).name;
+    const dir = `deployments/${network}`;
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(`${dir}/VoucherHub.json`, `{"address": "${voucherHubAddress}"}`);
     return voucherHubAddress;
 }
