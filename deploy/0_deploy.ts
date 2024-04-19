@@ -1,26 +1,18 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
-import fs from 'fs';
-import { ethers } from 'hardhat';
+import { deployments } from 'hardhat';
+import * as voucherHubUtils from '../scripts/voucherHubUtils';
+import * as voucherUtils from '../scripts/voucherUtils';
 import { UpgradeableBeacon } from '../typechain-types';
-import * as voucherHubUtils from './voucherHubUtils';
-import * as voucherUtils from './voucherUtils';
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-});
-
-async function main() {
+module.exports = async function () {
     const beaconOwner = '0xbee4B4D44c9472347482c7941409E4E7AEdf3c1e'; // random
     const assetEligibilityManager = '0x0f78173486FDFdA573a894dcC037E0486DDEE6Db'; // random
     const voucherManager = '0xf3B82Dcc6028d8e78DDd137d048A6580E94DEe5b'; // random
     const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // TODO: Change it
     await deploy(beaconOwner, assetEligibilityManager, voucherManager, iexecPoco);
-}
+};
 
 export async function deploy(
     beaconOwner: string,
@@ -31,6 +23,7 @@ export async function deploy(
     // Deploy Voucher beacon and implementation.
     const beacon: UpgradeableBeacon = await voucherUtils.deployBeaconAndImplementation(beaconOwner);
     const beaconAddress = await beacon.getAddress();
+    await save('UpgradeableBeacon', beaconAddress);
     console.log(`Voucher beacon deployed at: ${beaconAddress}`);
     console.log(`Voucher implementation deployed at: ${await beacon.implementation()}`);
     // Deploy VoucherHub.
@@ -46,11 +39,13 @@ export async function deploy(
     if ((await voucherHub.getVoucherBeacon()) !== beaconAddress) {
         throw new Error('Deployment error');
     }
-    // TODO use hardhat-deploy
-    // Save voucherHub address
-    const network = (await ethers.provider.getNetwork()).name;
-    const dir = `deployments/${network}`;
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(`${dir}/VoucherHub.json`, `{"address": "${voucherHubAddress}"}`);
+    await save('VoucherHub', voucherHubAddress);
     return voucherHubAddress;
+}
+
+async function save(name: string, address: string) {
+    await deployments.save(name, {
+        abi: [],
+        address: address,
+    });
 }
