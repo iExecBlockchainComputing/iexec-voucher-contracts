@@ -13,4 +13,5 @@ node_modules
 /coverage
 /coverage.json
 
-/deployments
+/deployments/hardhat
+/deployments/localhost

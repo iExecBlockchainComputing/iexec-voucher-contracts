@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { deployments, ethers } from 'hardhat';
-import { DeployFunction } from 'hardhat-deploy/types';
+import { DeployFunction } from 'hardhat-deploy/dist/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
