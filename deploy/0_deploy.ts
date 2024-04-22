@@ -1,18 +1,24 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
-import { deployments } from 'hardhat';
+import { deployments, ethers } from 'hardhat';
+import { DeployFunction } from 'hardhat-deploy/types';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import { UpgradeableBeacon } from '../typechain-types';
 
-module.exports = async function () {
+const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+    // const {deployments} = hre;
+    // const {deploy} = deployments;
+    const [admin] = await ethers.getSigners();
     const beaconOwner = '0xbee4B4D44c9472347482c7941409E4E7AEdf3c1e'; // random
     const assetEligibilityManager = '0x0f78173486FDFdA573a894dcC037E0486DDEE6Db'; // random
     const voucherManager = '0xf3B82Dcc6028d8e78DDd137d048A6580E94DEe5b'; // random
     const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // TODO: Change it
     await deploy(beaconOwner, assetEligibilityManager, voucherManager, iexecPoco);
 };
+export default func;
 
 export async function deploy(
     beaconOwner: string,
