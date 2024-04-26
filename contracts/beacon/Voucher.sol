@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 
 import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.sol";
 import {IexecPoco1} from "@iexec/poco/contracts/modules/interfaces/IexecPoco1.v8.sol";
+import {IexecPocoBoost} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoost.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVoucherHub} from "../IVoucherHub.sol";
@@ -124,6 +125,60 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         );
         $._sponsoredAmounts[dealId] = sponsoredAmount;
         emit OrdersMatchedWithVoucher(dealId);
+        return dealId;
+    }
+
+    /**
+     * Match orders boost on Poco. Eligible assets prices will be debited from the
+     * voucher if possible, then non-sponsored amount will be debited from the
+     * iExec account of the requester.
+     *
+     * @param appOrder The app order.
+     * @param datasetOrder The dataset order.
+     * @param workerpoolOrder The workerpool order.
+     * @param requestOrder The request order.
+     */
+    function matchOrdersBoost(
+        IexecLibOrders_v5.AppOrder calldata appOrder,
+        IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
+        IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
+        IexecLibOrders_v5.RequestOrder calldata requestOrder
+    ) external returns (bytes32 dealId) {
+        // TODO add onlyAuthorized
+        // TODO check expiration
+        uint256 appPrice = appOrder.appprice;
+        uint256 datasetPrice = datasetOrder.datasetprice;
+        uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
+        VoucherStorage storage $ = _getVoucherStorage();
+        IVoucherHub voucherHub = IVoucherHub($._voucherHub);
+        uint256 sponsoredAmount = voucherHub.debitVoucher(
+            $._type,
+            appOrder.app,
+            appPrice,
+            datasetOrder.dataset,
+            datasetPrice,
+            workerpoolOrder.workerpool,
+            workerpoolPrice
+        );
+        uint256 dealPrice = appPrice + datasetPrice + workerpoolPrice;
+        address iexecPoco = voucherHub.getIexecPoco();
+        if (sponsoredAmount != dealPrice) {
+            // Transfer non-sponsored amount from the iExec account of the
+            // requester to the iExec account of the voucher
+            IERC20(iexecPoco).transferFrom(
+                requestOrder.requester,
+                address(this),
+                dealPrice - sponsoredAmount
+            );
+        }
+        dealId = IexecPocoBoost(iexecPoco).sponsorMatchOrdersBoost(
+            appOrder,
+            datasetOrder,
+            workerpoolOrder,
+            requestOrder
+        );
+        $._sponsoredAmounts[dealId] = sponsoredAmount;
+        emit OrdersBoostMatchedWithVoucher(dealId);
         return dealId;
     }
 
