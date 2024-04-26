@@ -2,13 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { deployments, ethers } from 'hardhat';
-import { DeployFunction } from 'hardhat-deploy/dist/types';
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import { UpgradeableBeacon } from '../typechain-types';
 
-const main: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+export default async function () {
     // const {deployments} = hre;
     // const {deploy} = deployments;
     const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // TODO: Change it
@@ -19,8 +17,7 @@ const main: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         voucherManager.address,
         iexecPoco,
     );
-};
-export default main;
+}
 
 async function deployAll(
     beaconOwner: string,
