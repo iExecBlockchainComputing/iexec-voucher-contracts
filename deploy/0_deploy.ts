@@ -32,7 +32,7 @@ export async function deployAll(
     const beacon: UpgradeableBeacon = await voucherUtils.deployBeaconAndImplementation(beaconOwner);
     const beaconAddress = await beacon.getAddress();
     console.log(`UpgradeableBeacon: ${beaconAddress}`);
-    console.log(`Voucher: ${await beacon.implementation()}`);
+    console.log(`Voucher implementation: ${await beacon.implementation()}`);
     // Deploy VoucherHub.
     const voucherHub = await voucherHubUtils.deployHub(
         assetEligibilityManager,
