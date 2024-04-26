@@ -22,7 +22,7 @@ const main: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 export default main;
 
-export async function deployAll(
+async function deployAll(
     beaconOwner: string,
     assetEligibilityManager: string,
     voucherManager: string,
