@@ -530,7 +530,6 @@ describe('Voucher', function () {
                 ).to.be.revertedWith('IexecPocoMock: Failed to sponsorMatchOrdersBoost');
             });
             it('Should not match orders boost when sender is not allowed', async () => {
-                const voucherWithAnyoneSigner = voucher.connect(anyone);
                 await expect(
                     voucherWithAnyoneSigner.matchOrdersBoost(
                         appOrder,
