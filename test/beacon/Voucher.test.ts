@@ -31,6 +31,8 @@ describe('Voucher', function () {
     let voucherHubWithVoucherManagerSigner: VoucherHub;
     let voucherHubWithAssetEligibilityManagerSigner: VoucherHub;
     let voucherHubWithAnyoneSigner: VoucherHub;
+    let voucherWithOwnerSigner: Voucher;
+    let voucherWithAnyoneSigner: Voucher;
     // We define a fixture to reuse the same setup in every test.
     // We use loadFixture to run this setup once, snapshot that state,
     // and reset Hardhat Network to that snapshot in every test.
@@ -318,9 +320,7 @@ describe('Voucher', function () {
         let requestOrder = { ...mockOrder };
         let [voucherOwner1, requester, anyone]: SignerWithAddress[] = [];
         let voucherHub: VoucherHub;
-        let voucher: Voucher;
-        let voucherWithOwnerSigner: Voucher;
-        let voucherWithAnyoneSigner: Voucher;
+        let voucher: Voucher; // TODO: Remove this when onlyAthorized is set to matchOrders
 
         beforeEach(async () => {
             ({ voucherHub, voucherOwner1, requester, anyone } = await loadFixture(deployFixture));
