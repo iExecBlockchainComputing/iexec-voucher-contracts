@@ -340,7 +340,7 @@ describe('Voucher', function () {
             }
             const voucherInitialCreditBalance = await voucher.getBalance();
             const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
-            const requesterInitialSrlcBalanceBefore = await getRequesterBalanceOnIexecPoco();
+            const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
 
             expect(
                 await voucher.matchOrders.staticCall(
@@ -357,9 +357,7 @@ describe('Voucher', function () {
                 .to.be.equal(voucherInitialCreditBalance - dealPrice)
                 .to.be.equal(await getVoucherBalanceOnIexecPoco())
                 .to.be.equal(voucherInitialSrlcBalance - dealPrice);
-            expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
-                requesterInitialSrlcBalanceBefore,
-            );
+            expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(requesterInitialSrlcBalance);
             expect(await voucher.getSponsoredAmount(dealId)).to.equal(dealPrice);
         });
 
@@ -417,7 +415,7 @@ describe('Voucher', function () {
                 }
                 const voucherInitialCreditBalance = await voucher.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
-                const requesterInitialSrlcBalanceBefore = await getRequesterBalanceOnIexecPoco();
+                const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
 
                 expect(
                     await voucherWithOwnerSigner.matchOrdersBoost.staticCall(
@@ -442,7 +440,7 @@ describe('Voucher', function () {
                     .to.be.equal(await getVoucherBalanceOnIexecPoco())
                     .to.be.equal(voucherInitialSrlcBalance - dealPrice);
                 expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
-                    requesterInitialSrlcBalanceBefore,
+                    requesterInitialSrlcBalance,
                 );
                 expect(await voucher.getSponsoredAmount(dealId)).to.equal(dealPrice);
             });
