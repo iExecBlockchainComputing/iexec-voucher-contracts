@@ -30,6 +30,21 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         mapping(bytes32 dealId => uint256) _sponsoredAmounts;
     }
 
+    modifier onlyAuthorized() {
+        VoucherStorage storage $ = _getVoucherStorage();
+        require(
+            msg.sender == owner() || $._authorizedAccounts[msg.sender],
+            "Voucher: sender is not authorized"
+        );
+        _;
+    }
+
+    modifier onlyNotExpired() {
+        VoucherStorage storage $ = _getVoucherStorage();
+        require(block.timestamp < $._expiration, "Voucher: voucher is expired");
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -92,32 +107,17 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     ) external returns (bytes32 dealId) {
         // TODO add onlyAuthorized
         // TODO check expiration
-        uint256 appPrice = appOrder.appprice;
-        uint256 datasetPrice = datasetOrder.datasetprice;
-        uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
         VoucherStorage storage $ = _getVoucherStorage();
         IVoucherHub voucherHub = IVoucherHub($._voucherHub);
-        uint256 sponsoredAmount = voucherHub.debitVoucher(
+        uint256 sponsoredAmount = _debitVoucherAndTransfer(
             $._type,
-            appOrder.app,
-            appPrice,
-            datasetOrder.dataset,
-            datasetPrice,
-            workerpoolOrder.workerpool,
-            workerpoolPrice
+            $._voucherHub,
+            appOrder,
+            datasetOrder,
+            workerpoolOrder,
+            requestOrder
         );
-        uint256 dealPrice = appPrice + datasetPrice + workerpoolPrice;
-        address iexecPoco = voucherHub.getIexecPoco();
-        if (sponsoredAmount != dealPrice) {
-            // Transfer non-sponsored amount from the iExec account of the
-            // requester to the iExec account of the voucher
-            IERC20(iexecPoco).transferFrom(
-                requestOrder.requester,
-                address(this),
-                dealPrice - sponsoredAmount
-            );
-        }
-        dealId = IexecPoco1(iexecPoco).sponsorMatchOrders(
+        dealId = IexecPoco1(voucherHub.getIexecPoco()).sponsorMatchOrders(
             appOrder,
             datasetOrder,
             workerpoolOrder,
@@ -143,35 +143,18 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
         IexecLibOrders_v5.RequestOrder calldata requestOrder
-    ) external returns (bytes32 dealId) {
-        // TODO add onlyAuthorized
-        // TODO check expiration
-        uint256 appPrice = appOrder.appprice;
-        uint256 datasetPrice = datasetOrder.datasetprice;
-        uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
+    ) external onlyAuthorized onlyNotExpired returns (bytes32 dealId) {
         VoucherStorage storage $ = _getVoucherStorage();
         IVoucherHub voucherHub = IVoucherHub($._voucherHub);
-        uint256 sponsoredAmount = voucherHub.debitVoucher(
+        uint256 sponsoredAmount = _debitVoucherAndTransfer(
             $._type,
-            appOrder.app,
-            appPrice,
-            datasetOrder.dataset,
-            datasetPrice,
-            workerpoolOrder.workerpool,
-            workerpoolPrice
+            $._voucherHub,
+            appOrder,
+            datasetOrder,
+            workerpoolOrder,
+            requestOrder
         );
-        uint256 dealPrice = appPrice + datasetPrice + workerpoolPrice;
-        address iexecPoco = voucherHub.getIexecPoco();
-        if (sponsoredAmount != dealPrice) {
-            // Transfer non-sponsored amount from the iExec account of the
-            // requester to the iExec account of the voucher
-            IERC20(iexecPoco).transferFrom(
-                requestOrder.requester,
-                address(this),
-                dealPrice - sponsoredAmount
-            );
-        }
-        dealId = IexecPocoBoost(iexecPoco).sponsorMatchOrdersBoost(
+        dealId = IexecPocoBoost(voucherHub.getIexecPoco()).sponsorMatchOrdersBoost(
             appOrder,
             datasetOrder,
             workerpoolOrder,
@@ -249,6 +232,53 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
         assembly {
             $.slot := VOUCHER_STORAGE_LOCATION
+        }
+    }
+
+    /**
+     * @dev Debit voucher and transfer non-sponsored amount from requester's account.
+     *
+     * @param appOrder The app order.
+     * @param datasetOrder The dataset order.
+     * @param workerpoolOrder The workerpool order.
+     * @param requestOrder The request order.
+     *
+     * @return sponsoredAmount The amount sponsored by the voucher.
+     */
+    function _debitVoucherAndTransfer(
+        uint256 _type,
+        address _voucherHub,
+        IexecLibOrders_v5.AppOrder calldata appOrder,
+        IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
+        IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
+        IexecLibOrders_v5.RequestOrder calldata requestOrder
+    ) private returns (uint256 sponsoredAmount) {
+        uint256 appPrice = appOrder.appprice;
+        uint256 datasetPrice = datasetOrder.datasetprice;
+        uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
+        IVoucherHub voucherHub = IVoucherHub(_voucherHub);
+
+        sponsoredAmount = voucherHub.debitVoucher(
+            _type,
+            appOrder.app,
+            appPrice,
+            datasetOrder.dataset,
+            datasetPrice,
+            workerpoolOrder.workerpool,
+            workerpoolPrice
+        );
+
+        uint256 dealPrice = appPrice + datasetPrice + workerpoolPrice;
+        address iexecPoco = voucherHub.getIexecPoco();
+
+        if (sponsoredAmount != dealPrice) {
+            // Transfer non-sponsored amount from the iExec account of the
+            // requester to the iExec account of the voucher
+            IERC20(iexecPoco).transferFrom(
+                requestOrder.requester,
+                address(this),
+                dealPrice - sponsoredAmount
+            );
         }
     }
 }
