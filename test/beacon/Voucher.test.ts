@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-import { loadFixture, mine, time } from '@nomicfoundation/hardhat-toolbox/network-helpers';
+import { loadFixture, time } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import * as commonUtils from '../../scripts/common';
@@ -485,10 +485,9 @@ describe('Voucher', function () {
                         .addEligibleAsset(voucherType, asset)
                         .then((x) => x.wait());
                 }
-                const authorizationTx = await voucherWithOwnerSigner.authorizeAccount(
-                    anyone.address,
-                );
-                await authorizationTx.wait();
+                await voucherWithOwnerSigner
+                    .authorizeAccount(anyone.address)
+                    .then((tx) => tx.wait());
 
                 const voucherWithAnyoneSigner = voucher.connect(anyone);
                 await expect(
@@ -544,8 +543,6 @@ describe('Voucher', function () {
             it('Should not match orders boost when voucher is expired', async () => {
                 const expirationDate = (await voucher.getExpiration()) + BigInt(10);
                 await time.setNextBlockTimestamp(expirationDate);
-                // Mine empty block to get to voucher expiration time.
-                await mine();
                 await expect(
                     voucherWithOwnerSigner.matchOrdersBoost(
                         appOrder,
