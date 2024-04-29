@@ -7,8 +7,6 @@ import * as voucherUtils from '../scripts/voucherUtils';
 import { UpgradeableBeacon } from '../typechain-types';
 
 export default async function () {
-    // const {deployments} = hre;
-    // const {deploy} = deployments;
     const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // TODO: Change it
     const [admin, assetEligibilityManager, voucherManager] = await ethers.getSigners();
     await deployAll(
