@@ -109,15 +109,17 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         // TODO check expiration
         VoucherStorage storage $ = _getVoucherStorage();
         IVoucherHub voucherHub = IVoucherHub($._voucherHub);
+        address iexecPoco = voucherHub.getIexecPoco();
         uint256 sponsoredAmount = _debitVoucherAndTransfer(
             $._type,
             $._voucherHub,
+            iexecPoco,
             appOrder,
             datasetOrder,
             workerpoolOrder,
             requestOrder
         );
-        dealId = IexecPoco1(voucherHub.getIexecPoco()).sponsorMatchOrders(
+        dealId = IexecPoco1(iexecPoco).sponsorMatchOrders(
             appOrder,
             datasetOrder,
             workerpoolOrder,
@@ -146,15 +148,17 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     ) external onlyAuthorized onlyNotExpired returns (bytes32 dealId) {
         VoucherStorage storage $ = _getVoucherStorage();
         IVoucherHub voucherHub = IVoucherHub($._voucherHub);
+        address iexecPoco = voucherHub.getIexecPoco();
         uint256 sponsoredAmount = _debitVoucherAndTransfer(
             $._type,
             $._voucherHub,
+            iexecPoco,
             appOrder,
             datasetOrder,
             workerpoolOrder,
             requestOrder
         );
-        dealId = IexecPocoBoost(voucherHub.getIexecPoco()).sponsorMatchOrdersBoost(
+        dealId = IexecPocoBoost(iexecPoco).sponsorMatchOrdersBoost(
             appOrder,
             datasetOrder,
             workerpoolOrder,
@@ -246,8 +250,9 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      * @return sponsoredAmount The amount sponsored by the voucher.
      */
     function _debitVoucherAndTransfer(
-        uint256 _type,
-        address _voucherHub,
+        uint256 voucherTypeId,
+        address voucherHub,
+        address iexecPoco,
         IexecLibOrders_v5.AppOrder calldata appOrder,
         IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
@@ -256,10 +261,9 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 appPrice = appOrder.appprice;
         uint256 datasetPrice = datasetOrder.datasetprice;
         uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
-        IVoucherHub voucherHub = IVoucherHub(_voucherHub);
 
-        sponsoredAmount = voucherHub.debitVoucher(
-            _type,
+        sponsoredAmount = IVoucherHub(voucherHub).debitVoucher(
+            voucherTypeId,
             appOrder.app,
             appPrice,
             datasetOrder.dataset,
@@ -269,7 +273,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         );
 
         uint256 dealPrice = appPrice + datasetPrice + workerpoolPrice;
-        address iexecPoco = voucherHub.getIexecPoco();
 
         if (sponsoredAmount != dealPrice) {
             // Transfer non-sponsored amount from the iExec account of the
