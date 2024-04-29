@@ -1,7 +1,7 @@
 # Changelog
 
 ## vNEXT
-- Match orders boost through voucher. (#)
+- Match orders boost through voucher. (#16)
 - Upload coverage reports to Codecov. (#14)
 - Clean some TODOs. (#13)
 - Match orders through voucher. (#12)
