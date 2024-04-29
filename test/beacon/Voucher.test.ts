@@ -320,6 +320,7 @@ describe('Voucher', function () {
         let voucherHub: VoucherHub;
         let voucher: Voucher;
         let voucherWithOwnerSigner: Voucher;
+        let voucherWithAnyoneSigner: Voucher;
 
         beforeEach(async () => {
             ({ voucherHub, voucherOwner1, requester, anyone } = await loadFixture(deployFixture));
@@ -330,6 +331,7 @@ describe('Voucher', function () {
                 .then(() => voucherHub.getVoucher(voucherOwner1))
                 .then((voucherAddress) => commonUtils.getVoucher(voucherAddress));
             voucherWithOwnerSigner = voucher.connect(voucherOwner1);
+            voucherWithAnyoneSigner = voucher.connect(anyone);
         });
 
         it('Should match orders with full sponsored amount', async () => {
@@ -489,7 +491,6 @@ describe('Voucher', function () {
                     .authorizeAccount(anyone.address)
                     .then((tx) => tx.wait());
 
-                const voucherWithAnyoneSigner = voucher.connect(anyone);
                 await expect(
                     voucherWithAnyoneSigner.matchOrdersBoost(
                         appOrder,
