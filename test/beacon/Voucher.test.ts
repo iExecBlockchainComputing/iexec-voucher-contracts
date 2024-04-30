@@ -476,9 +476,9 @@ describe('Voucher', function () {
                         requestOrder,
                     ),
                 )
+                    .to.emit(voucher, 'OrdersBoostMatchedWithVoucher')
                     .to.emit(iexecPocoInstance, 'Transfer')
-                    .withArgs(requester.address, await voucher.getAddress(), dealPrice)
-                    .to.emit(voucher, 'OrdersBoostMatchedWithVoucher');
+                    .withArgs(requester.address, await voucher.getAddress(), dealPrice);
                 expect(await voucher.getBalance())
                     .to.be.equal(voucherInitialCreditBalance)
                     .to.be.equal(await getVoucherBalanceOnIexecPoco())
@@ -520,6 +520,8 @@ describe('Voucher', function () {
                         requestOrder,
                     ),
                 )
+                    .to.emit(voucher, 'OrdersBoostMatchedWithVoucher')
+                    .withArgs(dealId)
                     .to.emit(iexecPocoInstance, 'Transfer')
                     .withArgs(
                         requester.address,
@@ -529,9 +531,7 @@ describe('Voucher', function () {
                     .to.emit(voucherHub, 'VoucherDebited')
                     .withArgs(await voucher.getAddress(), sponsoredValue)
                     .to.emit(voucherHub, 'Transfer')
-                    .withArgs(await voucher.getAddress(), ethers.ZeroAddress, sponsoredValue)
-                    .to.emit(voucher, 'OrdersBoostMatchedWithVoucher');
-
+                    .withArgs(await voucher.getAddress(), ethers.ZeroAddress, sponsoredValue);
                 expect(await voucher.getBalance())
                     .to.be.equal(voucherInitialCreditBalance - sponsoredValue)
                     .to.be.equal(await getVoucherBalanceOnIexecPoco())
