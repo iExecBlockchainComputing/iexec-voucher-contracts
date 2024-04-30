@@ -271,7 +271,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
             workerpoolOrder.workerpool,
             workerpoolPrice
         );
-        // TODO: Compute volume and set taskPrice = dealPrice * volume instead of taskPrice
+        // TODO: Compute volume and set dealPrice = taskPrice * volume instead of curent dealPrice
         uint256 dealPrice = appPrice + datasetPrice + workerpoolPrice;
 
         if (sponsoredAmount != dealPrice) {
