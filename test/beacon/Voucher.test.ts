@@ -504,6 +504,30 @@ describe('Voucher', function () {
                     .withArgs(dealId);
             });
 
+            it('Should not match orders boost when sender is not allowed', async () => {
+                await expect(
+                    voucherWithAnyoneSigner.matchOrdersBoost(
+                        appOrder,
+                        datasetOrder,
+                        workerpoolOrder,
+                        requestOrder,
+                    ),
+                ).to.be.revertedWith('Voucher: sender is not authorized');
+            });
+
+            it('Should not match orders boost when voucher is expired', async () => {
+                const expirationDate = await voucher.getExpiration();
+                await time.setNextBlockTimestamp(expirationDate);
+                await expect(
+                    voucherWithOwnerSigner.matchOrdersBoost(
+                        appOrder,
+                        datasetOrder,
+                        workerpoolOrder,
+                        requestOrder,
+                    ),
+                ).to.be.revertedWith('Voucher: voucher is expired');
+            });
+
             it('Should not match orders boost when non-sponsored amount not transferable', async () => {
                 await expect(
                     voucherWithOwnerSigner.matchOrdersBoost(
@@ -529,29 +553,6 @@ describe('Voucher', function () {
                         requestOrder,
                     ),
                 ).to.be.revertedWith('IexecPocoMock: Failed to sponsorMatchOrdersBoost');
-            });
-            it('Should not match orders boost when sender is not allowed', async () => {
-                await expect(
-                    voucherWithAnyoneSigner.matchOrdersBoost(
-                        appOrder,
-                        datasetOrder,
-                        workerpoolOrder,
-                        requestOrder,
-                    ),
-                ).to.be.revertedWith('Voucher: sender is not authorized');
-            });
-
-            it('Should not match orders boost when voucher is expired', async () => {
-                const expirationDate = (await voucher.getExpiration())
-                await time.setNextBlockTimestamp(expirationDate);
-                await expect(
-                    voucherWithOwnerSigner.matchOrdersBoost(
-                        appOrder,
-                        datasetOrder,
-                        workerpoolOrder,
-                        requestOrder,
-                    ),
-                ).to.be.revertedWith('Voucher: voucher is expired');
             });
         });
     });
