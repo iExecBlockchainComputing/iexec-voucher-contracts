@@ -506,6 +506,7 @@ describe('Voucher', function () {
                     .transfer(requester, noSponsoredValue)
                     .then((tx) => tx.wait());
 
+                const requesterDeposietedSrlcBalance = await getRequesterBalanceOnIexecPoco();
                 // Allow voucher to spend non-sponsored amount
                 await iexecPocoInstance
                     .connect(requester)
@@ -536,9 +537,9 @@ describe('Voucher', function () {
                     .to.be.equal(voucherInitialCreditBalance - sponsoredValue)
                     .to.be.equal(await getVoucherBalanceOnIexecPoco())
                     .to.be.equal(voucherInitialSrlcBalance - sponsoredValue);
-                expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
-                    requesterInitialSrlcBalance,
-                );
+                expect(await getRequesterBalanceOnIexecPoco())
+                    .to.be.equal(requesterDeposietedSrlcBalance - noSponsoredValue)
+                    .to.be.equal(requesterInitialSrlcBalance);
                 expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(sponsoredValue);
             });
 
