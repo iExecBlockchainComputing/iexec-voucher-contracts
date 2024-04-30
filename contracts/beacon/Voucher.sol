@@ -112,7 +112,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         address iexecPoco = voucherHub.getIexecPoco();
         uint256 sponsoredAmount = _debitVoucherAndTransferNonSponsoredAmount(
             $._type,
-            $._voucherHub,
+            voucherHub,
             iexecPoco,
             appOrder,
             datasetOrder,
@@ -151,7 +151,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         address iexecPoco = voucherHub.getIexecPoco();
         uint256 sponsoredAmount = _debitVoucherAndTransferNonSponsoredAmount(
             $._type,
-            $._voucherHub,
+            voucherHub,
             iexecPoco,
             appOrder,
             datasetOrder,
@@ -242,6 +242,9 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     /**
      * @dev Debit voucher and transfer non-sponsored amount from requester's account.
      *
+     * @param voucherTypeId The type Id of the voucher.
+     * @param voucherHub The voucher hub instance.
+     * @param iexecPoco The address of iExec Poco.
      * @param appOrder The app order.
      * @param datasetOrder The dataset order.
      * @param workerpoolOrder The workerpool order.
@@ -251,7 +254,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      */
     function _debitVoucherAndTransferNonSponsoredAmount(
         uint256 voucherTypeId,
-        address voucherHub,
+        IVoucherHub voucherHub,
         address iexecPoco,
         IexecLibOrders_v5.AppOrder calldata appOrder,
         IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
@@ -262,7 +265,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 datasetPrice = datasetOrder.datasetprice;
         uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
 
-        sponsoredAmount = IVoucherHub(voucherHub).debitVoucher(
+        sponsoredAmount = voucherHub.debitVoucher(
             voucherTypeId,
             appOrder.app,
             appPrice,
