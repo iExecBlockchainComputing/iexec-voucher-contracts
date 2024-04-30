@@ -411,6 +411,7 @@ describe('Voucher', function () {
         });
         describe('Match orders boost', async function () {
             it('Should match orders boost with full sponsored amount', async () => {
+                const sponsoredValue = BigInt(appPrice + datasetPrice + workerpoolPrice);
                 for (const asset of [app, dataset, workerpool]) {
                     await voucherHubWithAssetEligibilityManagerSigner
                         .addEligibleAsset(voucherType, asset)
@@ -419,7 +420,6 @@ describe('Voucher', function () {
                 const voucherInitialCreditBalance = await voucher.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
                 const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
-
                 expect(
                     await voucherWithOwnerSigner.matchOrdersBoost.staticCall(
                         appOrder,
@@ -437,7 +437,11 @@ describe('Voucher', function () {
                     ),
                 )
                     .to.emit(voucher, 'OrdersBoostMatchedWithVoucher')
-                    .withArgs(dealId);
+                    .withArgs(dealId)
+                    .to.emit(voucherHub, 'VoucherDebited')
+                    .withArgs(await voucher.getAddress(), sponsoredValue)
+                    .to.emit(voucherHub, 'Transfer')
+                    .withArgs(await voucher.getAddress(), ethers.ZeroAddress, sponsoredValue);
                 expect(await voucher.getBalance())
                     .to.be.equal(voucherInitialCreditBalance - dealPrice)
                     .to.be.equal(await getVoucherBalanceOnIexecPoco())
