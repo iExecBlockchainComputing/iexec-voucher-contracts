@@ -134,31 +134,32 @@ describe('Voucher', function () {
             expect(await beacon.implementation(), 'Implementation did not change').to.not.equal(
                 initialImplementation,
             );
-            expect(await voucherAsProxy1.implementation(), 'New implementation mismatch').to.equal(
-                await beacon.implementation(),
-            );
+            expect(
+                await voucherAsProxy1.implementation(),
+                'New implementation mismatch',
+            ).to.be.equal(await beacon.implementation());
             expect(
                 await voucherAsProxy1.implementation(),
                 'New implementation mismatch between proxies',
-            ).to.equal(await voucherAsProxy2.implementation());
+            ).to.be.equal(await voucherAsProxy2.implementation());
             // Make sure the state did not change
-            expect(await voucher1_V2.owner(), 'New implementation owner mismatch').to.equal(
+            expect(await voucher1_V2.owner(), 'New implementation owner mismatch').to.be.equal(
                 voucherOwner1,
             );
-            expect(await voucher2_V2.owner(), 'New implementation owner mismatch').to.equal(
+            expect(await voucher2_V2.owner(), 'New implementation owner mismatch').to.be.equal(
                 voucherOwner2,
             );
             expect(
                 await voucher1_V2.getExpiration(),
                 'New implementation expiration mismatch',
-            ).to.equal(expectedExpirationVoucher1);
+            ).to.be.equal(expectedExpirationVoucher1);
             expect(
                 await voucher2_V2.getExpiration(),
                 'New implementation expiration mismatch',
-            ).to.equal(expectedExpirationVoucher2);
+            ).to.be.equal(expectedExpirationVoucher2);
             // Check new state variable.
-            expect(await voucher1_V2.getNewStateVariable()).to.equal(1);
-            expect(await voucher2_V2.getNewStateVariable()).to.equal(2);
+            expect(await voucher1_V2.getNewStateVariable()).to.be.equal(1);
+            expect(await voucher2_V2.getNewStateVariable()).to.be.equal(2);
         });
 
         it('Should not upgrade voucher when unauthorized', async function () {
@@ -171,7 +172,7 @@ describe('Voucher', function () {
                 voucherUtils.upgradeBeacon(beacon, voucherImplV2Factory),
             ).to.revertedWithCustomError(beacon, 'OwnableUnauthorizedAccount');
             // Check implementation did not change.
-            expect(await beacon.implementation(), 'Implementation has changed').to.equal(
+            expect(await beacon.implementation(), 'Implementation has changed').to.be.equal(
                 initialImplementation,
             );
         });
@@ -264,8 +265,9 @@ describe('Voucher', function () {
                 voucher.connect(anyone).unauthorizeAccount(anyone.address),
             ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
             // Check that the state of mapping is not modified from.
-            expect(await voucher.isAccountAuthorized(anyone.address)).to.equal(anyoneIsAuthorized)
-                .to.be.true;
+            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.equal(
+                anyoneIsAuthorized,
+            ).to.be.true;
         });
 
         it('Should not authorize owner account', async function () {
@@ -296,7 +298,7 @@ describe('Voucher', function () {
             await createVoucherTx.wait();
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
-            expect(await voucher.getBalance()).to.equal(voucherValue);
+            expect(await voucher.getBalance()).to.be.equal(voucherValue);
         });
     });
 
@@ -361,7 +363,7 @@ describe('Voucher', function () {
                 .to.be.equal(await getVoucherBalanceOnIexecPoco())
                 .to.be.equal(voucherInitialSrlcBalance - dealPrice);
             expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(requesterInitialSrlcBalance);
-            expect(await voucher.getSponsoredAmount(dealId)).to.equal(dealPrice);
+            expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealPrice);
         });
 
         it('Should match orders with full non-sponsored amount', async () => {
@@ -388,7 +390,7 @@ describe('Voucher', function () {
             expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
                 requesterInitialSrlcBalance - dealPrice,
             );
-            expect(await voucher.getSponsoredAmount(dealId)).to.equal(0);
+            expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(0);
         });
 
         it('Should not match orders when non-sponsored amount not transferable', async () => {
@@ -449,7 +451,7 @@ describe('Voucher', function () {
                 expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
                     requesterInitialSrlcBalance,
                 );
-                expect(await voucher.getSponsoredAmount(dealId)).to.equal(dealPrice);
+                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealPrice);
             });
 
             it('Should match orders boost with full non-sponsored amount', async () => {
@@ -483,7 +485,7 @@ describe('Voucher', function () {
                 expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
                     requesterInitialSrlcBalance - dealPrice,
                 );
-                expect(await voucher.getSponsoredAmount(dealId)).to.equal(0);
+                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(0);
             });
 
             it('Should match orders boost with an authorized account', async () => {
