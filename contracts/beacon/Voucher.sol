@@ -110,7 +110,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         VoucherStorage storage $ = _getVoucherStorage();
         IVoucherHub voucherHub = IVoucherHub($._voucherHub);
         address iexecPoco = voucherHub.getIexecPoco();
-        uint256 sponsoredAmount = _debitVoucherAndTransfer(
+        uint256 sponsoredAmount = _debitVoucherAndTransferNonSponsoredAmount(
             $._type,
             $._voucherHub,
             iexecPoco,
@@ -149,7 +149,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         VoucherStorage storage $ = _getVoucherStorage();
         IVoucherHub voucherHub = IVoucherHub($._voucherHub);
         address iexecPoco = voucherHub.getIexecPoco();
-        uint256 sponsoredAmount = _debitVoucherAndTransfer(
+        uint256 sponsoredAmount = _debitVoucherAndTransferNonSponsoredAmount(
             $._type,
             $._voucherHub,
             iexecPoco,
@@ -249,7 +249,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      *
      * @return sponsoredAmount The amount sponsored by the voucher.
      */
-    function _debitVoucherAndTransfer(
+    function _debitVoucherAndTransferNonSponsoredAmount(
         uint256 voucherTypeId,
         address voucherHub,
         address iexecPoco,
