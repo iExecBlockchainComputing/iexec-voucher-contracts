@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Use real poco address if available at deployment. (#17)
 - Match orders boost through voucher. (#16)
 - Use hardhat deploy. (#15)
 - Upload coverage reports to Codecov. (#14)
