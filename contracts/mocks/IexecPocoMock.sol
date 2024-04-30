@@ -11,6 +11,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  */
 contract IexecPocoMock is ERC20 {
     bool public shouldRevertOnSponsorMatchOrders = false;
+    bool public shouldRevertOnSponsorMatchOrdersBoost = false;
 
     constructor() ERC20("Staked RLC", "SRLC") {
         _mint(msg.sender, 1000000);
@@ -32,7 +33,26 @@ contract IexecPocoMock is ERC20 {
         return keccak256("deal");
     }
 
+    function sponsorMatchOrdersBoost(
+        IexecLibOrders_v5.AppOrder calldata appOrder,
+        IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
+        IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
+        IexecLibOrders_v5.RequestOrder calldata
+    ) external returns (bytes32 dealId) {
+        if (shouldRevertOnSponsorMatchOrdersBoost) {
+            revert("IexecPocoMock: Failed to sponsorMatchOrdersBoost");
+        }
+        _burn(
+            msg.sender,
+            appOrder.appprice + datasetOrder.datasetprice + workerpoolOrder.workerpoolprice
+        );
+        return keccak256("deal");
+    }
+
     function willRevertOnSponsorMatchOrders() external {
         shouldRevertOnSponsorMatchOrders = true;
+    }
+    function willRevertOnSponsorMatchOrdersBoost() external {
+        shouldRevertOnSponsorMatchOrdersBoost = true;
     }
 }

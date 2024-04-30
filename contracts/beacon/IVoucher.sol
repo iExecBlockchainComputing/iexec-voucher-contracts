@@ -9,10 +9,17 @@ interface IVoucher {
     event AccountAuthorized(address indexed account);
     event AccountUnauthorized(address indexed account);
     event OrdersMatchedWithVoucher(bytes32 dealId);
+    event OrdersBoostMatchedWithVoucher(bytes32 dealId);
 
     function authorizeAccount(address account) external;
     function unauthorizeAccount(address account) external;
     function matchOrders(
+        IexecLibOrders_v5.AppOrder calldata appOrder,
+        IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
+        IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
+        IexecLibOrders_v5.RequestOrder calldata requestOrder
+    ) external returns (bytes32);
+    function matchOrdersBoost(
         IexecLibOrders_v5.AppOrder calldata appOrder,
         IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
