@@ -393,7 +393,7 @@ describe('Voucher', function () {
             expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(0);
         });
 
-        it('Should not match orders when non-sponsored amount not transferable', async () => {
+        it('Should not match orders when non-sponsored amount is not transferable', async () => {
             await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
                 .to.be.revertedWithCustomError(iexecPocoInstance, 'ERC20InsufficientAllowance')
                 .withArgs(await voucher.getAddress(), 0, dealPrice);
@@ -534,7 +534,7 @@ describe('Voucher', function () {
                 ).to.be.revertedWith('Voucher: voucher is expired');
             });
 
-            it('Should not match orders boost when non-sponsored amount not transferable', async () => {
+            it('Should not match orders boost when non-sponsored amount is not transferable', async () => {
                 await expect(
                     voucherWithOwnerSigner.matchOrdersBoost(
                         appOrder,
