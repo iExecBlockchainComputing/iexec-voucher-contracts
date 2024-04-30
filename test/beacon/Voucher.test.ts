@@ -28,11 +28,12 @@ const initVoucherHubBalance = 1000; // enough to create couple vouchers
 describe('Voucher', function () {
     let iexecPoco: string;
     let iexecPocoInstance: IexecPocoMock;
-    let voucherHubWithVoucherManagerSigner: VoucherHub;
-    let voucherHubWithAssetEligibilityManagerSigner: VoucherHub;
-    let voucherHubWithAnyoneSigner: VoucherHub;
-    let voucherWithOwnerSigner: Voucher;
-    let voucherWithAnyoneSigner: Voucher;
+    let [
+        voucherHubWithVoucherManagerSigner,
+        voucherHubWithAssetEligibilityManagerSigner,
+        voucherHubWithAnyoneSigner,
+    ]: VoucherHub[] = [];
+    let [voucherWithOwnerSigner, voucherWithAnyoneSigner]: Voucher[] = [];
     // We define a fixture to reuse the same setup in every test.
     // We use loadFixture to run this setup once, snapshot that state,
     // and reset Hardhat Network to that snapshot in every test.
