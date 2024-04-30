@@ -488,6 +488,59 @@ describe('Voucher', function () {
                 expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(0);
             });
 
+            it('Should match orders boost with partial sponsored amount', async () => {
+                const sponsoredValue = BigInt(datasetPrice + workerpoolPrice);
+                const nonSupporedValue = BigInt(appPrice); // app wont be eligible for sponsoring
+                for (const asset of [dataset, workerpool]) {
+                    await voucherHubWithAssetEligibilityManagerSigner
+                        .addEligibleAsset(voucherType, asset)
+                        .then((x) => x.wait());
+                }
+                const voucherInitialCreditBalance = await voucher.getBalance();
+                const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
+                const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
+
+                // Deposit in iExec account of requester for the non-sponsored amount
+                await iexecPocoInstance
+                    .transfer(requester, nonSupporedValue)
+                    .then((tx) => tx.wait());
+
+                // Allow voucher to spend non-sponsored amount
+                await iexecPocoInstance
+                    .connect(requester)
+                    .approve(await voucher.getAddress(), nonSupporedValue)
+                    .then((tx) => tx.wait());
+
+                await expect(
+                    voucherWithOwnerSigner.matchOrdersBoost(
+                        appOrder,
+                        datasetOrder,
+                        workerpoolOrder,
+                        requestOrder,
+                    ),
+                )
+                    .to.emit(iexecPocoInstance, 'Transfer')
+                    .withArgs(
+                        requester.address,
+                        await voucher.getAddress(),
+                        dealPrice - sponsoredValue,
+                    )
+                    .to.emit(voucherHub, 'VoucherDebited')
+                    .withArgs(await voucher.getAddress(), sponsoredValue)
+                    .to.emit(voucherHub, 'Transfer')
+                    .withArgs(await voucher.getAddress(), ethers.ZeroAddress, sponsoredValue)
+                    .to.emit(voucher, 'OrdersBoostMatchedWithVoucher');
+
+                expect(await voucher.getBalance())
+                    .to.be.equal(voucherInitialCreditBalance - sponsoredValue)
+                    .to.be.equal(await getVoucherBalanceOnIexecPoco())
+                    .to.be.equal(voucherInitialSrlcBalance - sponsoredValue);
+                expect(await getRequesterBalanceOnIexecPoco())
+                    .to.be.equal(requesterInitialSrlcBalance)
+                    .to.be.equal(0);
+                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(sponsoredValue);
+            });
+
             it('Should match orders boost with an authorized account', async () => {
                 for (const asset of [app, dataset, workerpool]) {
                     await voucherHubWithAssetEligibilityManagerSigner
