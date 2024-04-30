@@ -6,14 +6,18 @@ import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import { UpgradeableBeacon } from '../typechain-types';
 
+// TODO move this to a config file and determine
+// poco address according to chain id.
+const pocoAddress = process.env.IEXEC_POCO_ADDRESS || '0x123456789a123456789b123456789b123456789d'; // random
+
 export default async function () {
-    const iexecPoco = '0x123456789a123456789b123456789b123456789d'; // TODO: Change it
+    console.log(`Using PoCo address: ${pocoAddress}`);
     const [admin, assetEligibilityManager, voucherManager] = await ethers.getSigners();
     await deployAll(
         admin.address,
         assetEligibilityManager.address,
         voucherManager.address,
-        iexecPoco,
+        pocoAddress,
     );
 }
 
