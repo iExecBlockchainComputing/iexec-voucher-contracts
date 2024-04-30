@@ -411,6 +411,7 @@ describe('Voucher', function () {
                 ),
             ).to.be.revertedWith('IexecPocoMock: Failed to sponsorMatchOrders');
         });
+
         describe('Match orders boost', async function () {
             it('Should match orders boost with full sponsored amount', async () => {
                 const sponsoredValue = BigInt(appPrice + datasetPrice + workerpoolPrice);
