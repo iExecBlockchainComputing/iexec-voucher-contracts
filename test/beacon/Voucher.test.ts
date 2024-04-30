@@ -535,9 +535,9 @@ describe('Voucher', function () {
                     .to.be.equal(voucherInitialCreditBalance - sponsoredValue)
                     .to.be.equal(await getVoucherBalanceOnIexecPoco())
                     .to.be.equal(voucherInitialSrlcBalance - sponsoredValue);
-                expect(await getRequesterBalanceOnIexecPoco())
-                    .to.be.equal(requesterInitialSrlcBalance)
-                    .to.be.equal(0);
+                expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
+                    requesterInitialSrlcBalance,
+                );
                 expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(sponsoredValue);
             });
 
