@@ -5,7 +5,6 @@
 Contracts related to iExec Voucher
 
 ### How to deploy?
-
 ```
 IEXEC_POCO_ADDRESS=<0xProxyAddress> npx hardhat deploy --network <name>
 ```
