@@ -542,7 +542,7 @@ describe('Voucher', function () {
             });
 
             it('Should not match orders boost when voucher is expired', async () => {
-                const expirationDate = (await voucher.getExpiration()) + BigInt(10);
+                const expirationDate = (await voucher.getExpiration())
                 await time.setNextBlockTimestamp(expirationDate);
                 await expect(
                     voucherWithOwnerSigner.matchOrdersBoost(
