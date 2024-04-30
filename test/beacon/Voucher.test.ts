@@ -491,7 +491,7 @@ describe('Voucher', function () {
 
             it('Should match orders boost with partial sponsored amount', async () => {
                 const sponsoredValue = BigInt(datasetPrice + workerpoolPrice);
-                const nonSupporedValue = BigInt(appPrice); // app wont be eligible for sponsoring
+                const noSponsoredValue = BigInt(appPrice); // app wont be eligible for sponsoring
                 for (const asset of [dataset, workerpool]) {
                     await voucherHubWithAssetEligibilityManagerSigner
                         .addEligibleAsset(voucherType, asset)
@@ -503,13 +503,13 @@ describe('Voucher', function () {
 
                 // Deposit in iExec account of requester for the non-sponsored amount
                 await iexecPocoInstance
-                    .transfer(requester, nonSupporedValue)
+                    .transfer(requester, noSponsoredValue)
                     .then((tx) => tx.wait());
 
                 // Allow voucher to spend non-sponsored amount
                 await iexecPocoInstance
                     .connect(requester)
-                    .approve(await voucher.getAddress(), nonSupporedValue)
+                    .approve(await voucher.getAddress(), noSponsoredValue)
                     .then((tx) => tx.wait());
 
                 await expect(
