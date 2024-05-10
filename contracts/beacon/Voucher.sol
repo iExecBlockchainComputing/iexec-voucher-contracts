@@ -6,16 +6,24 @@ pragma solidity ^0.8.20;
 import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.sol";
 import {IexecPoco1} from "@iexec/poco/contracts/modules/interfaces/IexecPoco1.v8.sol";
 import {IexecPocoBoost} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoost.sol";
+import {IexecPocoAccessorsDelegate} from "@iexec/poco/contracts/modules/delegates/IexecPocoAccessorsDelegate.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVoucherHub} from "../IVoucherHub.sol";
 import {IVoucher} from "./IVoucher.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title Implementation of the voucher contract.
  * Deployed along the Beacon contract using "Upgrades" plugin of OZ.
  */
 contract Voucher is OwnableUpgradeable, IVoucher {
+    using Math for uint256;
+    using IexecLibOrders_v5 for IexecLibOrders_v5.AppOrder;
+    using IexecLibOrders_v5 for IexecLibOrders_v5.DatasetOrder;
+    using IexecLibOrders_v5 for IexecLibOrders_v5.WorkerpoolOrder;
+    using IexecLibOrders_v5 for IexecLibOrders_v5.RequestOrder;
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
     // & ~bytes32(uint256(0xff));
     bytes32 private constant VOUCHER_STORAGE_LOCATION =
@@ -275,7 +283,37 @@ contract Voucher is OwnableUpgradeable, IVoucher {
             workerpoolPrice
         );
         // TODO: Compute volume and set dealPrice = taskPrice * volume instead of curent dealPrice
-        uint256 dealPrice = appPrice + datasetPrice + workerpoolPrice;
+        IexecPocoAccessorsDelegate pocoAccessors = IexecPocoAccessorsDelegate(iexecPoco);
+        bytes32 eip712DomainSeparator = pocoAccessors.eip712domain_separator();
+
+        bytes32 requestOrderTypedDataHash = _toTypedDataHash(
+            requestOrder.hash(),
+            eip712DomainSeparator
+        );
+        bytes32 appOrderTypedDataHash = _toTypedDataHash(appOrder.hash(), eip712DomainSeparator);
+        bytes32 workerpoolOrderTypedDataHash = _toTypedDataHash(
+            workerpoolOrder.hash(),
+            eip712DomainSeparator
+        );
+
+        uint256 requestOrderConsumed = pocoAccessors.viewConsumed(requestOrderTypedDataHash);
+        uint256 appOrderConsumed = pocoAccessors.viewConsumed(appOrderTypedDataHash);
+        uint256 workerpoolOrderConsumed = pocoAccessors.viewConsumed(workerpoolOrderTypedDataHash);
+
+        uint256 volume = appOrder.volume - appOrderConsumed;
+        volume = volume.min(workerpoolOrder.volume - workerpoolOrderConsumed);
+        volume = volume.min(requestOrder.volume - requestOrderConsumed);
+
+        if (datasetOrder.dataset != address(0)) {
+            bytes32 datasetOrderTypedDataHash = _toTypedDataHash(
+                datasetOrder.hash(),
+                eip712DomainSeparator
+            );
+            uint256 datasetOrderConsumed = pocoAccessors.viewConsumed(datasetOrderTypedDataHash);
+            volume = volume.min(datasetOrder.volume - datasetOrderConsumed);
+        }
+
+        uint256 dealPrice = (appPrice + datasetPrice + workerpoolPrice) * volume;
 
         if (sponsoredAmount != dealPrice) {
             // Transfer non-sponsored amount from the iExec account of the
@@ -286,5 +324,12 @@ contract Voucher is OwnableUpgradeable, IVoucher {
                 dealPrice - sponsoredAmount
             );
         }
+    }
+
+    function _toTypedDataHash(
+        bytes32 structHash,
+        bytes32 eip712DomainSeparator
+    ) internal pure returns (bytes32) {
+        return MessageHashUtils.toTypedDataHash(eip712DomainSeparator, structHash);
     }
 }
