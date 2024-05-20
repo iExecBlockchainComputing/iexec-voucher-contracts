@@ -11,6 +11,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVoucherHub} from "../IVoucherHub.sol";
 import {IVoucher} from "./IVoucher.sol";
 
+// TODO disable transferOwnership()
+
 /**
  * @title Implementation of the voucher contract.
  * Deployed along the Beacon contract using "Upgrades" plugin of OZ.
