@@ -46,6 +46,7 @@ contract VoucherHub is
         /// @dev This hash should be updated when `VoucherProxy` is updated.
         bytes32 _voucherCreationCodeHash;
         VoucherType[] voucherTypes;
+        // TODO use has(voucherTypeId, asset)) as mapping key to save storage.
         mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
     }
 
@@ -207,11 +208,15 @@ contract VoucherHub is
         if (eligible[workerpool]) {
             sponsoredAmount += workerpoolPrice;
         }
+        // TODO sponsoredAmount = sponsoredAmount * volume
         sponsoredAmount = Math.min(balanceOf(msg.sender), sponsoredAmount);
         if (sponsoredAmount > 0) {
             _burn(msg.sender, sponsoredAmount);
             emit VoucherDebited(msg.sender, sponsoredAmount);
         }
+    }
+    function refundVoucher(uint256 amount) external {
+        _mint(msg.sender, amount);
     }
 
     // TODO make view functions external whenever possible.

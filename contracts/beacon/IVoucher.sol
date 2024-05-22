@@ -10,6 +10,7 @@ interface IVoucher {
     event AccountUnauthorized(address indexed account);
     event OrdersMatchedWithVoucher(bytes32 dealId);
     event OrdersBoostMatchedWithVoucher(bytes32 dealId);
+    event TaskClaimedWithVoucher(bytes32 dealId, uint256 index);
 
     function authorizeAccount(address account) external;
     function unauthorizeAccount(address account) external;
@@ -25,6 +26,7 @@ interface IVoucher {
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
         IexecLibOrders_v5.RequestOrder calldata requestOrder
     ) external returns (bytes32);
+    function claim(bytes32 dealId, uint256 index) external;
 
     function getVoucherHub() external view returns (address);
     function getType() external view returns (uint256);

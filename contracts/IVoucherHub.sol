@@ -41,6 +41,7 @@ interface IVoucherHub {
         address workerpool,
         uint256 workerpoolPrice
     ) external returns (uint256 sponsoredAmount);
+    function refundVoucher(uint256 amount) external;
 
     function getIexecPoco() external view returns (address);
     function getVoucherBeacon() external view returns (address);

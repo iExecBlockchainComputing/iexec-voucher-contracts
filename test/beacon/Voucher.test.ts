@@ -393,6 +393,10 @@ describe('Voucher', function () {
             expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(0);
         });
 
+        it('TODO - Should match orders with partial sponsored amount', async () => {
+            // TODO
+        });
+
         it('Should not match orders when non-sponsored amount is not transferable', async () => {
             await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
                 .to.be.revertedWithCustomError(iexecPocoInstance, 'ERC20InsufficientAllowance')
@@ -617,4 +621,6 @@ describe('Voucher', function () {
             });
         });
     });
+
+    describe('Claim', async function () {});
 });
