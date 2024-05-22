@@ -49,12 +49,11 @@ describe('Voucher', function () {
     let iexecPocoInstance: IexecPocoMock;
     let [
         voucherHub,
-        voucherHubWithVoucherManagerSigner,
-        voucherHubWithAssetEligibilityManagerSigner,
-        voucherHubWithAnyoneSigner,
+        voucherHubAsVoucherCreationManager,
+        voucherHubAsAssetEligibilityManager,
     ]: VoucherHub[] = [];
     let voucher: Voucher; // TODO: Remove this when onlyAuthorized is set to matchOrders
-    let [voucherWithOwnerSigner, voucherWithAnyoneSigner]: Voucher[] = [];
+    let [voucherAsOwner, voucherAsAnyone]: Voucher[] = [];
     let voucherCreationTxReceipt: ContractTransactionReceipt;
     let [appOrder, datasetOrder, workerpoolOrder, requestOrder]: ReturnType<
         typeof createMockOrder
@@ -93,19 +92,18 @@ describe('Voucher', function () {
             .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
             .then((tx) => tx.wait());
         // TODO rename to voucherHubAs...
-        voucherHubWithVoucherManagerSigner = voucherHub.connect(voucherManager);
-        voucherHubWithAssetEligibilityManagerSigner = voucherHub.connect(assetEligibilityManager);
-        voucherHubWithAnyoneSigner = voucherHub.connect(anyone);
+        voucherHubAsVoucherCreationManager = voucherHub.connect(voucherManager);
+        voucherHubAsAssetEligibilityManager = voucherHub.connect(assetEligibilityManager);
         // Create one voucher.
-        await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(description, duration);
-        const voucherAddress1 = await voucherHubWithVoucherManagerSigner
+        await voucherHubAsAssetEligibilityManager.createVoucherType(description, duration);
+        const voucherAddress1 = await voucherHubAsVoucherCreationManager
             .createVoucher(voucherOwner1, voucherType, voucherValue)
             .then((tx) => tx.wait())
             .then((tx) => (voucherCreationTxReceipt = tx!))
             .then(() => voucherHub.getVoucher(voucherOwner1));
         voucher = Voucher__factory.connect(voucherAddress1, voucherOwner1);
-        voucherWithOwnerSigner = voucher.connect(voucherOwner1);
-        voucherWithAnyoneSigner = voucher.connect(anyone);
+        voucherAsOwner = voucher.connect(voucherOwner1);
+        voucherAsAnyone = voucher.connect(anyone);
         // Create mock orders.
         const mockOrder = createMockOrder();
         appOrder = { ...mockOrder, app: app, appprice: appPrice };
@@ -144,7 +142,7 @@ describe('Voucher', function () {
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucherAsProxy1 = await commonUtils.getVoucherAsProxy(voucherAddress1);
             // Create voucher2.
-            const createVoucherTx2 = await voucherHubWithVoucherManagerSigner.createVoucher(
+            const createVoucherTx2 = await voucherHubAsVoucherCreationManager.createVoucher(
                 voucherOwner2,
                 voucherType,
                 voucherValue,
@@ -218,17 +216,17 @@ describe('Voucher', function () {
     describe('Authorization', function () {
         it('Should authorize an account', async function () {
             expect(await voucher.isAccountAuthorized(anyone.address)).to.be.false;
-            expect(await voucherWithOwnerSigner.authorizeAccount(anyone.address))
-                .to.emit(voucherWithOwnerSigner, 'AccountAuthorized')
+            expect(await voucherAsOwner.authorizeAccount(anyone.address))
+                .to.emit(voucherAsOwner, 'AccountAuthorized')
                 .withArgs(anyone.address);
             // Check if the account is authorized
             expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
         });
 
         it('Should unauthorize an account', async function () {
-            await voucherWithOwnerSigner.authorizeAccount(anyone.address).then((tx) => tx.wait());
+            await voucherAsOwner.authorizeAccount(anyone.address).then((tx) => tx.wait());
             expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
-            expect(await voucherWithOwnerSigner.unauthorizeAccount(anyone.address))
+            expect(await voucherAsOwner.unauthorizeAccount(anyone.address))
                 .to.emit(voucher, 'AccountUnauthorized')
                 .withArgs(anyone.address);
             // Check if the account is unauthorized
@@ -237,31 +235,31 @@ describe('Voucher', function () {
 
         it('Should not authorize account if sender is not the owner', async function () {
             await expect(
-                voucherWithAnyoneSigner.authorizeAccount(anyone.address),
+                voucherAsAnyone.authorizeAccount(anyone.address),
             ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
         });
 
         it('Should not unauthorize account if sender is not the owner', async function () {
-            await voucherWithOwnerSigner.authorizeAccount(anyone.address).then((tx) => tx.wait());
+            await voucherAsOwner.authorizeAccount(anyone.address).then((tx) => tx.wait());
             expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
             // unauthorize the account
             await expect(
-                voucherWithAnyoneSigner.unauthorizeAccount(anyone.address),
+                voucherAsAnyone.unauthorizeAccount(anyone.address),
             ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
             // Check that the state of mapping is not modified from.
             expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
         });
 
         it('Should not authorize owner account', async function () {
-            await expect(
-                voucherWithOwnerSigner.authorizeAccount(voucherOwner1.address),
-            ).to.be.revertedWith('Voucher: owner is already authorized.');
+            await expect(voucherAsOwner.authorizeAccount(voucherOwner1.address)).to.be.revertedWith(
+                'Voucher: owner is already authorized.',
+            );
         });
     });
 
     describe('Voucher Balance', function () {
         it('Should get balance', async function () {
-            expect(await voucherWithAnyoneSigner.getBalance()).to.be.equal(voucherValue);
+            expect(await voucherAsAnyone.getBalance()).to.be.equal(voucherValue);
         });
     });
 
@@ -273,7 +271,7 @@ describe('Voucher', function () {
 
         it('Should match orders with full sponsored amount', async () => {
             for (const asset of [app, dataset, workerpool]) {
-                await voucherHubWithAssetEligibilityManagerSigner
+                await voucherHubAsAssetEligibilityManager
                     .addEligibleAsset(voucherType, asset)
                     .then((x) => x.wait());
             }
@@ -350,7 +348,7 @@ describe('Voucher', function () {
             it('Should match orders boost with full sponsored amount', async () => {
                 const sponsoredValue = BigInt(appPrice + datasetPrice + workerpoolPrice);
                 for (const asset of [app, dataset, workerpool]) {
-                    await voucherHubWithAssetEligibilityManagerSigner
+                    await voucherHubAsAssetEligibilityManager
                         .addEligibleAsset(voucherType, asset)
                         .then((x) => x.wait());
                 }
@@ -358,7 +356,7 @@ describe('Voucher', function () {
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
                 const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
                 expect(
-                    await voucherWithOwnerSigner.matchOrdersBoost.staticCall(
+                    await voucherAsOwner.matchOrdersBoost.staticCall(
                         appOrder,
                         datasetOrder,
                         workerpoolOrder,
@@ -366,7 +364,7 @@ describe('Voucher', function () {
                     ),
                 ).to.be.equal(dealId);
                 await expect(
-                    voucherWithOwnerSigner.matchOrdersBoost(
+                    voucherAsOwner.matchOrdersBoost(
                         appOrder,
                         datasetOrder,
                         workerpoolOrder,
@@ -403,7 +401,7 @@ describe('Voucher', function () {
                 const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
 
                 await expect(
-                    voucherWithOwnerSigner.matchOrdersBoost(
+                    voucherAsOwner.matchOrdersBoost(
                         appOrder,
                         datasetOrder,
                         workerpoolOrder,
@@ -427,7 +425,7 @@ describe('Voucher', function () {
                 const sponsoredValue = BigInt(datasetPrice + workerpoolPrice);
                 const noSponsoredValue = BigInt(appPrice); // app wont be eligible for sponsoring
                 for (const asset of [dataset, workerpool]) {
-                    await voucherHubWithAssetEligibilityManagerSigner
+                    await voucherHubAsAssetEligibilityManager
                         .addEligibleAsset(voucherType, asset)
                         .then((x) => x.wait());
                 }
@@ -448,7 +446,7 @@ describe('Voucher', function () {
                     .then((tx) => tx.wait());
 
                 await expect(
-                    voucherWithOwnerSigner.matchOrdersBoost(
+                    voucherAsOwner.matchOrdersBoost(
                         appOrder,
                         datasetOrder,
                         workerpoolOrder,
@@ -479,16 +477,14 @@ describe('Voucher', function () {
 
             it('Should match orders boost with an authorized account', async () => {
                 for (const asset of [app, dataset, workerpool]) {
-                    await voucherHubWithAssetEligibilityManagerSigner
+                    await voucherHubAsAssetEligibilityManager
                         .addEligibleAsset(voucherType, asset)
                         .then((x) => x.wait());
                 }
-                await voucherWithOwnerSigner
-                    .authorizeAccount(anyone.address)
-                    .then((tx) => tx.wait());
+                await voucherAsOwner.authorizeAccount(anyone.address).then((tx) => tx.wait());
 
                 await expect(
-                    voucherWithAnyoneSigner.matchOrdersBoost(
+                    voucherAsAnyone.matchOrdersBoost(
                         appOrder,
                         datasetOrder,
                         workerpoolOrder,
@@ -501,7 +497,7 @@ describe('Voucher', function () {
 
             it('Should not match orders boost when sender is not allowed', async () => {
                 await expect(
-                    voucherWithAnyoneSigner.matchOrdersBoost(
+                    voucherAsAnyone.matchOrdersBoost(
                         appOrder,
                         datasetOrder,
                         workerpoolOrder,
@@ -514,7 +510,7 @@ describe('Voucher', function () {
                 const expirationDate = await voucher.getExpiration();
                 await time.setNextBlockTimestamp(expirationDate);
                 await expect(
-                    voucherWithOwnerSigner.matchOrdersBoost(
+                    voucherAsOwner.matchOrdersBoost(
                         appOrder,
                         datasetOrder,
                         workerpoolOrder,
@@ -525,7 +521,7 @@ describe('Voucher', function () {
 
             it('Should not match orders boost when non-sponsored amount is not transferable', async () => {
                 await expect(
-                    voucherWithOwnerSigner.matchOrdersBoost(
+                    voucherAsOwner.matchOrdersBoost(
                         appOrder,
                         datasetOrder,
                         workerpoolOrder,
@@ -541,7 +537,7 @@ describe('Voucher', function () {
                     .willRevertOnSponsorMatchOrdersBoost()
                     .then((tx) => tx.wait());
                 await expect(
-                    voucherWithOwnerSigner.matchOrdersBoost(
+                    voucherAsOwner.matchOrdersBoost(
                         { ...appOrder, appprice: 0 },
                         { ...datasetOrder, datasetprice: 0 },
                         { ...workerpoolOrder, workerpoolprice: 0 },
