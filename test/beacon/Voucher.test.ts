@@ -8,7 +8,14 @@ import { ethers } from 'hardhat';
 import * as commonUtils from '../../scripts/common';
 import * as voucherHubUtils from '../../scripts/voucherHubUtils';
 import * as voucherUtils from '../../scripts/voucherUtils';
-import { IexecPocoMock, IexecPocoMock__factory, Voucher, VoucherHub } from '../../typechain-types';
+import {
+    IexecPocoMock,
+    IexecPocoMock__factory,
+    UpgradeableBeacon,
+    Voucher,
+    VoucherHub,
+    Voucher__factory,
+} from '../../typechain-types';
 import { random } from '../utils/address-utils';
 import { createMockOrder } from '../utils/poco-utils';
 
@@ -22,24 +29,42 @@ const workerpool = random();
 const appPrice = 1;
 const datasetPrice = 2;
 const workerpoolPrice = 3;
+const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice);
 const dealId = ethers.id('deal');
 const initVoucherHubBalance = 1000; // enough to create couple vouchers
 
 describe('Voucher', function () {
+    let [
+        admin,
+        assetEligibilityManager,
+        voucherManager,
+        voucherOwner1,
+        voucherOwner2,
+        requester,
+        anyone,
+    ]: SignerWithAddress[] = [];
+    let beacon: UpgradeableBeacon;
     let iexecPoco: string;
     let iexecPocoInstance: IexecPocoMock;
     let [
+        voucherHub,
         voucherHubWithVoucherManagerSigner,
         voucherHubWithAssetEligibilityManagerSigner,
         voucherHubWithAnyoneSigner,
     ]: VoucherHub[] = [];
     let [voucherWithOwnerSigner, voucherWithAnyoneSigner]: Voucher[] = [];
-    // We define a fixture to reuse the same setup in every test.
-    // We use loadFixture to run this setup once, snapshot that state,
-    // and reset Hardhat Network to that snapshot in every test.
+    let voucher: Voucher; // TODO: Remove this when onlyAuthorized is set to matchOrders
+    let [appOrder, datasetOrder, workerpoolOrder, requestOrder]: ReturnType<
+        typeof createMockOrder
+    >[] = [];
+
+    beforeEach('Deploy', async () => {
+        await loadFixture(deployFixture);
+    });
+
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
-        const [
+        [
             admin,
             assetEligibilityManager,
             voucherManager,
@@ -48,26 +73,51 @@ describe('Voucher', function () {
             requester,
             anyone,
         ] = await ethers.getSigners();
-        const beacon = await voucherUtils.deployBeaconAndImplementation(admin.address);
+        // Deploy PoCo mock and VoucherHub.
         iexecPocoInstance = await new IexecPocoMock__factory()
             .connect(admin)
             .deploy()
             .then((x) => x.waitForDeployment());
         iexecPoco = await iexecPocoInstance.getAddress();
-        const voucherHub = await voucherHubUtils.deployHub(
+        beacon = await voucherUtils.deployBeaconAndImplementation(admin.address);
+        voucherHub = await voucherHubUtils.deployHub(
             assetEligibilityManager.address,
             voucherManager.address,
             iexecPoco,
             await beacon.getAddress(),
         );
-        voucherHubWithVoucherManagerSigner = voucherHub.connect(voucherManager);
-        voucherHubWithAssetEligibilityManagerSigner = voucherHub.connect(assetEligibilityManager);
-        voucherHubWithAnyoneSigner = voucherHub.connect(anyone);
-        await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(description, duration);
-
+        // Fund VoucherHub with RLCs.
         await iexecPocoInstance
             .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
             .then((tx) => tx.wait());
+        // TODO rename to voucherHubAs...
+        voucherHubWithVoucherManagerSigner = voucherHub.connect(voucherManager);
+        voucherHubWithAssetEligibilityManagerSigner = voucherHub.connect(assetEligibilityManager);
+        voucherHubWithAnyoneSigner = voucherHub.connect(anyone);
+        // Create some vouchers.
+        await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(description, duration);
+        const voucherAddress1 = await voucherHubWithVoucherManagerSigner
+            .createVoucher(voucherOwner1, voucherType, voucherValue)
+            .then((tx) => tx.wait())
+            .then(() => voucherHub.getVoucher(voucherOwner1));
+        voucher = Voucher__factory.connect(voucherAddress1, voucherOwner1);
+        voucherWithOwnerSigner = voucher.connect(voucherOwner1);
+        voucherWithAnyoneSigner = voucher.connect(anyone);
+        // Create mock orders.
+        const mockOrder = createMockOrder();
+        appOrder = { ...mockOrder, app: app, appprice: appPrice };
+        datasetOrder = {
+            ...mockOrder,
+            dataset: dataset,
+            datasetprice: datasetPrice,
+        };
+        workerpoolOrder = {
+            ...mockOrder,
+            workerpool: workerpool,
+            workerpoolprice: workerpoolPrice,
+        };
+        requestOrder = { ...mockOrder, requester: requester.address };
+        // TODO remove return and update tests.
         return {
             beacon,
             voucherHub,
@@ -307,35 +357,6 @@ describe('Voucher', function () {
             iexecPocoInstance.balanceOf(voucher.getAddress());
         const getRequesterBalanceOnIexecPoco = () =>
             iexecPocoInstance.balanceOf(requester.getAddress());
-        const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice);
-        const mockOrder = createMockOrder();
-        const appOrder = { ...mockOrder, app: app, appprice: appPrice };
-        const datasetOrder = {
-            ...mockOrder,
-            dataset: dataset,
-            datasetprice: datasetPrice,
-        };
-        const workerpoolOrder = {
-            ...mockOrder,
-            workerpool: workerpool,
-            workerpoolprice: workerpoolPrice,
-        };
-        let requestOrder = { ...mockOrder };
-        let [voucherOwner1, requester, anyone]: SignerWithAddress[] = [];
-        let voucherHub: VoucherHub;
-        let voucher: Voucher; // TODO: Remove this when onlyAthorized is set to matchOrders
-
-        beforeEach(async () => {
-            ({ voucherHub, voucherOwner1, requester, anyone } = await loadFixture(deployFixture));
-            requestOrder.requester = requester.address;
-            voucher = await voucherHubWithVoucherManagerSigner
-                .createVoucher(voucherOwner1, voucherType, voucherValue)
-                .then((tx) => tx.wait())
-                .then(() => voucherHub.getVoucher(voucherOwner1))
-                .then((voucherAddress) => commonUtils.getVoucher(voucherAddress));
-            voucherWithOwnerSigner = voucher.connect(voucherOwner1);
-            voucherWithAnyoneSigner = voucher.connect(anyone);
-        });
 
         it('Should match orders with full sponsored amount', async () => {
             for (const asset of [app, dataset, workerpool]) {
