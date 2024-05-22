@@ -273,7 +273,7 @@ describe('Voucher', function () {
             iexecPocoInstance.balanceOf(requester.getAddress());
 
         it('Should match orders with full sponsored amount', async () => {
-            addEligibleAssets([app, dataset, workerpool]);
+            await addEligibleAssets([app, dataset, workerpool]);
             const voucherInitialCreditBalance = await voucher.getBalance();
             const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
             const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
@@ -350,7 +350,7 @@ describe('Voucher', function () {
         describe('Match orders boost', async function () {
             it('Should match orders boost with full sponsored amount', async () => {
                 const sponsoredValue = BigInt(appPrice + datasetPrice + workerpoolPrice);
-                addEligibleAssets([app, dataset, workerpool]);
+                await addEligibleAssets([app, dataset, workerpool]);
                 const voucherInitialCreditBalance = await voucher.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
                 const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
@@ -423,7 +423,7 @@ describe('Voucher', function () {
             it('Should match orders boost with partial sponsored amount', async () => {
                 const sponsoredValue = BigInt(datasetPrice + workerpoolPrice);
                 const noSponsoredValue = BigInt(appPrice); // app wont be eligible for sponsoring
-                addEligibleAssets([dataset, workerpool]);
+                await addEligibleAssets([dataset, workerpool]);
                 const voucherInitialCreditBalance = await voucher.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
                 const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
@@ -471,7 +471,7 @@ describe('Voucher', function () {
             });
 
             it('Should match orders boost with an authorized account', async () => {
-                addEligibleAssets([app, dataset, workerpool]);
+                await addEligibleAssets([app, dataset, workerpool]);
                 await voucherAsOwner.authorizeAccount(anyone.address).then((tx) => tx.wait());
 
                 await expect(
