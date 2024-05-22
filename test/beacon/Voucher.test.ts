@@ -96,7 +96,7 @@ describe('Voucher', function () {
         voucherHubWithVoucherManagerSigner = voucherHub.connect(voucherManager);
         voucherHubWithAssetEligibilityManagerSigner = voucherHub.connect(assetEligibilityManager);
         voucherHubWithAnyoneSigner = voucherHub.connect(anyone);
-        // Create some vouchers.
+        // Create one voucher.
         await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(description, duration);
         const voucherAddress1 = await voucherHubWithVoucherManagerSigner
             .createVoucher(voucherOwner1, voucherType, voucherValue)
