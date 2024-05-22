@@ -217,49 +217,18 @@ describe('Voucher', function () {
 
     describe('Authorization', function () {
         it('Should authorize an account', async function () {
-            const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
-            const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
-                voucherOwner1,
-                voucherType,
-                voucherValue,
-            );
-            await createVoucherTx.wait();
-            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
-            // Authorize the account
-            const authorizationTx = await voucher
-                .connect(voucherOwner1)
-                .authorizeAccount(anyone.address);
-            const authorizationReceipt = await authorizationTx.wait();
-            // Run assertions.
-            // Events.
-            expect(authorizationReceipt)
-                .to.emit(voucher, 'AccountAuthorized')
+            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.false;
+            expect(await voucherWithOwnerSigner.authorizeAccount(anyone.address))
+                .to.emit(voucherWithOwnerSigner, 'AccountAuthorized')
                 .withArgs(anyone.address);
             // Check if the account is authorized
             expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
         });
 
-        it('Should deauthorize an account', async function () {
-            const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
-            const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
-                voucherOwner1,
-                voucherType,
-                voucherValue,
-            );
-            await createVoucherTx.wait();
-            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
-            // Authorize the account
-            await voucher.connect(voucherOwner1).authorizeAccount(anyone.address);
-            // unauthorize the account
-            const unauthorizationTx = await voucher
-                .connect(voucherOwner1)
-                .unauthorizeAccount(anyone.address);
-            const unauthorizationReceipt = await unauthorizationTx.wait();
-            // Run assertions.
-            // Events.
-            expect(unauthorizationReceipt)
+        it('Should unauthorize an account', async function () {
+            await voucherWithOwnerSigner.authorizeAccount(anyone.address).then((tx) => tx.wait());
+            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
+            expect(await voucherWithOwnerSigner.unauthorizeAccount(anyone.address))
                 .to.emit(voucher, 'AccountUnauthorized')
                 .withArgs(anyone.address);
             // Check if the account is unauthorized
@@ -267,75 +236,32 @@ describe('Voucher', function () {
         });
 
         it('Should not authorize account if sender is not the owner', async function () {
-            const { voucherHub, voucherManager, voucherOwner1, anyone } =
-                await loadFixture(deployFixture);
-            const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
-                voucherOwner1,
-                voucherType,
-                voucherValue,
-            );
-            await createVoucherTx.wait();
-            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
-
-            // Authorize the account
             await expect(
-                voucher.connect(anyone).authorizeAccount(anyone.address),
+                voucherWithAnyoneSigner.authorizeAccount(anyone.address),
             ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
         });
 
         it('Should not unauthorize account if sender is not the owner', async function () {
-            const { voucherHub, voucherManager, voucherOwner1, anyone } =
-                await loadFixture(deployFixture);
-            const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
-                voucherOwner1,
-                voucherType,
-                voucherValue,
-            );
-            await createVoucherTx.wait();
-            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
-            await voucher.connect(voucherOwner1).authorizeAccount(anyone.address);
-            const anyoneIsAuthorized = await voucher.isAccountAuthorized(anyone.address);
+            await voucherWithOwnerSigner.authorizeAccount(anyone.address).then((tx) => tx.wait());
+            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
             // unauthorize the account
             await expect(
-                voucher.connect(anyone).unauthorizeAccount(anyone.address),
+                voucherWithAnyoneSigner.unauthorizeAccount(anyone.address),
             ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
             // Check that the state of mapping is not modified from.
-            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.equal(
-                anyoneIsAuthorized,
-            ).to.be.true;
+            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
         });
 
         it('Should not authorize owner account', async function () {
-            const { voucherHub, voucherManager, voucherOwner1 } = await loadFixture(deployFixture);
-            const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
-                voucherOwner1,
-                voucherType,
-                voucherValue,
-            );
-            await createVoucherTx.wait();
-            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
-
             await expect(
-                voucher.connect(voucherOwner1).authorizeAccount(voucherOwner1.address),
+                voucherWithOwnerSigner.authorizeAccount(voucherOwner1.address),
             ).to.be.revertedWith('Voucher: owner is already authorized.');
         });
     });
 
     describe('Voucher Balance', function () {
         it('Should get balance', async function () {
-            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
-            const createVoucherTx = await voucherHubWithVoucherManagerSigner.createVoucher(
-                voucherOwner1,
-                voucherType,
-                voucherValue,
-            );
-            await createVoucherTx.wait();
-            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
-            expect(await voucher.getBalance()).to.be.equal(voucherValue);
+            expect(await voucherWithAnyoneSigner.getBalance()).to.be.equal(voucherValue);
         });
     });
 
