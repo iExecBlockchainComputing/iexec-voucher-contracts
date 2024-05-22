@@ -52,8 +52,11 @@ describe('Voucher', function () {
         voucherHubAsVoucherCreationManager,
         voucherHubAsAssetEligibilityManager,
     ]: VoucherHub[] = [];
-    let voucher: Voucher; // TODO: Remove this when onlyAuthorized is set to matchOrders
-    let [voucherAsOwner, voucherAsAnyone]: Voucher[] = [];
+    let [
+        voucher, // TODO: Remove this when onlyAuthorized is set to matchOrders
+        voucherAsOwner,
+        voucherAsAnyone,
+    ]: Voucher[] = [];
     let voucherCreationTxReceipt: ContractTransactionReceipt;
     let [appOrder, datasetOrder, workerpoolOrder, requestOrder]: ReturnType<
         typeof createMockOrder
