@@ -273,11 +273,7 @@ describe('Voucher', function () {
             iexecPocoInstance.balanceOf(requester.getAddress());
 
         it('Should match orders with full sponsored amount', async () => {
-            for (const asset of [app, dataset, workerpool]) {
-                await voucherHubAsAssetEligibilityManager
-                    .addEligibleAsset(voucherType, asset)
-                    .then((x) => x.wait());
-            }
+            addEligibleAssets([app, dataset, workerpool]);
             const voucherInitialCreditBalance = await voucher.getBalance();
             const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
             const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
@@ -354,11 +350,7 @@ describe('Voucher', function () {
         describe('Match orders boost', async function () {
             it('Should match orders boost with full sponsored amount', async () => {
                 const sponsoredValue = BigInt(appPrice + datasetPrice + workerpoolPrice);
-                for (const asset of [app, dataset, workerpool]) {
-                    await voucherHubAsAssetEligibilityManager
-                        .addEligibleAsset(voucherType, asset)
-                        .then((x) => x.wait());
-                }
+                addEligibleAssets([app, dataset, workerpool]);
                 const voucherInitialCreditBalance = await voucher.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
                 const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
@@ -431,11 +423,7 @@ describe('Voucher', function () {
             it('Should match orders boost with partial sponsored amount', async () => {
                 const sponsoredValue = BigInt(datasetPrice + workerpoolPrice);
                 const noSponsoredValue = BigInt(appPrice); // app wont be eligible for sponsoring
-                for (const asset of [dataset, workerpool]) {
-                    await voucherHubAsAssetEligibilityManager
-                        .addEligibleAsset(voucherType, asset)
-                        .then((x) => x.wait());
-                }
+                addEligibleAssets([dataset, workerpool]);
                 const voucherInitialCreditBalance = await voucher.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
                 const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
@@ -483,11 +471,7 @@ describe('Voucher', function () {
             });
 
             it('Should match orders boost with an authorized account', async () => {
-                for (const asset of [app, dataset, workerpool]) {
-                    await voucherHubAsAssetEligibilityManager
-                        .addEligibleAsset(voucherType, asset)
-                        .then((x) => x.wait());
-                }
+                addEligibleAssets([app, dataset, workerpool]);
                 await voucherAsOwner.authorizeAccount(anyone.address).then((tx) => tx.wait());
 
                 await expect(
@@ -556,4 +540,12 @@ describe('Voucher', function () {
     });
 
     describe('Claim', async function () {});
+
+    async function addEligibleAssets(assets: string[]) {
+        for (const asset of assets) {
+            await voucherHubAsAssetEligibilityManager
+                .addEligibleAsset(voucherType, asset)
+                .then((tx) => tx.wait());
+        }
+    }
 });
