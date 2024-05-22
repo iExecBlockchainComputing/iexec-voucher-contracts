@@ -4,6 +4,7 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { loadFixture, time } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
+import { ContractTransactionReceipt } from 'ethers';
 import { ethers } from 'hardhat';
 import * as commonUtils from '../../scripts/common';
 import * as voucherHubUtils from '../../scripts/voucherHubUtils';
@@ -52,8 +53,9 @@ describe('Voucher', function () {
         voucherHubWithAssetEligibilityManagerSigner,
         voucherHubWithAnyoneSigner,
     ]: VoucherHub[] = [];
-    let [voucherWithOwnerSigner, voucherWithAnyoneSigner]: Voucher[] = [];
     let voucher: Voucher; // TODO: Remove this when onlyAuthorized is set to matchOrders
+    let [voucherWithOwnerSigner, voucherWithAnyoneSigner]: Voucher[] = [];
+    let voucherCreationTxReceipt: ContractTransactionReceipt;
     let [appOrder, datasetOrder, workerpoolOrder, requestOrder]: ReturnType<
         typeof createMockOrder
     >[] = [];
@@ -99,6 +101,7 @@ describe('Voucher', function () {
         const voucherAddress1 = await voucherHubWithVoucherManagerSigner
             .createVoucher(voucherOwner1, voucherType, voucherValue)
             .then((tx) => tx.wait())
+            .then((tx) => (voucherCreationTxReceipt = tx!))
             .then(() => voucherHub.getVoucher(voucherOwner1));
         voucher = Voucher__factory.connect(voucherAddress1, voucherOwner1);
         voucherWithOwnerSigner = voucher.connect(voucherOwner1);
@@ -133,38 +136,22 @@ describe('Voucher', function () {
 
     describe('Upgrade', function () {
         it('Should upgrade all vouchers', async function () {
-            const { beacon, voucherHub, admin, voucherOwner1, voucherOwner2 } =
-                await loadFixture(deployFixture);
-            const voucherType1 = 1;
-            const duration1 = 7200;
-            const description1 = 'Long Term Duration';
-            const voucherValue1 = 200;
-            // Create type1.
-            await voucherHubWithAssetEligibilityManagerSigner
-                .createVoucherType(description1, duration1)
-                .then((tx) => tx.wait());
-            // Create voucher1.
-            const createVoucherTx1 = await voucherHubWithVoucherManagerSigner.createVoucher(
-                voucherOwner1,
-                voucherType,
-                voucherValue,
-            );
-            const createVoucherReceipt1 = await createVoucherTx1.wait();
+            // Voucher1
             const expectedExpirationVoucher1 = await commonUtils.getExpectedExpiration(
                 duration,
-                createVoucherReceipt1,
+                voucherCreationTxReceipt,
             );
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucherAsProxy1 = await commonUtils.getVoucherAsProxy(voucherAddress1);
             // Create voucher2.
             const createVoucherTx2 = await voucherHubWithVoucherManagerSigner.createVoucher(
                 voucherOwner2,
-                voucherType1,
-                voucherValue1,
+                voucherType,
+                voucherValue,
             );
             const createVoucherReceipt2 = await createVoucherTx2.wait();
             const expectedExpirationVoucher2 = await commonUtils.getExpectedExpiration(
-                duration1,
+                duration,
                 createVoucherReceipt2,
             );
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
