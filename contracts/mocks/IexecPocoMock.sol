@@ -7,6 +7,7 @@ import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.so
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import "hardhat/console.sol";
 
 /**
  * @notice Testing purposes only.
@@ -111,5 +112,13 @@ contract IexecPocoMock is ERC20 {
 
     function _toTypedDataHash(bytes32 structHash) internal view returns (bytes32) {
         return MessageHashUtils.toTypedDataHash(EIP712DOMAIN_SEPARATOR, structHash);
+    }
+
+    function eip712domain_separator() external view returns (bytes32) {
+        return EIP712DOMAIN_SEPARATOR;
+    }
+
+    function viewConsumed(bytes32 _id) external view returns (uint256 consumed) {
+        return m_consumed[_id];
     }
 }
