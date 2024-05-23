@@ -90,13 +90,12 @@ describe('Voucher', function () {
             iexecPoco,
             await beacon.getAddress(),
         );
+        voucherHubAsVoucherCreationManager = voucherHub.connect(voucherManager);
+        voucherHubAsAssetEligibilityManager = voucherHub.connect(assetEligibilityManager);
         // Fund VoucherHub with RLCs.
         await iexecPocoInstance
             .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
             .then((tx) => tx.wait());
-        // TODO rename to voucherHubAs...
-        voucherHubAsVoucherCreationManager = voucherHub.connect(voucherManager);
-        voucherHubAsAssetEligibilityManager = voucherHub.connect(assetEligibilityManager);
         // Create one voucher.
         await voucherHubAsAssetEligibilityManager.createVoucherType(description, duration);
         const voucherAddress1 = await voucherHubAsVoucherCreationManager
