@@ -273,16 +273,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 datasetPrice = datasetOrder.datasetprice;
         uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
 
-        sponsoredAmount = voucherHub.debitVoucher(
-            voucherTypeId,
-            appOrder.app,
-            appPrice,
-            datasetOrder.dataset,
-            datasetPrice,
-            workerpoolOrder.workerpool,
-            workerpoolPrice
-        );
-        // TODO: Compute volume and set dealPrice = taskPrice * volume instead of curent dealPrice
         IexecPocoAccessorsDelegate pocoAccessors = IexecPocoAccessorsDelegate(iexecPoco);
         bytes32 eip712DomainSeparator = pocoAccessors.eip712domain_separator();
 
@@ -314,6 +304,17 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         }
 
         uint256 dealPrice = (appPrice + datasetPrice + workerpoolPrice) * volume;
+        sponsoredAmount =
+            voucherHub.debitVoucher(
+                voucherTypeId,
+                appOrder.app,
+                appPrice,
+                datasetOrder.dataset,
+                datasetPrice,
+                workerpoolOrder.workerpool,
+                workerpoolPrice
+            ) *
+            volume;
 
         if (sponsoredAmount != dealPrice) {
             // Transfer non-sponsored amount from the iExec account of the
