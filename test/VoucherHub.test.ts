@@ -19,6 +19,7 @@ const duration = 3600;
 const voucherValue = 100;
 const asset = random();
 const assetPrice = 1;
+const volume = 1;
 const initVoucherHubBalance = 10 * voucherValue; // arbitrary value, but should support couple voucher creations
 
 describe('VoucherHub', function () {
@@ -691,7 +692,16 @@ describe('VoucherHub', function () {
             const sponsoredValue = BigInt(assetPrice * 3);
             const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
 
-            const args = [voucherType, asset, assetPrice, asset, assetPrice, asset, assetPrice] as [
+            const args = [
+                voucherType,
+                asset,
+                assetPrice,
+                asset,
+                assetPrice,
+                asset,
+                assetPrice,
+                volume,
+            ] as [
                 voucherTypeId: BigNumberish,
                 app: AddressLike,
                 appPrice: BigNumberish,
@@ -699,6 +709,7 @@ describe('VoucherHub', function () {
                 datasetPrice: BigNumberish,
                 workerpool: AddressLike,
                 workerpoolPrice: BigNumberish,
+                volume: BigNumberish,
             ];
             expect(await voucherHub.connect(voucher).debitVoucher.staticCall(...args)).to.be.equal(
                 sponsoredValue,
@@ -726,6 +737,7 @@ describe('VoucherHub', function () {
                         assetPrice,
                         asset,
                         assetPrice,
+                        volume,
                     );
             // The matcher 'emit' cannot be chained after or before 'reverted'
             // so we call several times to check different assertions
@@ -755,6 +767,7 @@ describe('VoucherHub', function () {
                         assetPrice,
                         asset,
                         assetPrice,
+                        volume,
                     ),
             ).to.not.emit(voucherHub, 'VoucherDebited');
             expect(await voucherHub.balanceOf(emptyVoucher.address))
@@ -777,6 +790,7 @@ describe('VoucherHub', function () {
                         assetPrice,
                         unEligibleAsset,
                         assetPrice,
+                        volume,
                     ),
             ).to.not.emit(voucherHub, 'VoucherDebited');
             expect(await voucherHub.balanceOf(voucher.address)).to.equal(initialCreditBalance);
@@ -788,7 +802,16 @@ describe('VoucherHub', function () {
             await expect(
                 voucherHub
                     .connect(anyone)
-                    .debitVoucher(999, asset, assetPrice, asset, assetPrice, asset, assetPrice),
+                    .debitVoucher(
+                        999,
+                        asset,
+                        assetPrice,
+                        asset,
+                        assetPrice,
+                        asset,
+                        assetPrice,
+                        volume,
+                    ),
             ).to.not.emit(voucherHub, 'VoucherDebited');
             expect(await voucherHub.balanceOf(anyone.address)).to.equal(initialCreditBalance);
         });
