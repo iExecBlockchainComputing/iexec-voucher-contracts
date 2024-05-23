@@ -186,6 +186,7 @@ contract VoucherHub is
      * @param datasetPrice The dataset price.
      * @param workerpool The workerpool address.
      * @param workerpoolPrice The workerpool price.
+     * @param volume Volume of the deal.
      */
     function debitVoucher(
         uint256 voucherTypeId,
@@ -194,7 +195,8 @@ contract VoucherHub is
         address dataset,
         uint256 datasetPrice,
         address workerpool,
-        uint256 workerpoolPrice
+        uint256 workerpoolPrice,
+        uint256 volume
     ) external returns (uint256 sponsoredAmount) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         mapping(address asset => bool) storage eligible = $.matchOrdersEligibility[voucherTypeId];
@@ -207,7 +209,7 @@ contract VoucherHub is
         if (eligible[workerpool]) {
             sponsoredAmount += workerpoolPrice;
         }
-        sponsoredAmount = Math.min(balanceOf(msg.sender), sponsoredAmount);
+        sponsoredAmount = Math.min(balanceOf(msg.sender), sponsoredAmount * volume);
         if (sponsoredAmount > 0) {
             _burn(msg.sender, sponsoredAmount);
             emit VoucherDebited(msg.sender, sponsoredAmount);
