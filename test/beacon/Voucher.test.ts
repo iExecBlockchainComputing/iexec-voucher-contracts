@@ -19,6 +19,7 @@ const voucherValue = 100;
 const app = random();
 const dataset = random();
 const workerpool = random();
+const volume = 1;
 const appPrice = 1;
 const datasetPrice = 2;
 const workerpoolPrice = 3;
@@ -314,7 +315,7 @@ describe('Voucher', function () {
             iexecPocoInstance.balanceOf(voucher.getAddress());
         const getRequesterBalanceOnIexecPoco = () =>
             iexecPocoInstance.balanceOf(requester.getAddress());
-        const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice);
+        const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice) * BigInt(volume);
         const mockOrder = createMockOrder();
         const appOrder = { ...mockOrder, app: app, appprice: appPrice };
         const datasetOrder = {
