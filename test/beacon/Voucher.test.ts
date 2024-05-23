@@ -357,6 +357,44 @@ describe('Voucher', function () {
             expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(0);
         });
 
+        it('Should match orders without dataset', async () => {
+            const mockOrder = createMockOrder();
+            const appOrder = { ...mockOrder, app: app, appprice: appPrice };
+            const datasetOrder = {
+                ...mockOrder,
+            };
+            const workerpoolOrder = {
+                ...mockOrder,
+                workerpool: workerpool,
+                workerpoolprice: workerpoolPrice,
+            };
+            const requestOrder = { ...mockOrder, requester: requester.address };
+            const dealPricNoDataset = BigInt(appPrice + workerpoolPrice) * BigInt(volume);
+
+            await addEligibleAssets([app, dataset, workerpool]);
+            const voucherInitialCreditBalance = await voucher.getBalance();
+            const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
+            const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
+
+            expect(
+                await voucher.matchOrders.staticCall(
+                    appOrder,
+                    datasetOrder,
+                    workerpoolOrder,
+                    requestOrder,
+                ),
+            ).to.be.equal(dealId);
+            await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
+                .to.emit(voucher, 'OrdersMatchedWithVoucher')
+                .withArgs(dealId);
+            expect(await voucher.getBalance())
+                .to.be.equal(voucherInitialCreditBalance - dealPricNoDataset)
+                .to.be.equal(await getVoucherBalanceOnIexecPoco())
+                .to.be.equal(voucherInitialSrlcBalance - dealPricNoDataset);
+            expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(requesterInitialSrlcBalance);
+            expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealPricNoDataset);
+        });
+
         it('Should not match orders when non-sponsored amount is not transferable', async () => {
             await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
                 .to.be.revertedWithCustomError(iexecPocoInstance, 'ERC20InsufficientAllowance')
