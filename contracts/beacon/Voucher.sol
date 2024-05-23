@@ -304,17 +304,16 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         }
 
         uint256 dealPrice = (appPrice + datasetPrice + workerpoolPrice) * volume;
-        sponsoredAmount =
-            voucherHub.debitVoucher(
-                voucherTypeId,
-                appOrder.app,
-                appPrice,
-                datasetOrder.dataset,
-                datasetPrice,
-                workerpoolOrder.workerpool,
-                workerpoolPrice
-            ) *
-            volume;
+        sponsoredAmount = voucherHub.debitVoucher(
+            voucherTypeId,
+            appOrder.app,
+            appPrice,
+            datasetOrder.dataset,
+            datasetPrice,
+            workerpoolOrder.workerpool,
+            workerpoolPrice,
+            volume
+        );
 
         if (sponsoredAmount != dealPrice) {
             // Transfer non-sponsored amount from the iExec account of the
