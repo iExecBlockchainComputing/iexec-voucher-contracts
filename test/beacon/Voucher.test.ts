@@ -143,20 +143,23 @@ describe('Voucher', function () {
             );
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucherAsProxy1 = await commonUtils.getVoucherAsProxy(voucherAddress1);
-            // Create voucher2.
-            const createVoucherTx2 = await voucherHubAsVoucherCreationManager.createVoucher(
-                voucherOwner2,
-                voucherType,
-                voucherValue,
-            );
-            const createVoucherReceipt2 = await createVoucherTx2.wait();
+            // Create voucher2 with different type and value.
+            const anotherDuration = 7200;
+            const anotherVoucherTypeId = 1;
+            const anotherVoucherValue = 200;
+            await voucherHubAsAssetEligibilityManager
+                .createVoucherType('Another description', anotherDuration)
+                .then((tx) => tx.wait());
+            const createVoucherReceipt2 = await voucherHubAsVoucherCreationManager
+                .createVoucher(voucherOwner2, anotherVoucherTypeId, anotherVoucherValue)
+                .then((tx) => tx.wait());
             const expectedExpirationVoucher2 = await commonUtils.getExpectedExpiration(
-                duration,
+                anotherDuration,
                 createVoucherReceipt2,
             );
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucherAsProxy2 = await commonUtils.getVoucherAsProxy(voucherAddress2);
-            // Save old implementation.
+            // Save old implementation address.
             const initialImplementation = await beacon.implementation();
             // Upgrade beacon.
             const voucherImplV2Factory = await ethers.getContractFactory('VoucherV2Mock', admin);
