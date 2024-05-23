@@ -24,13 +24,16 @@ const voucherType = 0;
 const duration = 3600;
 const description = 'Early Access';
 const voucherValue = 100;
+// TODO change volume to be > 1.
+const volume = 1n;
 const app = random();
 const dataset = random();
 const workerpool = random();
-const appPrice = 1;
-const datasetPrice = 2;
-const workerpoolPrice = 3;
-const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice);
+const appPrice = 1n;
+const datasetPrice = 2n;
+const workerpoolPrice = 3n;
+const taskPrice = appPrice + datasetPrice + workerpoolPrice;
+const dealPrice = taskPrice / volume;
 const dealId = ethers.id('deal');
 const taskIndex = 0;
 const initVoucherHubBalance = 1000; // enough to create couple vouchers
@@ -58,6 +61,7 @@ describe('Voucher', function () {
         voucherAsOwner,
         voucherAsAnyone,
     ]: Voucher[] = [];
+    let voucherAddress: string;
     let voucherCreationTxReceipt: ContractTransactionReceipt;
     let [appOrder, datasetOrder, workerpoolOrder, requestOrder]: ReturnType<
         typeof createMockOrder
@@ -100,40 +104,30 @@ describe('Voucher', function () {
         voucherHubAsAssetEligibilityManager = voucherHub.connect(assetEligibilityManager);
         // Create one voucher.
         await voucherHubAsAssetEligibilityManager.createVoucherType(description, duration);
-        const voucherAddress1 = await voucherHubAsVoucherCreationManager
+        voucherAddress = await voucherHubAsVoucherCreationManager
             .createVoucher(voucherOwner1, voucherType, voucherValue)
             .then((tx) => tx.wait())
             .then((tx) => (voucherCreationTxReceipt = tx!))
             .then(() => voucherHub.getVoucher(voucherOwner1));
-        voucher = Voucher__factory.connect(voucherAddress1, voucherOwner1);
+        voucher = Voucher__factory.connect(voucherAddress, voucherOwner1);
         voucherAsOwner = voucher.connect(voucherOwner1);
         voucherAsAnyone = voucher.connect(anyone);
         // Create mock orders.
         const mockOrder = createMockOrder();
-        appOrder = { ...mockOrder, app: app, appprice: appPrice };
+        appOrder = { ...mockOrder, app: app, appprice: appPrice, volume: volume };
         datasetOrder = {
             ...mockOrder,
             dataset: dataset,
             datasetprice: datasetPrice,
+            volume: volume,
         };
         workerpoolOrder = {
             ...mockOrder,
             workerpool: workerpool,
             workerpoolprice: workerpoolPrice,
+            volume: volume,
         };
-        requestOrder = { ...mockOrder, requester: requester.address };
-        // TODO remove return and update tests.
-        return {
-            beacon,
-            voucherHub,
-            admin,
-            assetEligibilityManager,
-            voucherManager,
-            voucherOwner1,
-            voucherOwner2,
-            requester,
-            anyone,
-        };
+        requestOrder = { ...mockOrder, requester: requester.address, volume: volume };
     }
 
     describe('Upgrade', function () {
@@ -202,8 +196,7 @@ describe('Voucher', function () {
         });
 
         it('Should not upgrade voucher when unauthorized', async function () {
-            const { beacon, anyone } = await loadFixture(deployFixture);
-            // Save implementation.
+            // Save implementation address.
             const initialImplementation = await beacon.implementation();
             // Try to upgrade beacon.
             const voucherImplV2Factory = await ethers.getContractFactory('VoucherV2Mock', anyone);
@@ -350,7 +343,7 @@ describe('Voucher', function () {
 
         describe('Match orders boost', async function () {
             it('Should match orders boost with full sponsored amount', async () => {
-                const sponsoredValue = BigInt(appPrice + datasetPrice + workerpoolPrice);
+                const sponsoredValue = appPrice + datasetPrice + workerpoolPrice;
                 await addEligibleAssets([app, dataset, workerpool]);
                 const voucherInitialCreditBalance = await voucher.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
@@ -422,8 +415,8 @@ describe('Voucher', function () {
             });
 
             it('Should match orders boost with partial sponsored amount', async () => {
-                const sponsoredValue = BigInt(datasetPrice + workerpoolPrice);
-                const noSponsoredValue = BigInt(appPrice); // app wont be eligible for sponsoring
+                const sponsoredValue = datasetPrice + workerpoolPrice;
+                const noSponsoredValue = appPrice; // app wont be eligible for sponsoring
                 await addEligibleAssets([dataset, workerpool]);
                 const voucherInitialCreditBalance = await voucher.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
@@ -563,7 +556,7 @@ describe('Voucher', function () {
                 // Claim
                 await expect(voucher.claim(dealId, taskIndex))
                     .to.emit(voucher, 'TaskClaimedWithVoucher')
-                    .withArgs(dealId, 0);
+                    .withArgs(dealId, taskIndex);
             });
 
             it('Boost', async () => {
@@ -592,23 +585,21 @@ describe('Voucher', function () {
                 // Claim
                 await expect(voucher.claim(dealId, taskIndex))
                     .to.emit(voucher, 'TaskClaimedWithVoucher')
-                    .withArgs(dealId, 0);
+                    .withArgs(dealId, taskIndex);
             });
         });
 
-        it('Should claim task when deal is partially sponsored', async () => {});
+        describe('Should claim task when deal is not sponsored', async () => {});
 
-        it('Should claim task when deal is not sponsored', async () => {});
+        describe('Should claim task when already claimed on PoCo', async () => {});
 
-        it('Should claim task when already claimed on PoCo', async () => {});
+        describe('Should not claim task twice', async () => {});
 
-        it('Should not claim task twice', async () => {});
+        describe('Should not claim task when deal not found', async () => {});
 
-        it('Should not claim task when deal not found', async () => {});
+        describe('Should not claim task when task not found', async () => {});
 
-        it('Should not claim task when task not found', async () => {});
-
-        it('Should not claim task when PoCo claim reverts', async () => {});
+        describe('Should not claim task when PoCo claim reverts', async () => {});
     });
 
     async function addEligibleAssets(assets: string[]) {
