@@ -635,6 +635,29 @@ describe('Voucher', function () {
             }
         });
 
+        // TODO when volume can be > 1
+        describe('Should claim task when deal is partially sponsored and sponsored amount is not divisible by volume', async () => {
+            it.skip('Classic', async () => {
+                await runTest(voucher.matchOrders);
+            });
+
+            it.skip('Boost', async () => {
+                await runTest(voucher.matchOrders);
+            });
+
+            async function runTest(matchOrdersFunction: any) {
+                // Use another voucher with a small amount of credits.
+                const smallVoucherValue = 1n;
+                voucher = await voucherHubAsVoucherCreationManager
+                    .createVoucher(voucherOwner2, voucherType, smallVoucherValue)
+                    .then((tx) => tx.wait())
+                    .then(() => voucherHub.getVoucher(voucherOwner1))
+                    .then((voucherAddress) =>
+                        Voucher__factory.connect(voucherAddress, voucherOwner1),
+                    );
+            }
+        });
+
         describe('Should claim task when deal is not sponsored', async () => {});
 
         describe('Should claim task when already claimed on PoCo', async () => {});
