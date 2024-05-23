@@ -7,7 +7,6 @@ import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.so
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import "hardhat/console.sol";
 
 /**
  * @notice Testing purposes only.
@@ -58,10 +57,6 @@ contract IexecPocoMock is ERC20 {
             datasetOrder.datasetprice +
             workerpoolOrder.workerpoolprice) * volume;
         _burn(msg.sender, dealPrice);
-        // _burn(
-        //     msg.sender,
-        //     appOrder.appprice + datasetOrder.datasetprice + workerpoolOrder.workerpoolprice
-        // );
         return keccak256("deal");
     }
 
@@ -95,7 +90,6 @@ contract IexecPocoMock is ERC20 {
         uint256 dealPrice = (appOrder.appprice +
             datasetOrder.datasetprice +
             workerpoolOrder.workerpoolprice) * volume;
-        _burn(msg.sender, dealPrice);
         _burn(
             msg.sender,
             appOrder.appprice + datasetOrder.datasetprice + workerpoolOrder.workerpoolprice
