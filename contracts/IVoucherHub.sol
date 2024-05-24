@@ -16,6 +16,7 @@ interface IVoucherHub {
         uint256 value
     );
     event VoucherDebited(address indexed voucher, uint256 sponsoredAmount);
+    event VoucherRefunded(address indexed voucher, uint256 amount);
     event VoucherTypeCreated(uint256 indexed id, string description, uint256 duration);
     event VoucherTypeDescriptionUpdated(uint256 indexed id, string description);
     event VoucherTypeDurationUpdated(uint256 indexed id, uint256 duration);

@@ -16,11 +16,14 @@ contract IexecPocoMock is ERC20 {
     bool public shouldRevertOnSponsorMatchOrders = false;
     bool public shouldRevertOnSponsorMatchOrdersBoost = false;
     bool public shouldRevertOnClaim = false;
-    bool public shouldRevertOnClaimBoost = false;
+    bool public shouldReturnTaskWithFailedStatus = false;
 
     bytes32 public mockDealId = keccak256("deal");
+    uint256 public mockTaskIndex = 0;
+    bytes32 public mockTaskId = keccak256(abi.encode(mockDealId, mockTaskIndex));
     IexecLibCore_v5.Deal public deal;
     IexecLibCore_v5.DealBoost public dealBoost;
+    IexecLibCore_v5.Task public task;
 
     constructor() ERC20("Staked RLC", "SRLC") {
         _mint(msg.sender, 1000000);
@@ -44,11 +47,13 @@ contract IexecPocoMock is ERC20 {
         deal.app.price = appOrder.appprice;
         deal.dataset.price = datasetOrder.datasetprice;
         deal.workerpool.price = workerpoolOrder.workerpoolprice;
+        deal.sponsor = msg.sender;
         _burn(
             msg.sender,
             appOrder.appprice + datasetOrder.datasetprice + workerpoolOrder.workerpoolprice
         );
         dealId = mockDealId;
+        task.status = IexecLibCore_v5.TaskStatusEnum.ACTIVE;
     }
 
     function sponsorMatchOrdersBoost(
@@ -65,11 +70,13 @@ contract IexecPocoMock is ERC20 {
         dealBoost.appPrice = uint96(appOrder.appprice);
         dealBoost.datasetPrice = uint96(datasetOrder.datasetprice);
         dealBoost.workerpoolPrice = uint96(workerpoolOrder.workerpoolprice);
+        deal.sponsor = msg.sender;
         _burn(
             msg.sender,
             appOrder.appprice + datasetOrder.datasetprice + workerpoolOrder.workerpoolprice
         );
         dealId = mockDealId;
+        task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
     }
 
     function willRevertOnSponsorMatchOrders() external {
@@ -84,26 +91,37 @@ contract IexecPocoMock is ERC20 {
      * Claim
      */
 
-    function claim(bytes32) external {
+    function claim(bytes32 taskId) external {
         if (shouldRevertOnClaim) {
             revert("IexecPocoMock: Failed to claim");
         }
-        _mint(msg.sender, deal.app.price + deal.dataset.price + deal.workerpool.price);
+        if (taskId != mockTaskId) {
+            revert(); // no reason, same as PoCo.
+        }
+        _mint(deal.sponsor, deal.app.price + deal.dataset.price + deal.workerpool.price);
+        task.status = IexecLibCore_v5.TaskStatusEnum.FAILED;
     }
 
-    function claimBoost(bytes32, uint256) external {
-        if (shouldRevertOnClaimBoost) {
+    function claimBoost(bytes32, uint256 taskIndex) external {
+        if (shouldRevertOnClaim) {
             revert("IexecPocoMock: Failed to claim boost");
         }
-        _mint(msg.sender, dealBoost.appPrice + dealBoost.datasetPrice + dealBoost.workerpoolPrice);
+        if (taskIndex != mockTaskIndex) {
+            revert("PocoBoost: Unknown task"); // same as PoCo.
+        }
+        _mint(
+            deal.sponsor,
+            dealBoost.appPrice + dealBoost.datasetPrice + dealBoost.workerpoolPrice
+        );
+        task.status = IexecLibCore_v5.TaskStatusEnum.FAILED;
     }
 
     function willRevertOnClaim() external {
         shouldRevertOnClaim = true;
     }
 
-    function willRevertOnClaimBoost() external {
-        shouldRevertOnClaimBoost = true;
+    function willReturnTaskWithFailedStatus() external {
+        shouldReturnTaskWithFailedStatus = true;
     }
 
     function viewDeal(bytes32) external view returns (IexecLibCore_v5.Deal memory) {
@@ -114,7 +132,7 @@ contract IexecPocoMock is ERC20 {
         return dealBoost;
     }
 
-    function viewTask(bytes32) external pure returns (IexecLibCore_v5.Task memory task) {
-        task.status = IexecLibCore_v5.TaskStatusEnum.ACTIVE;
+    function viewTask(bytes32) external view returns (IexecLibCore_v5.Task memory) {
+        return task;
     }
 }

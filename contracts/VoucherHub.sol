@@ -215,8 +215,11 @@ contract VoucherHub is
             emit VoucherDebited(msg.sender, sponsoredAmount);
         }
     }
+
+    // TODO add access control to this function.
     function refundVoucher(uint256 amount) external {
         _mint(msg.sender, amount);
+        emit VoucherRefunded(msg.sender, amount);
     }
 
     // TODO make view functions external whenever possible.
