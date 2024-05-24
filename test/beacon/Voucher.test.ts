@@ -537,13 +537,8 @@ describe('Voucher', function () {
 
     describe('Claim', async function () {
         describe('Should claim task when deal is fully sponsored', async function () {
-            it('Classic', async () => {
-                await runTest(voucher.matchOrders);
-            });
-
-            it('Boost', async () => {
-                await runTest(voucher.matchOrders);
-            });
+            it('Classic', async () => await runTest(voucher.matchOrders));
+            it('Boost', async () => await runTest(voucher.matchOrdersBoost));
 
             async function runTest(matchOrdersFunction: any) {
                 await addEligibleAssets([app, dataset, workerpool]);
@@ -561,6 +556,8 @@ describe('Voucher', function () {
 
                 // Claim task
                 await expect(voucher.claim(dealId, taskIndex))
+                    .to.emit(voucherHub, 'VoucherRefunded')
+                    .withArgs(voucherAddress, taskSponsoredAmount)
                     .to.emit(voucher, 'TaskClaimedWithVoucher')
                     .withArgs(dealId, taskIndex);
                 const {
@@ -579,13 +576,8 @@ describe('Voucher', function () {
         });
 
         describe('Should claim task when deal is partially sponsored', async () => {
-            it('Classic', async () => {
-                await runTest(voucher.matchOrders);
-            });
-
-            it('Boost', async () => {
-                await runTest(voucher.matchOrders);
-            });
+            it('Classic', async () => await runTest(voucher.matchOrders));
+            it('Boost', async () => await runTest(voucher.matchOrdersBoost));
 
             async function runTest(matchOrdersFunction: any) {
                 await addEligibleAssets([app, dataset]); // workerpool not eligible.
@@ -594,7 +586,7 @@ describe('Voucher', function () {
                 // Deposit non-sponsored amount for requester and approve voucher.
                 await iexecPocoInstance
                     .transfer(requester, dealNonSponsoredAmount)
-                    // .then(tx => tx.wait())
+                    .then((tx) => tx.wait())
                     .then(() =>
                         iexecPocoInstance
                             .connect(requester)
@@ -616,6 +608,8 @@ describe('Voucher', function () {
 
                 // Claim
                 await expect(voucher.claim(dealId, taskIndex))
+                    .to.emit(voucherHub, 'VoucherRefunded')
+                    .withArgs(voucherAddress, taskSponsoredAmount)
                     .to.emit(voucher, 'TaskClaimedWithVoucher')
                     .withArgs(dealId, taskIndex);
                 const {
@@ -637,13 +631,8 @@ describe('Voucher', function () {
 
         // TODO when volume can be > 1
         describe('Should claim task when deal is partially sponsored and sponsored amount is not divisible by volume', async () => {
-            it.skip('Classic', async () => {
-                await runTest(voucher.matchOrders);
-            });
-
-            it.skip('Boost', async () => {
-                await runTest(voucher.matchOrders);
-            });
+            it.skip('Classic', async () => await runTest(voucher.matchOrders));
+            it.skip('Boost', async () => await runTest(voucher.matchOrdersBoost));
 
             async function runTest(matchOrdersFunction: any) {
                 // Use another voucher with a small amount of credits.
@@ -658,7 +647,96 @@ describe('Voucher', function () {
             }
         });
 
-        describe('Should claim task when deal is not sponsored', async () => {});
+        describe('Should claim task when deal is not sponsored but matched by voucher', async () => {
+            it('Classic', async () => await runTest(voucher.matchOrders));
+            it('Boost', async () => await runTest(voucher.matchOrdersBoost));
+
+            async function runTest(matchOrdersFunction: any) {
+                // Assets are not eligible.
+                // Deposit dealPrice amount for requester and approve voucher.
+                await iexecPocoInstance
+                    .transfer(requester, dealPrice)
+                    .then((tx) => tx.wait())
+                    .then(() =>
+                        iexecPocoInstance.connect(requester).approve(voucherAddress, dealPrice),
+                    )
+                    .then((tx) => tx.wait());
+                // Match orders
+                await matchOrdersFunction(appOrder, datasetOrder, workerpoolOrder, requestOrder);
+                const {
+                    voucherCreditBalance: voucherCreditBalancePreClaim,
+                    voucherRlcBalance: voucherRlcBalancePreClaim,
+                    requesterRlcBalance: requesterRlcBalancePreClaim,
+                } = await getVoucherAndRequesterBalances();
+                // The voucher should not sponsor the deal.
+                const dealSponsoredAmount = await voucher.getSponsoredAmount(dealId);
+                expect(dealSponsoredAmount).to.be.equal(0);
+
+                // Claim
+                await expect(voucher.claim(dealId, taskIndex))
+                    .to.emit(voucher, 'TaskClaimedWithVoucher')
+                    .withArgs(dealId, taskIndex)
+                    .and.to.not.emit(voucherHub, 'VoucherRefunded');
+                const {
+                    voucherCreditBalance: voucherCreditBalancePostClaim,
+                    voucherRlcBalance: voucherRlcBalancePostClaim,
+                    requesterRlcBalance: requesterRlcBalancePostClaim,
+                } = await getVoucherAndRequesterBalances();
+                // Voucher credit and RLC balances should stay unchanged.
+                expect(voucherCreditBalancePostClaim)
+                    .to.be.equal(voucherCreditBalancePreClaim)
+                    .to.be.equal(voucherRlcBalancePostClaim)
+                    .to.be.equal(voucherRlcBalancePreClaim);
+                // Requester balance should increase.
+                expect(requesterRlcBalancePostClaim).to.be.equal(
+                    requesterRlcBalancePreClaim + taskPrice,
+                );
+            }
+        });
+
+        describe('Should claim task when deal is neither sponsored nor matched by voucher', async () => {
+            // Match orders directly on PoCo by requester.
+            it('Classic', async () =>
+                await runTest(iexecPocoInstance.connect(requester).sponsorMatchOrders));
+            it('Boost', async () =>
+                await runTest(iexecPocoInstance.connect(requester).sponsorMatchOrdersBoost));
+
+            async function runTest(matchOrdersFunction: any) {
+                // Assets are not eligible.
+                // Deposit dealPrice amount for requester.
+                await iexecPocoInstance.transfer(requester, dealPrice).then((tx) => tx.wait());
+                // Match orders.
+                await matchOrdersFunction(appOrder, datasetOrder, workerpoolOrder, requestOrder);
+                const {
+                    voucherCreditBalance: voucherCreditBalancePreClaim,
+                    voucherRlcBalance: voucherRlcBalancePreClaim,
+                    requesterRlcBalance: requesterRlcBalancePreClaim,
+                } = await getVoucherAndRequesterBalances();
+                // The voucher should not sponsor the deal.
+                const dealSponsoredAmount = await voucher.getSponsoredAmount(dealId);
+                expect(dealSponsoredAmount).to.be.equal(0);
+
+                // Claim
+                await expect(voucher.claim(dealId, taskIndex))
+                    .to.emit(voucher, 'TaskClaimedWithVoucher')
+                    .withArgs(dealId, taskIndex)
+                    .and.to.not.emit(voucherHub, 'VoucherRefunded');
+                const {
+                    voucherCreditBalance: voucherCreditBalancePostClaim,
+                    voucherRlcBalance: voucherRlcBalancePostClaim,
+                    requesterRlcBalance: requesterRlcBalancePostClaim,
+                } = await getVoucherAndRequesterBalances();
+                // Voucher credit and RLC balances should stay unchanged.
+                expect(voucherCreditBalancePostClaim)
+                    .to.be.equal(voucherCreditBalancePreClaim)
+                    .to.be.equal(voucherRlcBalancePostClaim)
+                    .to.be.equal(voucherRlcBalancePreClaim);
+                // Requester balance should increase.
+                expect(requesterRlcBalancePostClaim).to.be.equal(
+                    requesterRlcBalancePreClaim + taskPrice,
+                );
+            }
+        });
 
         describe('Should claim task when already claimed on PoCo', async () => {});
 
