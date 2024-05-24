@@ -38,20 +38,18 @@ contract IexecPocoMock is ERC20 {
         bytes32 requestOrderTypedDataHash = _toTypedDataHash(requestOrder.hash());
         bytes32 appOrderTypedDataHash = _toTypedDataHash(appOrder.hash());
         bytes32 workerpoolOrderTypedDataHash = _toTypedDataHash(workerpoolOrder.hash());
-
-        uint256 requestOrderConsumed = m_consumed[requestOrderTypedDataHash];
-        uint256 appOrderConsumed = m_consumed[appOrderTypedDataHash];
-        uint256 workerpoolOrderConsumed = m_consumed[workerpoolOrderTypedDataHash];
-
-        uint256 volume = appOrder.volume - appOrderConsumed;
-        volume = volume.min(workerpoolOrder.volume - workerpoolOrderConsumed);
-        volume = volume.min(requestOrder.volume - requestOrderConsumed);
-
-        if (datasetOrder.dataset != address(0)) {
-            bytes32 datasetOrderTypedDataHash = _toTypedDataHash(datasetOrder.hash());
-            uint256 datasetOrderConsumed = m_consumed[datasetOrderTypedDataHash];
-            volume = volume.min(datasetOrder.volume - datasetOrderConsumed);
-        }
+        bytes32 datasetOrderTypedDataHash = _toTypedDataHash(datasetOrder.hash());
+        uint256 volume = _computeVolume(
+            appOrder.volume,
+            appOrderTypedDataHash,
+            datasetOrder.dataset != address(0),
+            datasetOrder.volume,
+            datasetOrderTypedDataHash,
+            workerpoolOrder.volume,
+            workerpoolOrderTypedDataHash,
+            requestOrder.volume,
+            requestOrderTypedDataHash
+        );
 
         uint256 dealPrice = (appOrder.appprice +
             datasetOrder.datasetprice +
@@ -72,28 +70,23 @@ contract IexecPocoMock is ERC20 {
         bytes32 requestOrderTypedDataHash = _toTypedDataHash(requestOrder.hash());
         bytes32 appOrderTypedDataHash = _toTypedDataHash(appOrder.hash());
         bytes32 workerpoolOrderTypedDataHash = _toTypedDataHash(workerpoolOrder.hash());
-
-        uint256 requestOrderConsumed = m_consumed[requestOrderTypedDataHash];
-        uint256 appOrderConsumed = m_consumed[appOrderTypedDataHash];
-        uint256 workerpoolOrderConsumed = m_consumed[workerpoolOrderTypedDataHash];
-
-        uint256 volume = appOrder.volume - appOrderConsumed;
-        volume = volume.min(workerpoolOrder.volume - workerpoolOrderConsumed);
-        volume = volume.min(requestOrder.volume - requestOrderConsumed);
-
-        if (datasetOrder.dataset != address(0)) {
-            bytes32 datasetOrderTypedDataHash = _toTypedDataHash(datasetOrder.hash());
-            uint256 datasetOrderConsumed = m_consumed[datasetOrderTypedDataHash];
-            volume = volume.min(datasetOrder.volume - datasetOrderConsumed);
-        }
+        bytes32 datasetOrderTypedDataHash = _toTypedDataHash(datasetOrder.hash());
+        uint256 volume = _computeVolume(
+            appOrder.volume,
+            appOrderTypedDataHash,
+            datasetOrder.dataset != address(0),
+            datasetOrder.volume,
+            datasetOrderTypedDataHash,
+            workerpoolOrder.volume,
+            workerpoolOrderTypedDataHash,
+            requestOrder.volume,
+            requestOrderTypedDataHash
+        );
 
         uint256 dealPrice = (appOrder.appprice +
             datasetOrder.datasetprice +
             workerpoolOrder.workerpoolprice) * volume;
-        _burn(
-            msg.sender,
-            appOrder.appprice + datasetOrder.datasetprice + workerpoolOrder.workerpoolprice
-        );
+        _burn(msg.sender, dealPrice);
         return keccak256("deal");
     }
 
@@ -104,15 +97,55 @@ contract IexecPocoMock is ERC20 {
         shouldRevertOnSponsorMatchOrdersBoost = true;
     }
 
+    function toTypedDataHash(bytes32 structHash) external view returns (bytes32) {
+        return _toTypedDataHash(structHash);
+    }
+
+    function computeVolume(
+        uint256 apporderVolume,
+        bytes32 appOrderTypedDataHash,
+        bool hasDataset,
+        uint256 datasetorderVolume,
+        bytes32 datasetOrderTypedDataHash,
+        uint256 workerpoolorderVolume,
+        bytes32 workerpoolOrderTypedDataHash,
+        uint256 requestorderVolume,
+        bytes32 requestOrderTypedDataHash
+    ) external view returns (uint256 volume) {
+        return
+            _computeVolume(
+                apporderVolume,
+                appOrderTypedDataHash,
+                hasDataset,
+                datasetorderVolume,
+                datasetOrderTypedDataHash,
+                workerpoolorderVolume,
+                workerpoolOrderTypedDataHash,
+                requestorderVolume,
+                requestOrderTypedDataHash
+            );
+    }
+
     function _toTypedDataHash(bytes32 structHash) internal view returns (bytes32) {
         return MessageHashUtils.toTypedDataHash(EIP712DOMAIN_SEPARATOR, structHash);
     }
 
-    function eip712domain_separator() external view returns (bytes32) {
-        return EIP712DOMAIN_SEPARATOR;
-    }
-
-    function viewConsumed(bytes32 _id) external view returns (uint256 consumed) {
-        return m_consumed[_id];
+    function _computeVolume(
+        uint256 apporderVolume,
+        bytes32 appOrderTypedDataHash,
+        bool hasDataset,
+        uint256 datasetorderVolume,
+        bytes32 datasetOrderTypedDataHash,
+        uint256 workerpoolorderVolume,
+        bytes32 workerpoolOrderTypedDataHash,
+        uint256 requestorderVolume,
+        bytes32 requestOrderTypedDataHash
+    ) internal view returns (uint256 volume) {
+        volume = apporderVolume - m_consumed[appOrderTypedDataHash];
+        volume = hasDataset
+            ? volume.min(datasetorderVolume - m_consumed[datasetOrderTypedDataHash])
+            : volume;
+        volume = volume.min(workerpoolorderVolume - m_consumed[workerpoolOrderTypedDataHash]);
+        volume = volume.min(requestorderVolume - m_consumed[requestOrderTypedDataHash]);
     }
 }

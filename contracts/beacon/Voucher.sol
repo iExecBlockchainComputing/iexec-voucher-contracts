@@ -6,7 +6,8 @@ pragma solidity ^0.8.20;
 import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.sol";
 import {IexecPoco1} from "@iexec/poco/contracts/modules/interfaces/IexecPoco1.v8.sol";
 import {IexecPocoBoost} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoost.sol";
-import {IexecPocoAccessorsDelegate} from "@iexec/poco/contracts/modules/delegates/IexecPocoAccessorsDelegate.sol";
+import {SignatureVerifier} from "@iexec/poco/contracts/modules/interfaces/SignatureVerifier.sol";
+import {IexecMath} from "@iexec/poco/contracts/modules/interfaces/IexecMath.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVoucherHub} from "../IVoucherHub.sol";
@@ -273,35 +274,30 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 datasetPrice = datasetOrder.datasetprice;
         uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
 
-        IexecPocoAccessorsDelegate pocoAccessors = IexecPocoAccessorsDelegate(iexecPoco);
-        bytes32 eip712DomainSeparator = pocoAccessors.eip712domain_separator();
+        SignatureVerifier pocoSignatureVerifier = SignatureVerifier(iexecPoco);
 
-        bytes32 requestOrderTypedDataHash = _toTypedDataHash(
-            requestOrder.hash(),
-            eip712DomainSeparator
+        bytes32 requestOrderTypedDataHash = pocoSignatureVerifier.toTypedDataHash(
+            requestOrder.hash()
         );
-        bytes32 appOrderTypedDataHash = _toTypedDataHash(appOrder.hash(), eip712DomainSeparator);
-        bytes32 workerpoolOrderTypedDataHash = _toTypedDataHash(
-            workerpoolOrder.hash(),
-            eip712DomainSeparator
+        bytes32 appOrderTypedDataHash = pocoSignatureVerifier.toTypedDataHash(appOrder.hash());
+        bytes32 workerpoolOrderTypedDataHash = pocoSignatureVerifier.toTypedDataHash(
+            workerpoolOrder.hash()
+        );
+        bytes32 datasetOrderTypedDataHash = pocoSignatureVerifier.toTypedDataHash(
+            datasetOrder.hash()
         );
 
-        uint256 requestOrderConsumed = pocoAccessors.viewConsumed(requestOrderTypedDataHash);
-        uint256 appOrderConsumed = pocoAccessors.viewConsumed(appOrderTypedDataHash);
-        uint256 workerpoolOrderConsumed = pocoAccessors.viewConsumed(workerpoolOrderTypedDataHash);
-
-        uint256 volume = appOrder.volume - appOrderConsumed;
-        volume = volume.min(workerpoolOrder.volume - workerpoolOrderConsumed);
-        volume = volume.min(requestOrder.volume - requestOrderConsumed);
-
-        if (datasetOrder.dataset != address(0)) {
-            bytes32 datasetOrderTypedDataHash = _toTypedDataHash(
-                datasetOrder.hash(),
-                eip712DomainSeparator
-            );
-            uint256 datasetOrderConsumed = pocoAccessors.viewConsumed(datasetOrderTypedDataHash);
-            volume = volume.min(datasetOrder.volume - datasetOrderConsumed);
-        }
+        uint256 volume = IexecMath(iexecPoco).computeVolume(
+            appOrder.volume,
+            appOrderTypedDataHash,
+            datasetOrder.dataset != address(0),
+            datasetOrder.volume,
+            datasetOrderTypedDataHash,
+            workerpoolOrder.volume,
+            workerpoolOrderTypedDataHash,
+            requestOrder.volume,
+            requestOrderTypedDataHash
+        );
 
         uint256 dealPrice = (appPrice + datasetPrice + workerpoolPrice) * volume;
         sponsoredAmount = voucherHub.debitVoucher(
@@ -324,12 +320,5 @@ contract Voucher is OwnableUpgradeable, IVoucher {
                 dealPrice - sponsoredAmount
             );
         }
-    }
-
-    function _toTypedDataHash(
-        bytes32 structHash,
-        bytes32 eip712DomainSeparator
-    ) internal pure returns (bytes32) {
-        return MessageHashUtils.toTypedDataHash(eip712DomainSeparator, structHash);
     }
 }
