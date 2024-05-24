@@ -36,8 +36,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         // Save all deals matched by the voucher to be able to
         // refund requesters for non sponsored tasks.
         mapping(bytes32 dealId => VoucherMatchedDeal) _voucherMatchedDeals;
-        // Save claimed tasks to disable replay.
-        mapping(bytes32 taskId => bool) _claimedTasks;
     }
 
     struct VoucherMatchedDeal {
@@ -196,7 +194,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         address iexecPoco = voucherHub.getIexecPoco();
         // Check if task is already claimed.
         bytes32 taskId = keccak256(abi.encodePacked(dealId, index));
-        require(!$._claimedTasks[taskId], "Voucher: task already claimed");
         // Get deal details from PoCo.
         (bool isBoostDeal, address requester, uint256 volume, uint256 dealPrice) = _getDealDetails(
             iexecPoco,
@@ -229,7 +226,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
                 if (taskSponsoredAmount != 0) {
                     // If the voucher did fully/partially sponsor the deal then mint voucher
                     // credits back.
-                    voucherHub.refundVoucher(taskSponsoredAmount);
+                    voucherHub.refundVoucherForTask(taskId, taskSponsoredAmount);
                 }
                 if (taskSponsoredAmount < taskPrice) {
                     // If the deal was not sponsored or partially sponsored
@@ -238,7 +235,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
                     IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount);
                 }
             }
-            $._claimedTasks[taskId] = true;
         } else {
             // If the deal was not matched by the voucher then
             // forward the claim request to PoCo and do nothing.

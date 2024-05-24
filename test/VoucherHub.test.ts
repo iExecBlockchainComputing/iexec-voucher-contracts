@@ -655,6 +655,8 @@ describe('VoucherHub', function () {
                 ),
             ).to.be.revertedWith('VoucherHub: type index out of bounds');
         });
+
+        it.skip('TODO - Should not create voucher when out of funds', async function () {});
     });
 
     describe('Debit voucher', function () {
@@ -785,6 +787,13 @@ describe('VoucherHub', function () {
             ).to.not.emit(voucherHub, 'VoucherDebited');
             expect(await voucherHub.balanceOf(anyone.address)).to.equal(initialCreditBalance);
         });
+    });
+
+    describe('Refund voucher', function () {
+        it('Should refund voucher for task', async function () {});
+        it('Should not refund voucher twice', async function () {});
+        it('Should not refund voucher when task is not found', async function () {});
+        it('Should not refund voucher when task is not failed', async function () {});
     });
 
     describe('Get voucher', function () {

@@ -3,6 +3,8 @@
 
 pragma solidity ^0.8.20;
 
+import {IexecLibCore_v5} from "@iexec/poco/contracts/libs/IexecLibCore_v5.sol";
+import {IexecPocoAccessors} from "@iexec/poco/contracts/modules/interfaces/IexecPocoAccessors.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -47,6 +49,8 @@ contract VoucherHub is
         bytes32 _voucherCreationCodeHash;
         VoucherType[] voucherTypes;
         mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
+        // Save refunded tasks to disable replay attack.
+        mapping(bytes32 taskId => bool) _refundedTasks;
     }
 
     modifier whenVoucherTypeExists(uint256 id) {
@@ -215,9 +219,21 @@ contract VoucherHub is
         }
     }
 
-    // TODO add access control to this function.
-    function refundVoucher(uint256 amount) external {
+    /**
+     * Refund voucher for a failed task.
+     * @param taskId id of the task
+     * @param amount to be refunded
+     */
+    function refundVoucherForTask(bytes32 taskId, uint256 amount) external {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        require(!$._refundedTasks[taskId], "VoucherHub: task already refunded");
+        require(
+            IexecPocoAccessors($._iexecPoco).viewTask(taskId).status ==
+                IexecLibCore_v5.TaskStatusEnum.FAILED,
+            "VoucherHub: invalid task id or status"
+        );
         _mint(msg.sender, amount);
+        $._refundedTasks[taskId] = true;
         emit VoucherRefunded(msg.sender, amount);
     }
 
