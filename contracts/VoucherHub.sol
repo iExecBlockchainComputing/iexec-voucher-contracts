@@ -46,7 +46,6 @@ contract VoucherHub is
         /// @dev This hash should be updated when `VoucherProxy` is updated.
         bytes32 _voucherCreationCodeHash;
         VoucherType[] voucherTypes;
-        // TODO use has(voucherTypeId, asset)) as mapping key to save storage.
         mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
     }
 

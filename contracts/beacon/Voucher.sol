@@ -7,7 +7,6 @@ import {IexecLibCore_v5} from "@iexec/poco/contracts/libs/IexecLibCore_v5.sol";
 import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.sol";
 import {IexecPoco1} from "@iexec/poco/contracts/modules/interfaces/IexecPoco1.v8.sol";
 import {IexecPoco2} from "@iexec/poco/contracts/modules/interfaces/IexecPoco2.v8.sol";
-import {IexecPocoBoost} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoost.sol";
 import {IexecPocoAccessors} from "@iexec/poco/contracts/modules/interfaces/IexecPocoAccessors.sol";
 import {IexecPocoBoost} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoost.sol";
 import {IexecPocoBoostAccessors} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoostAccessors.sol";
@@ -37,11 +36,13 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         // Save all deals matched by the voucher to be able to
         // refund requesters for non sponsored tasks.
         mapping(bytes32 dealId => VoucherMatchedDeal) _voucherMatchedDeals;
-        // Needed to not claim twice.
+        // Save claimed tasks to disable replay.
         mapping(bytes32 taskId => bool) _claimedTasks;
     }
 
     struct VoucherMatchedDeal {
+        // Will be true for deals matched
+        // by the voucher.
         bool exists;
         // RLC total supply is (87 * 10**15)
         // which can be encoded on 8 bytes.
@@ -196,7 +197,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         // Check if task is already claimed.
         bytes32 taskId = keccak256(abi.encodePacked(dealId, index));
         require(!$._claimedTasks[taskId], "Voucher: task already claimed");
-        // Get the deal details from PoCo.
+        // Get deal details from PoCo.
         (bool isBoostDeal, address requester, uint256 volume, uint256 dealPrice) = _getDealDetails(
             iexecPoco,
             dealId
@@ -206,7 +207,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         VoucherMatchedDeal memory voucherMatchedDeal = $._voucherMatchedDeals[dealId];
         if (voucherMatchedDeal.exists) {
             // The deal was matched by the voucher.
-            // It can be fully, partially, or not sponsored.
+            // It is either fully, partially, or not sponsored.
             IexecLibCore_v5.Task memory task = IexecPocoAccessors(iexecPoco).viewTask(taskId);
             if (task.status != IexecLibCore_v5.TaskStatusEnum.FAILED) {
                 // Claim task on PoCo because it's not already claimed.
@@ -223,7 +224,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
                 // A positive remainder is possible when the voucher balance is less than
                 // the sponsorable amount. Min(balance, dealSponsoredAmount) is computed
                 // at match orders.
-                // TODO do something with the remainder.
+                // TODO !! do something with the remainder.
                 uint256 taskSponsoredAmount = voucherMatchedDeal.sponsoredAmount / volume;
                 if (taskSponsoredAmount != 0) {
                     // If the voucher did fully/partially sponsor the deal then mint voucher
@@ -320,7 +321,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      * Send claim request of Boost and Classic tasks to PoCo.
      * @param iexecPoco PoCo proxy address
      * @param isBoostDeal whether the deal is of type boost or not
-     * @param dealId id of the task's deal
+     * @param dealId id of the deal
      * @param index of the task in the deal
      */
     function _claimTaskOnPoco(
@@ -362,7 +363,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
             isBoostDeal = true;
             requester = dealBoost.requester;
             dealVolume = dealBoost.botSize;
-            // TODO
             dealPrice =
                 (dealBoost.appPrice + dealBoost.datasetPrice + dealBoost.workerpoolPrice) *
                 dealVolume;
