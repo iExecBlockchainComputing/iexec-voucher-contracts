@@ -34,15 +34,14 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 _expiration;
         uint256 _type;
         mapping(address => bool) _authorizedAccounts;
-        // Save deal that are matched by the voucher because
-        // it's needed to refund requesters for tasks where
-        // sponsoredAmounts is 0;
-        mapping(bytes32 dealId => DealMatchedByVoucher) _dealsMatchedByVoucher;
+        // Save all deals matched by the voucher to be able to
+        // refund requesters for non sponsored tasks.
+        mapping(bytes32 dealId => VoucherMatchedDeal) _voucherMatchedDeals;
         // Needed to not claim twice.
         mapping(bytes32 taskId => bool) _claimedTasks;
     }
 
-    struct DealMatchedByVoucher {
+    struct VoucherMatchedDeal {
         bool exists;
         // RLC total supply is (87 * 10**15)
         // which can be encoded on 8 bytes.
@@ -144,8 +143,8 @@ contract Voucher is OwnableUpgradeable, IVoucher {
             workerpoolOrder,
             requestOrder
         );
-        $._dealsMatchedByVoucher[dealId].exists = true;
-        $._dealsMatchedByVoucher[dealId].sponsoredAmount = uint64(sponsoredAmount);
+        $._voucherMatchedDeals[dealId].exists = true;
+        $._voucherMatchedDeals[dealId].sponsoredAmount = uint64(sponsoredAmount);
         emit OrdersMatchedWithVoucher(dealId);
         return dealId;
     }
@@ -184,8 +183,8 @@ contract Voucher is OwnableUpgradeable, IVoucher {
             workerpoolOrder,
             requestOrder
         );
-        $._dealsMatchedByVoucher[dealId].exists = true;
-        $._dealsMatchedByVoucher[dealId].sponsoredAmount = uint64(sponsoredAmount);
+        $._voucherMatchedDeals[dealId].exists = true;
+        $._voucherMatchedDeals[dealId].sponsoredAmount = uint64(sponsoredAmount);
         emit OrdersBoostMatchedWithVoucher(dealId);
         return dealId;
     }
@@ -204,8 +203,8 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         );
         require(requester != address(0), "Voucher: deal not found");
         // Check wether the deal was matched by the voucher or not.
-        DealMatchedByVoucher memory dealMatchedByVoucher = $._dealsMatchedByVoucher[dealId];
-        if (dealMatchedByVoucher.exists) {
+        VoucherMatchedDeal memory voucherMatchedDeal = $._voucherMatchedDeals[dealId];
+        if (voucherMatchedDeal.exists) {
             // The deal was matched by the voucher.
             // It can be fully, partially, or not sponsored.
             IexecLibCore_v5.Task memory task = IexecPocoAccessors(iexecPoco).viewTask(taskId);
@@ -225,7 +224,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
                 // the sponsorable amount. Min(balance, dealSponsoredAmount) is computed
                 // at match orders.
                 // TODO do something with the remainder.
-                uint256 taskSponsoredAmount = dealMatchedByVoucher.sponsoredAmount / volume;
+                uint256 taskSponsoredAmount = voucherMatchedDeal.sponsoredAmount / volume;
                 if (taskSponsoredAmount != 0) {
                     // If the voucher did fully/partially sponsor the deal then mint voucher
                     // credits back.
@@ -297,7 +296,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
      */
     function getSponsoredAmount(bytes32 dealId) external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
-        return $._dealsMatchedByVoucher[dealId].sponsoredAmount;
+        return $._voucherMatchedDeals[dealId].sponsoredAmount;
     }
 
     /**
