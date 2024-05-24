@@ -376,39 +376,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         }
     }
 
-    // function _getTaskDetails(
-    //     address iexecPoco,
-    //     bytes32 id
-    // )
-    //     private
-    //     view
-    //     returns (bool isBoostTask, address requester, uint256 dealVolume, uint256 dealPrice)
-    // {
-    //     // Try to get boost deal first as it is meant to be more used than classic deals.
-    //     IexecLibCore_v5.DealBoost memory dealBoost = IexecPocoBoostAccessors(iexecPoco)
-    //         .viewDealBoost(id);
-    //     if (dealBoost.botSize != 0) { // Boost deal exists
-    //         isBoostDeal = true;
-    //         requester = dealBoost.requester;
-    //         dealVolume = dealBoost.botSize;
-    //         // TODO
-    //         dealPrice =
-    //             (dealBoost.appPrice + dealBoost.datasetPrice + dealBoost.workerpoolPrice) *
-    //             dealVolume;
-    //     } else {
-    //         IexecLibCore_v5.Deal memory deal = IexecPocoAccessors(iexecPoco).viewDeal(id);
-    //         isBoostDeal = false;
-    //         requester = deal.requester;
-    //         dealVolume = deal.botSize;
-    //         dealPrice = (deal.app.price + deal.dataset.price + deal.workerpool.price) * dealVolume;
-    //     }
-    // }
-
-    function _isClaimed(bytes32 taskId, bool returnValue) private pure returns (bool) {
-        taskId;
-        return returnValue;
-    }
-
     // TODO move this function before private view functions.
     /**
      * @dev Debit voucher and transfer non-sponsored amount from requester's account.
