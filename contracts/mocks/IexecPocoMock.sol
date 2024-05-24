@@ -97,10 +97,6 @@ contract IexecPocoMock is ERC20 {
         shouldRevertOnSponsorMatchOrdersBoost = true;
     }
 
-    function toTypedDataHash(bytes32 structHash) external view returns (bytes32) {
-        return _toTypedDataHash(structHash);
-    }
-
     function computeVolume(
         uint256 apporderVolume,
         bytes32 appOrderTypedDataHash,
@@ -126,8 +122,8 @@ contract IexecPocoMock is ERC20 {
             );
     }
 
-    function _toTypedDataHash(bytes32 structHash) internal view returns (bytes32) {
-        return MessageHashUtils.toTypedDataHash(EIP712DOMAIN_SEPARATOR, structHash);
+    function toTypedDataHash(bytes32 structHash) external view returns (bytes32) {
+        return _toTypedDataHash(structHash);
     }
 
     function _computeVolume(
@@ -147,5 +143,9 @@ contract IexecPocoMock is ERC20 {
             : volume;
         volume = volume.min(workerpoolorderVolume - m_consumed[workerpoolOrderTypedDataHash]);
         volume = volume.min(requestorderVolume - m_consumed[requestOrderTypedDataHash]);
+    }
+
+    function _toTypedDataHash(bytes32 structHash) internal view returns (bytes32) {
+        return MessageHashUtils.toTypedDataHash(EIP712DOMAIN_SEPARATOR, structHash);
     }
 }

@@ -10,10 +10,10 @@ import {SignatureVerifier} from "@iexec/poco/contracts/modules/interfaces/Signat
 import {IexecMath} from "@iexec/poco/contracts/modules/interfaces/IexecMath.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IVoucherHub} from "../IVoucherHub.sol";
-import {IVoucher} from "./IVoucher.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IVoucherHub} from "../IVoucherHub.sol";
+import {IVoucher} from "./IVoucher.sol";
 
 /**
  * @title Implementation of the voucher contract.
@@ -273,9 +273,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 appPrice = appOrder.appprice;
         uint256 datasetPrice = datasetOrder.datasetprice;
         uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
-
         SignatureVerifier pocoSignatureVerifier = SignatureVerifier(iexecPoco);
-
         bytes32 requestOrderTypedDataHash = pocoSignatureVerifier.toTypedDataHash(
             requestOrder.hash()
         );
@@ -286,7 +284,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         bytes32 datasetOrderTypedDataHash = pocoSignatureVerifier.toTypedDataHash(
             datasetOrder.hash()
         );
-
         uint256 volume = IexecMath(iexecPoco).computeVolume(
             appOrder.volume,
             appOrderTypedDataHash,
@@ -298,7 +295,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
             requestOrder.volume,
             requestOrderTypedDataHash
         );
-
         uint256 dealPrice = (appPrice + datasetPrice + workerpoolPrice) * volume;
         sponsoredAmount = voucherHub.debitVoucher(
             voucherTypeId,
@@ -310,7 +306,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
             workerpoolPrice,
             volume
         );
-
         if (sponsoredAmount != dealPrice) {
             // Transfer non-sponsored amount from the iExec account of the
             // requester to the iExec account of the voucher
