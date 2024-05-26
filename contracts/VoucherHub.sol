@@ -3,8 +3,6 @@
 
 pragma solidity ^0.8.20;
 
-import {IexecLibCore_v5} from "@iexec/poco/contracts/libs/IexecLibCore_v5.sol";
-import {IexecPocoAccessors} from "@iexec/poco/contracts/modules/interfaces/IexecPocoAccessors.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -49,13 +47,19 @@ contract VoucherHub is
         bytes32 _voucherCreationCodeHash;
         VoucherType[] voucherTypes;
         mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
-        // Save refunded tasks to disable replay attack.
-        mapping(bytes32 taskId => bool) _refundedTasks;
+        // Track created vouchers to avoid replay in certain operations such as refund.
+        mapping(address voucherAddress => bool) _isVoucher;
     }
 
     modifier whenVoucherTypeExists(uint256 id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require(id < $.voucherTypes.length, "VoucherHub: type index out of bounds");
+        _;
+    }
+
+    modifier onlyVoucher() {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        require($._isVoucher[msg.sender], "VoucherHub: sender is not voucher");
         _;
     }
 
@@ -170,6 +174,7 @@ contract VoucherHub is
         Voucher(voucherAddress).initialize(owner, address(this), voucherExpiration, voucherType);
         IERC20($._iexecPoco).transfer(voucherAddress, value); // SRLC
         _mint(voucherAddress, value); // VCHR
+        $._isVoucher[voucherAddress] = true;
         emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType, value);
     }
 
@@ -182,6 +187,9 @@ contract VoucherHub is
      * no asset is eligible or balance from caller is empty. Thanks to that it is
      * possible to try to debit the voucher in best effort mode (In short: "use
      * voucher if possible"), before trying other payment methods.
+     *
+     * Note: no need to for "onlyVoucher" modifier because if the sender is not a voucher,
+     * its balance would be null, then "_burn()" would revert.
      *
      * @param voucherTypeId The type ID of the voucher to debit.
      * @param app The app address.
@@ -220,20 +228,12 @@ contract VoucherHub is
     }
 
     /**
-     * Refund voucher for a failed task.
-     * @param taskId id of the task
-     * @param amount to be refunded
+     * Refund sender if it is a voucher.
+     * @param amount value to be refunded
      */
-    function refundVoucherForTask(bytes32 taskId, uint256 amount) external {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        require(!$._refundedTasks[taskId], "VoucherHub: task already refunded");
-        require(
-            IexecPocoAccessors($._iexecPoco).viewTask(taskId).status ==
-                IexecLibCore_v5.TaskStatusEnum.FAILED,
-            "VoucherHub: invalid task id or status"
-        );
+    function refundVoucher(uint256 amount) external onlyVoucher {
+        // TODO ?? check if balanceOf(msg.sender) + amount < initialBalance
         _mint(msg.sender, amount);
-        $._refundedTasks[taskId] = true;
         emit VoucherRefunded(msg.sender, amount);
     }
 

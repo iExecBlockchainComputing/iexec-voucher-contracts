@@ -21,6 +21,8 @@ const asset = random();
 const assetPrice = 1;
 const initVoucherHubBalance = 10 * voucherValue; // arbitrary value, but should support couple voucher creations
 
+// TODO use global variables (signers, addresses, ...).
+
 describe('VoucherHub', function () {
     let iexecPoco: string;
     let iexecPocoInstance: IexecPocoMock;
@@ -790,10 +792,64 @@ describe('VoucherHub', function () {
     });
 
     describe('Refund voucher', function () {
-        it('Should refund voucher for task', async function () {});
-        it('Should not refund voucher twice', async function () {});
-        it('Should not refund voucher when task is not found', async function () {});
-        it('Should not refund voucher when task is not failed', async function () {});
+        let [voucherOwner1, voucher, anyone]: SignerWithAddress[] = [];
+        let voucherHub: VoucherHub;
+
+        beforeEach(async function () {
+            ({ voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture));
+            // Create voucher type
+            await voucherHubWithAssetEligibilityManagerSigner
+                .createVoucherType(description, duration)
+                .then((tx) => tx.wait());
+            // Add eligible asset
+            await voucherHubWithAssetEligibilityManagerSigner
+                .addEligibleAsset(voucherType, asset)
+                .then((tx) => tx.wait());
+            // Create voucher
+            voucher = await voucherHubWithVoucherManagerSigner
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait())
+                .then(() => voucherHub.getVoucher(voucherOwner1))
+                .then((voucherAddress) => ethers.getImpersonatedSigner(voucherAddress));
+        });
+
+        it('Should refund voucher', async function () {
+            const debitedValue = BigInt(assetPrice * 3);
+            const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
+            await voucherHub
+                .connect(voucher)
+                .debitVoucher(voucherType, asset, assetPrice, asset, assetPrice, asset, assetPrice)
+                .then((tx) => tx.wait());
+            expect(await voucherHub.balanceOf(voucher.address)).equals(
+                voucherInitialCreditBalance - debitedValue,
+            );
+            // Refund voucher.
+            const refundAmount = debitedValue / 2n; // any amount < sponsoredValue
+            await expect(voucherHub.connect(voucher).refundVoucher(refundAmount))
+                .to.emit(voucherHub, 'Transfer')
+                .withArgs(ethers.ZeroAddress, voucher.address, refundAmount)
+                .to.emit(voucherHub, 'VoucherRefunded')
+                .withArgs(voucher.address, refundAmount);
+        });
+
+        it('Should not refund when sender is not a voucher', async function () {
+            const debitedValue = BigInt(assetPrice * 3);
+            const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
+            await voucherHub
+                .connect(voucher)
+                .debitVoucher(voucherType, asset, assetPrice, asset, assetPrice, asset, assetPrice)
+                .then((tx) => tx.wait());
+            expect(await voucherHub.balanceOf(voucher.address)).equals(
+                voucherInitialCreditBalance - debitedValue,
+            );
+            // Refund voucher.
+            const refundAmount = debitedValue / 2n; // any amount < sponsoredValue
+            await expect(voucherHub.connect(anyone).refundVoucher(refundAmount)).to.be.revertedWith(
+                'VoucherHub: sender is not voucher',
+            );
+        });
+
+        it.skip('TODO ?? - Should not refund voucher when amount is greater than voucher value', async function () {});
     });
 
     describe('Get voucher', function () {

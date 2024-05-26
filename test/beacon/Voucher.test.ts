@@ -848,7 +848,7 @@ describe('Voucher', function () {
 
                 // Second claim should revert.
                 await expect(voucher.claim(dealId, taskIndex)).to.be.revertedWith(
-                    'VoucherHub: task already refunded',
+                    'Voucher: task already claimed',
                 );
             }
         });
