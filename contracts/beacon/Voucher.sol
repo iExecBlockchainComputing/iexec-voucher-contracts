@@ -271,7 +271,9 @@ contract Voucher is OwnableUpgradeable, IVoucher {
             workerpoolOrder,
             requestOrder
         );
-        uint256 dealPrice = (appPrice + datasetPrice + workerpoolPrice) * volume;
+        uint256 dealPrice = datasetOrder.dataset != address(0)
+            ? (appPrice + datasetPrice + workerpoolPrice) * volume
+            : (appPrice + workerpoolPrice) * volume;
         sponsoredAmount = voucherHub.debitVoucher(
             voucherTypeId,
             appOrder.app,
