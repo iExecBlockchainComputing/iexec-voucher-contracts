@@ -8,16 +8,7 @@ import { UpgradeableBeacon } from '../typechain-types';
 export async function deployBeaconAndImplementation(
     beaconOwner: string,
 ): Promise<UpgradeableBeacon> {
-    const iexecLibOrders = await ethers.getContractFactory('IexecLibOrders_v5');
-    const iexecLibOrdersInstance = await iexecLibOrders.deploy();
-    const iexecLibOrdersInstanceAddress = await iexecLibOrdersInstance.getAddress();
-
-    const voucherFactory = await ethers.getContractFactory('Voucher', {
-        libraries: {
-            ['@iexec/poco/contracts/libs/IexecLibOrders_v5.sol:IexecLibOrders_v5']:
-                iexecLibOrdersInstanceAddress,
-        },
-    });
+    const voucherFactory = await ethers.getContractFactory('Voucher');
     // upgrades.deployBeacon() does the following:
     // 1. Deploys the implementation contract.
     // 2. Deploys an instance of oz/UpgradeableBeacon contract.
