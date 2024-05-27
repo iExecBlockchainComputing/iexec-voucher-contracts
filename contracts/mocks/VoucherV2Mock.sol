@@ -12,14 +12,9 @@ contract VoucherV2Mock is OwnableUpgradeable {
         uint256 _expiration;
         uint256 _type;
         mapping(address => bool) _authorizedAccounts;
-        mapping(bytes32 dealId => MatchedDeal) _voucherMatchedDeals;
+        mapping(bytes32 dealId => uint256) _sponsoredAmounts;
         mapping(bytes32 taskId => bool) _claimedTasks;
         uint256 _newStateVariable;
-    }
-
-    struct MatchedDeal {
-        bool exists;
-        uint64 sponsoredAmount;
     }
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))

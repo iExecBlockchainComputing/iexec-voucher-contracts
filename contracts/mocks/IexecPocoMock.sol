@@ -72,7 +72,7 @@ contract IexecPocoMock is ERC20 {
         dealBoost.appPrice = uint96(appOrder.appprice);
         dealBoost.datasetPrice = uint96(datasetOrder.datasetprice);
         dealBoost.workerpoolPrice = uint96(workerpoolOrder.workerpoolprice);
-        deal.sponsor = msg.sender;
+        dealBoost.sponsor = msg.sender;
         task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
         _burn(
             msg.sender,
@@ -114,7 +114,7 @@ contract IexecPocoMock is ERC20 {
         }
         task.status = IexecLibCore_v5.TaskStatusEnum.FAILED;
         _mint(
-            deal.sponsor,
+            dealBoost.sponsor,
             dealBoost.appPrice + dealBoost.datasetPrice + dealBoost.workerpoolPrice
         );
     }
