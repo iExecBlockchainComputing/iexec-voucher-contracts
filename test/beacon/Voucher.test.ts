@@ -597,7 +597,55 @@ describe('Voucher', function () {
 
         describe('Should claim task when deal is not matched by voucher', async () => {});
 
-        describe('Should claim task when already claimed on PoCo', async () => {});
+        describe('Should claim task when already claimed on PoCo', async () => {
+            it('Classic', async () =>
+                await runTest(voucherMatchOrders, iexecPocoInstance.claim, [taskId]));
+            it('Boost', async () =>
+                await runTest(voucherMatchOrdersBoost, iexecPocoInstance.claimBoost, [
+                    dealId,
+                    '0',
+                ]));
+
+            async function runTest(
+                matchOrdersFunction: any,
+                pocoClaimFunction: any,
+                pocoClaimArgs: string[],
+            ) {
+                await addEligibleAssets([app, dataset, workerpool]);
+                await matchOrdersFunction();
+                const {
+                    voucherCreditBalance: voucherCreditBalancePreClaim,
+                    voucherRlcBalance: voucherRlcBalancePreClaim,
+                    requesterRlcBalance: requesterRlcBalancePreClaim,
+                } = await getVoucherAndRequesterBalances();
+                // The voucher should've fully sponsored the deal.
+                const dealSponsoredAmount = await voucher.getSponsoredAmount(dealId);
+                const taskSponsoredAmount = dealSponsoredAmount / volume;
+                expect(dealSponsoredAmount).to.be.equal(dealPrice);
+                expect(taskSponsoredAmount).to.be.equal(taskPrice);
+
+                // Claim task on PoCo.
+                await pocoClaimFunction(...pocoClaimArgs);
+                // Claim task on voucher
+                await expect(voucher.claim(dealId, taskIndex))
+                    .to.emit(voucherHub, 'VoucherRefunded')
+                    .withArgs(voucherAddress, taskSponsoredAmount)
+                    .to.emit(voucher, 'TaskClaimedWithVoucher')
+                    .withArgs(dealId, taskIndex);
+                const {
+                    voucherCreditBalance: voucherCreditBalancePostClaim,
+                    voucherRlcBalance: voucherRlcBalancePostClaim,
+                    requesterRlcBalance: requesterRlcBalancePostClaim,
+                } = await getVoucherAndRequesterBalances();
+                // Voucher credit and RLC balances should increase while staying equal.
+                expect(voucherCreditBalancePostClaim)
+                    .to.be.equal(voucherCreditBalancePreClaim + taskPrice)
+                    .to.be.equal(voucherRlcBalancePostClaim)
+                    .to.be.equal(voucherRlcBalancePreClaim + taskPrice);
+                // Requester balance should stay unchanged.
+                expect(requesterRlcBalancePostClaim).to.be.equal(requesterRlcBalancePreClaim);
+            }
+        });
 
         describe('Should not claim task twice', async () => {});
 
