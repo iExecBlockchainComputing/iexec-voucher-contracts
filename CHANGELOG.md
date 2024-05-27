@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Claim task part 2 - Add voucher tests. (#21)
 - Claim task part 1 - Solidity with minimal tests. (#20)
 - Refactor voucher tests file. (#18)
 - Use real poco address if available at deployment. (#17)
