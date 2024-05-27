@@ -585,6 +585,10 @@ describe('Voucher', function () {
                     .to.be.equal(voucherRlcBalancePreClaim + taskPrice);
                 // Requester balance should stay unchanged.
                 expect(requesterRlcBalancePostClaim).to.be.equal(requesterRlcBalancePreClaim);
+                // Sponsored amount should decrease
+                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(
+                    dealSponsoredAmount - taskPrice,
+                );
             }
         });
 
