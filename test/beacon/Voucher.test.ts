@@ -369,7 +369,7 @@ describe('Voucher', function () {
                 workerpoolprice: workerpoolPrice,
             };
             const requestOrder = { ...mockOrder, requester: requester.address };
-            const dealPricNoDataset = BigInt(appPrice + workerpoolPrice) * BigInt(volume);
+            const dealPriceNoDataset = BigInt(appPrice + workerpoolPrice) * BigInt(volume);
 
             await addEligibleAssets([app, dataset, workerpool]);
             const voucherInitialCreditBalance = await voucher.getBalance();
