@@ -388,11 +388,11 @@ describe('Voucher', function () {
                 .to.emit(voucher, 'OrdersMatchedWithVoucher')
                 .withArgs(dealId);
             expect(await voucher.getBalance())
-                .to.be.equal(voucherInitialCreditBalance - dealPricNoDataset)
+                .to.be.equal(voucherInitialCreditBalance - dealPriceNoDataset)
                 .to.be.equal(await getVoucherBalanceOnIexecPoco())
-                .to.be.equal(voucherInitialSrlcBalance - dealPricNoDataset);
+                .to.be.equal(voucherInitialSrlcBalance - dealPriceNoDataset);
             expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(requesterInitialSrlcBalance);
-            expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealPricNoDataset);
+            expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealPriceNoDataset);
         });
 
         it('Should not match orders when non-sponsored amount is not transferable', async () => {
