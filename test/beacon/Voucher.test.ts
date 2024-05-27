@@ -585,6 +585,10 @@ describe('Voucher', function () {
                     .to.be.equal(voucherRlcBalancePreClaim + taskPrice);
                 // Requester balance should stay unchanged.
                 expect(requesterRlcBalancePostClaim).to.be.equal(requesterRlcBalancePreClaim);
+                // Sponsored amount should decrease
+                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(
+                    dealSponsoredAmount - taskPrice,
+                );
             }
         });
 
@@ -636,6 +640,10 @@ describe('Voucher', function () {
                 // Requester balance should increase.
                 expect(requesterRlcBalancePostClaim).to.be.equal(
                     requesterRlcBalancePreClaim + taskNonSponsoredAmount,
+                );
+                // Sponsored amount should decrease
+                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(
+                    dealSponsoredAmount - taskSponsoredAmount,
                 );
             }
         });
@@ -702,6 +710,8 @@ describe('Voucher', function () {
                 expect(requesterRlcBalancePostClaim).to.be.equal(
                     requesterRlcBalancePreClaim + taskPrice,
                 );
+                // Sponsored amount should stay unchanged.
+                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(0);
             }
         });
 
@@ -756,6 +766,8 @@ describe('Voucher', function () {
                 expect(requesterRlcBalancePostClaim).to.be.equal(
                     requesterRlcBalancePreClaim + taskPrice,
                 );
+                // Sponsored amount should stay unchanged.
+                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealSponsoredAmount);
             }
         });
 
@@ -806,6 +818,10 @@ describe('Voucher', function () {
                     .to.be.equal(voucherRlcBalancePreClaim + taskPrice);
                 // Requester balance should stay unchanged.
                 expect(requesterRlcBalancePostClaim).to.be.equal(requesterRlcBalancePreClaim);
+                // Sponsored amount should decrease
+                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(
+                    dealSponsoredAmount - taskSponsoredAmount,
+                );
             }
         });
 
