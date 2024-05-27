@@ -97,33 +97,29 @@ contract IexecPocoMock is ERC20 {
         shouldRevertOnSponsorMatchOrdersBoost = true;
     }
 
-    function computeVolume(
-        uint256 apporderVolume,
-        bytes32 appOrderTypedDataHash,
-        bool hasDataset,
-        uint256 datasetorderVolume,
-        bytes32 datasetOrderTypedDataHash,
-        uint256 workerpoolorderVolume,
-        bytes32 workerpoolOrderTypedDataHash,
-        uint256 requestorderVolume,
-        bytes32 requestOrderTypedDataHash
+    function computeDealVolume(
+        IexecLibOrders_v5.AppOrder calldata appOrder,
+        IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
+        IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
+        IexecLibOrders_v5.RequestOrder calldata requestOrder
     ) external view returns (uint256 volume) {
+        bytes32 requestOrderTypedDataHash = _toTypedDataHash(requestOrder.hash());
+        bytes32 appOrderTypedDataHash = _toTypedDataHash(appOrder.hash());
+        bytes32 workerpoolOrderTypedDataHash = _toTypedDataHash(workerpoolOrder.hash());
+        bytes32 datasetOrderTypedDataHash = _toTypedDataHash(datasetOrder.hash());
+
         return
             _computeVolume(
-                apporderVolume,
+                appOrder.volume,
                 appOrderTypedDataHash,
-                hasDataset,
-                datasetorderVolume,
+                datasetOrder.dataset != address(0),
+                datasetOrder.volume,
                 datasetOrderTypedDataHash,
-                workerpoolorderVolume,
+                workerpoolOrder.volume,
                 workerpoolOrderTypedDataHash,
-                requestorderVolume,
+                requestOrder.volume,
                 requestOrderTypedDataHash
             );
-    }
-
-    function toTypedDataHash(bytes32 structHash) external view returns (bytes32) {
-        return _toTypedDataHash(structHash);
     }
 
     function _computeVolume(

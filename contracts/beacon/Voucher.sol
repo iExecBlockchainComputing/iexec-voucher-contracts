@@ -6,12 +6,9 @@ pragma solidity ^0.8.20;
 import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.sol";
 import {IexecPoco1} from "@iexec/poco/contracts/modules/interfaces/IexecPoco1.v8.sol";
 import {IexecPocoBoost} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoost.sol";
-import {SignatureVerifier} from "@iexec/poco/contracts/modules/interfaces/SignatureVerifier.sol";
-import {IexecMath} from "@iexec/poco/contracts/modules/interfaces/IexecMath.sol";
+import {IexecOrderManagement} from "@iexec/poco/contracts/modules/interfaces/IexecOrderManagement.v8.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IVoucherHub} from "../IVoucherHub.sol";
 import {IVoucher} from "./IVoucher.sol";
 
@@ -20,11 +17,6 @@ import {IVoucher} from "./IVoucher.sol";
  * Deployed along the Beacon contract using "Upgrades" plugin of OZ.
  */
 contract Voucher is OwnableUpgradeable, IVoucher {
-    using Math for uint256;
-    using IexecLibOrders_v5 for IexecLibOrders_v5.AppOrder;
-    using IexecLibOrders_v5 for IexecLibOrders_v5.DatasetOrder;
-    using IexecLibOrders_v5 for IexecLibOrders_v5.WorkerpoolOrder;
-    using IexecLibOrders_v5 for IexecLibOrders_v5.RequestOrder;
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
     // & ~bytes32(uint256(0xff));
     bytes32 private constant VOUCHER_STORAGE_LOCATION =
@@ -273,27 +265,11 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 appPrice = appOrder.appprice;
         uint256 datasetPrice = datasetOrder.datasetprice;
         uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
-        SignatureVerifier pocoSignatureVerifier = SignatureVerifier(iexecPoco);
-        bytes32 requestOrderTypedDataHash = pocoSignatureVerifier.toTypedDataHash(
-            requestOrder.hash()
-        );
-        bytes32 appOrderTypedDataHash = pocoSignatureVerifier.toTypedDataHash(appOrder.hash());
-        bytes32 workerpoolOrderTypedDataHash = pocoSignatureVerifier.toTypedDataHash(
-            workerpoolOrder.hash()
-        );
-        bytes32 datasetOrderTypedDataHash = pocoSignatureVerifier.toTypedDataHash(
-            datasetOrder.hash()
-        );
-        uint256 volume = IexecMath(iexecPoco).computeVolume(
-            appOrder.volume,
-            appOrderTypedDataHash,
-            datasetOrder.dataset != address(0),
-            datasetOrder.volume,
-            datasetOrderTypedDataHash,
-            workerpoolOrder.volume,
-            workerpoolOrderTypedDataHash,
-            requestOrder.volume,
-            requestOrderTypedDataHash
+        uint256 volume = IexecOrderManagement(iexecPoco).computeDealVolume(
+            appOrder,
+            datasetOrder,
+            workerpoolOrder,
+            requestOrder
         );
         uint256 dealPrice = (appPrice + datasetPrice + workerpoolPrice) * volume;
         sponsoredAmount = voucherHub.debitVoucher(
