@@ -553,9 +553,9 @@ describe('Voucher', function () {
             it('Classic', async () => await runTest(voucherMatchOrders));
             it('Boost', async () => await runTest(voucherMatchOrdersBoost));
 
-            async function runTest(matchOrdersFunction: any) {
+            async function runTest(matchOrdersBoostOrClassic: any) {
                 await addEligibleAssets([app, dataset, workerpool]);
-                await matchOrdersFunction();
+                await matchOrdersBoostOrClassic();
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
                     voucherRlcBalance: voucherRlcBalancePreClaim,
@@ -592,7 +592,7 @@ describe('Voucher', function () {
             it('Classic', async () => await runTest(voucherMatchOrders));
             it('Boost', async () => await runTest(voucherMatchOrdersBoost));
 
-            async function runTest(matchOrdersFunction: any) {
+            async function runTest(matchOrdersBoostOrClassic: any) {
                 await addEligibleAssets([app, dataset]); // workerpool not eligible.
                 const dealNonSponsoredAmount = workerpoolPrice;
                 const taskNonSponsoredAmount = dealNonSponsoredAmount / volume;
@@ -605,7 +605,7 @@ describe('Voucher', function () {
                     .approve(voucherAddress, dealNonSponsoredAmount)
                     .then((tx) => tx.wait());
                 // Match orders
-                await matchOrdersFunction();
+                await matchOrdersBoostOrClassic();
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
                     voucherRlcBalance: voucherRlcBalancePreClaim,
@@ -645,7 +645,7 @@ describe('Voucher', function () {
             it.skip('Classic', async () => await runTest(voucherMatchOrders));
             it.skip('Boost', async () => await runTest(voucherMatchOrdersBoost));
 
-            async function runTest(matchOrdersFunction: any) {
+            async function runTest(matchOrdersBoostOrClassic: any) {
                 // Use another voucher with a small amount of credits.
                 const smallVoucherValue = 1n;
                 voucher = await voucherHubAsVoucherCreationManager
@@ -662,7 +662,7 @@ describe('Voucher', function () {
             it('Classic', async () => await runTest(voucherMatchOrders));
             it('Boost', async () => await runTest(voucherMatchOrdersBoost));
 
-            async function runTest(matchOrdersFunction: any) {
+            async function runTest(matchOrdersBoostOrClassic: any) {
                 // Assets are not eligible.
                 // Deposit dealPrice amount for requester and approve voucher.
                 await iexecPocoInstance
@@ -673,7 +673,7 @@ describe('Voucher', function () {
                     )
                     .then((tx) => tx.wait());
                 // Match orders
-                await matchOrdersFunction();
+                await matchOrdersBoostOrClassic();
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
                     voucherRlcBalance: voucherRlcBalancePreClaim,
@@ -722,12 +722,12 @@ describe('Voucher', function () {
             it('Classic', async () => await runTest(pocoMatchOrders));
             it('Boost', async () => await runTest(pocoMatchOrdersBoost));
 
-            async function runTest(matchOrdersFunction: any) {
+            async function runTest(matchOrdersBoostOrClassic: any) {
                 // Assets are not eligible.
                 // Deposit dealPrice amount for requester.
                 await iexecPocoInstance.transfer(requester, dealPrice).then((tx) => tx.wait());
                 // Match orders.
-                await matchOrdersFunction();
+                await matchOrdersBoostOrClassic();
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
                     voucherRlcBalance: voucherRlcBalancePreClaim,
@@ -769,12 +769,12 @@ describe('Voucher', function () {
                 ]));
 
             async function runTest(
-                matchOrdersFunction: any,
+                matchOrdersBoostOrClassic: any,
                 pocoClaimFunction: any,
                 pocoClaimArgs: string[],
             ) {
                 await addEligibleAssets([app, dataset, workerpool]);
-                await matchOrdersFunction();
+                await matchOrdersBoostOrClassic();
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
                     voucherRlcBalance: voucherRlcBalancePreClaim,
@@ -813,9 +813,9 @@ describe('Voucher', function () {
             it('Classic', async () => await runTest(voucherMatchOrders));
             it('Boost', async () => await runTest(voucherMatchOrdersBoost));
 
-            async function runTest(matchOrdersFunction: any) {
+            async function runTest(matchOrdersBoostOrClassic: any) {
                 await addEligibleAssets([app, dataset, workerpool]);
-                await matchOrdersFunction();
+                await matchOrdersBoostOrClassic();
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
                     voucherRlcBalance: voucherRlcBalancePreClaim,
@@ -868,9 +868,9 @@ describe('Voucher', function () {
             it('Classic', async () => await runTest(voucherMatchOrders, false));
             it('Boost', async () => await runTest(voucherMatchOrdersBoost, true));
 
-            async function runTest(matchOrdersFunction: any, isBoost: boolean) {
+            async function runTest(matchOrdersBoostOrClassic: any, isBoost: boolean) {
                 await addEligibleAssets([app, dataset, workerpool]);
-                await matchOrdersFunction();
+                await matchOrdersBoostOrClassic();
                 expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealPrice);
                 // Claim task
                 const badTaskIndex = 99;
@@ -888,9 +888,9 @@ describe('Voucher', function () {
             it('Classic', async () => await runTest(voucherMatchOrders, false));
             it('Boost', async () => await runTest(voucherMatchOrdersBoost, true));
 
-            async function runTest(matchOrdersFunction: any, isBoost: boolean) {
+            async function runTest(matchOrdersBoostOrClassic: any, isBoost: boolean) {
                 await addEligibleAssets([app, dataset, workerpool]);
-                await matchOrdersFunction();
+                await matchOrdersBoostOrClassic();
                 expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealPrice);
                 // Claim task
                 await iexecPocoInstance.willRevertOnClaim().then((tx) => tx.wait());
