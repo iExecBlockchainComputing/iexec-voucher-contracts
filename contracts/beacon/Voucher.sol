@@ -35,7 +35,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         mapping(address => bool) _authorizedAccounts;
         mapping(bytes32 dealId => uint256) _sponsoredAmounts;
         // Save refunded tasks to disable replay attacks.
-        mapping(bytes32 taskId => bool) _claimedTasks;
+        mapping(bytes32 taskId => bool) _refundedTasks;
     }
 
     struct GenericDeal {
@@ -191,7 +191,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         address iexecPoco = voucherHub.getIexecPoco();
         // Check if task is already claimed.
         bytes32 taskId = keccak256(abi.encodePacked(dealId, index));
-        require(!$._claimedTasks[taskId], "Voucher: task already claimed");
+        require(!$._refundedTasks[taskId], "Voucher: task already claimed");
         // Get deal details from PoCo.
         GenericDeal memory deal = _getDealDetails(iexecPoco, dealId);
         require(deal.sponsor != address(0), "Voucher: deal not found");
@@ -231,7 +231,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
                     IERC20(iexecPoco).transfer(deal.requester, taskPrice - taskSponsoredAmount);
                 }
             }
-            $._claimedTasks[taskId] = true;
+            $._refundedTasks[taskId] = true;
         } else {
             // If the deal was not matched by the voucher then
             // forward the claim request to PoCo and do nothing.

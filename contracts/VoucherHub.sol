@@ -188,7 +188,7 @@ contract VoucherHub is
      * possible to try to debit the voucher in best effort mode (In short: "use
      * voucher if possible"), before trying other payment methods.
      *
-     * Note: no need to for "onlyVoucher" modifier because if the sender is not a voucher,
+     * Note: no need for "onlyVoucher" modifier because if the sender is not a voucher,
      * its balance would be null, then "_burn()" would revert.
      *
      * @param voucherTypeId The type ID of the voucher to debit.
