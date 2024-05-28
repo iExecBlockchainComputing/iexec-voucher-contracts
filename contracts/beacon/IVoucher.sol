@@ -10,7 +10,7 @@ interface IVoucher {
     event AccountUnauthorized(address indexed account);
     event OrdersMatchedWithVoucher(bytes32 dealId);
     event OrdersBoostMatchedWithVoucher(bytes32 dealId);
-    event TaskClaimedWithVoucher(bytes32 dealId, uint256 index);
+    event TaskClaimedWithVoucher(bytes32 taskId);
 
     function authorizeAccount(address account) external;
     function unauthorizeAccount(address account) external;
