@@ -177,101 +177,105 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         return dealId;
     }
 
+    /**
+     * Claim failed task on PoCo then refund voucher and requester.
+     * @param taskId id of the task
+     */
     function claim(bytes32 taskId) external {
         VoucherStorage storage $ = _getVoucherStorage();
         IVoucherHub voucherHub = IVoucherHub($._voucherHub);
         address iexecPoco = voucherHub.getIexecPoco();
         IexecLibCore_v5.Task memory task = IexecPocoAccessors(iexecPoco).viewTask(taskId);
+        // Claim task on PoCo if not already claimed.
+        // This implicitly validates that the task and its deal exist.
+        if (task.status != IexecLibCore_v5.TaskStatusEnum.FAILED) {
+            IexecPoco2(iexecPoco).claim(taskId);
+        }
         IexecLibCore_v5.Deal memory deal = IexecPocoAccessors(iexecPoco).viewDeal(task.dealid);
-        require(deal.requester != address(0), "Voucher: deal not found");
-        _claim(
-            task.dealid,
-            task.idx,
-            deal.requester,
-            deal.sponsor,
-            deal.botSize,
-            (deal.app.price + deal.dataset.price + deal.workerpool.price) * deal.botSize,
-            false
-        );
+        // If the deal was matched by the voucher, then the voucher should be refunded.
+        // If the deal was partially or not sponsored by the voucher, then the requester
+        // should be refunded.
+        if (deal.sponsor == address(this)) {
+            _refundVoucherAndRequester(
+                voucherHub,
+                iexecPoco,
+                taskId,
+                task.dealid,
+                deal.botSize,
+                (deal.app.price + deal.dataset.price + deal.workerpool.price) * deal.botSize,
+                deal.requester
+            );
+        }
+        emit TaskClaimedWithVoucher(taskId);
     }
 
+    /**
+     * Claim failed Boost task on PoCo then refund voucher and requester.
+     * @param dealId id of the task's deal
+     * @param taskIndex task's index in the deal
+     */
     function claimBoost(bytes32 dealId, uint256 taskIndex) external {
         VoucherStorage storage $ = _getVoucherStorage();
         IVoucherHub voucherHub = IVoucherHub($._voucherHub);
         address iexecPoco = voucherHub.getIexecPoco();
+        bytes32 taskId = keccak256(abi.encodePacked(dealId, taskIndex));
+        IexecLibCore_v5.Task memory task = IexecPocoAccessors(iexecPoco).viewTask(taskId);
+        // Claim task on PoCo if not already claimed.
+        // This implicitly validates that the task and its deal exist.
+        if (task.status != IexecLibCore_v5.TaskStatusEnum.FAILED) {
+            IexecPocoBoost(iexecPoco).claimBoost(dealId, taskIndex);
+        }
         IexecLibCore_v5.DealBoost memory deal = IexecPocoBoostAccessors(iexecPoco).viewDealBoost(
             dealId
         );
-        require(deal.requester != address(0), "Voucher: boost deal not found");
-        _claim(
-            dealId,
-            taskIndex,
-            deal.requester,
-            deal.sponsor,
-            deal.botSize,
-            (deal.appPrice + deal.datasetPrice + deal.workerpoolPrice) * deal.botSize,
-            true
-        );
+        if (deal.sponsor == address(this)) {
+            _refundVoucherAndRequester(
+                voucherHub,
+                iexecPoco,
+                taskId,
+                dealId,
+                deal.botSize,
+                (deal.appPrice + deal.datasetPrice + deal.workerpoolPrice) * deal.botSize,
+                deal.requester
+            );
+        }
+        emit TaskClaimedWithVoucher(taskId);
     }
 
-    function _claim(
+    function _refundVoucherAndRequester(
+        IVoucherHub voucherHub,
+        address iexecPoco,
+        bytes32 taskId,
         bytes32 dealId,
-        uint256 index,
-        address requester,
-        address sponsor,
         uint256 dealVolume,
         uint256 dealPrice,
-        bool isBoostDeal
+        address requester
     ) private {
         VoucherStorage storage $ = _getVoucherStorage();
-        IVoucherHub voucherHub = IVoucherHub($._voucherHub);
-        address iexecPoco = voucherHub.getIexecPoco();
-        // Check if task is already claimed.
-        bytes32 taskId = keccak256(abi.encodePacked(dealId, index));
         require(!$._refundedTasks[taskId], "Voucher: task already claimed");
-        // Check wether the deal was matched by the voucher or not.
-        if (sponsor == address(this)) {
-            // The deal was matched by the voucher.
-            // It is either fully, partially, or not sponsored.
-            IexecLibCore_v5.Task memory task = IexecPocoAccessors(iexecPoco).viewTask(taskId);
-            if (task.status != IexecLibCore_v5.TaskStatusEnum.FAILED) {
-                // Claim task on PoCo because it's not already claimed.
-                // Tx will be reverted by the PoCo if the claim is not valid.
-                _claimTaskOnPoco(iexecPoco, isBoostDeal, dealId, index);
+        $._refundedTasks[taskId] = true;
+        if (dealPrice != 0) {
+            uint256 dealSponsoredAmount = $._sponsoredAmounts[dealId];
+            // The division yields no remainder since dealPrice = taskPrice * volume.
+            uint256 taskPrice = dealPrice / dealVolume;
+            // A positive remainder is possible when the voucher balance is less than
+            // the sponsorable amount. Min(balance, dealSponsoredAmount) is computed
+            // at match orders.
+            // TODO !! do something with the remainder.
+            uint256 taskSponsoredAmount = dealSponsoredAmount / dealVolume;
+            if (taskSponsoredAmount != 0) {
+                // If the voucher did fully/partially sponsor the deal then mint voucher
+                // credits back.
+                voucherHub.refundVoucher(taskSponsoredAmount);
+                $._sponsoredAmounts[dealId] = dealSponsoredAmount - taskSponsoredAmount;
             }
-            if (dealPrice != 0) {
-                // For partially sponsored or non sponsored deals, send the requester's contribution
-                // back to their iExec account because all funds are, by default, sent to the sponsor
-                // (the voucher in this case).
-
-                uint256 dealSponsoredAmount = $._sponsoredAmounts[dealId];
-                // The division yields no remainder since dealPrice = taskPrice * volume.
-                uint256 taskPrice = dealPrice / dealVolume;
-                // A positive remainder is possible when the voucher balance is less than
-                // the sponsorable amount. Min(balance, dealSponsoredAmount) is computed
-                // at match orders.
-                // TODO !! do something with the remainder.
-                uint256 taskSponsoredAmount = dealSponsoredAmount / dealVolume;
-                if (taskSponsoredAmount != 0) {
-                    // If the voucher did fully/partially sponsor the deal then mint voucher
-                    // credits back.
-                    voucherHub.refundVoucher(taskSponsoredAmount);
-                    $._sponsoredAmounts[dealId] = dealSponsoredAmount - taskSponsoredAmount;
-                }
-                if (taskSponsoredAmount < taskPrice) {
-                    // If the deal was not sponsored or partially sponsored
-                    // by the voucher then send the non-sponsored part back
-                    // to the requester.
-                    IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount);
-                }
+            if (taskSponsoredAmount < taskPrice) {
+                // If the deal was not sponsored or partially sponsored
+                // by the voucher then send the non-sponsored part back
+                // to the requester.
+                IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount);
             }
-            $._refundedTasks[taskId] = true;
-        } else {
-            // If the deal was not matched by the voucher then
-            // forward the claim request to PoCo and do nothing.
-            _claimTaskOnPoco(iexecPoco, isBoostDeal, dealId, index);
         }
-        emit TaskClaimedWithVoucher(dealId, index);
     }
 
     /**
@@ -341,26 +345,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
         assembly {
             $.slot := VOUCHER_STORAGE_LOCATION
-        }
-    }
-
-    /**
-     * Send claim request of Boost and Classic tasks to PoCo.
-     * @param iexecPoco PoCo proxy address
-     * @param isBoostDeal whether the deal is of type boost or not
-     * @param dealId id of the deal
-     * @param index of the task in the deal
-     */
-    function _claimTaskOnPoco(
-        address iexecPoco,
-        bool isBoostDeal,
-        bytes32 dealId,
-        uint256 index
-    ) private {
-        if (isBoostDeal) {
-            IexecPocoBoost(iexecPoco).claimBoost(dealId, index);
-        } else {
-            IexecPoco2(iexecPoco).claim(keccak256(abi.encodePacked(dealId, index)));
         }
     }
 

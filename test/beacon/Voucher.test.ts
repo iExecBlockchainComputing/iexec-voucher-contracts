@@ -575,7 +575,7 @@ describe('Voucher', function () {
                     .to.emit(voucherHub, 'VoucherRefunded')
                     .withArgs(voucherAddress, taskSponsoredAmount)
                     .to.emit(voucher, 'TaskClaimedWithVoucher')
-                    .withArgs(dealId, taskIndex);
+                    .withArgs(taskId);
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
                     voucherRlcBalance: voucherRlcBalancePostClaim,

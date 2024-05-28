@@ -657,8 +657,6 @@ describe('VoucherHub', function () {
                 ),
             ).to.be.revertedWith('VoucherHub: type index out of bounds');
         });
-
-        it.skip('TODO - Should not create voucher when out of funds', async function () {});
     });
 
     describe('Debit voucher', function () {
