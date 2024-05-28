@@ -39,17 +39,7 @@ contract IexecPocoMock is ERC20 {
         bytes32 appOrderTypedDataHash = _toTypedDataHash(appOrder.hash());
         bytes32 workerpoolOrderTypedDataHash = _toTypedDataHash(workerpoolOrder.hash());
         bytes32 datasetOrderTypedDataHash = _toTypedDataHash(datasetOrder.hash());
-        uint256 volume = _computeVolume(
-            appOrder.volume,
-            appOrderTypedDataHash,
-            datasetOrder.dataset != address(0),
-            datasetOrder.volume,
-            datasetOrderTypedDataHash,
-            workerpoolOrder.volume,
-            workerpoolOrderTypedDataHash,
-            requestOrder.volume,
-            requestOrderTypedDataHash
-        );
+        uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
 
         uint256 dealPrice = (appOrder.appprice +
             datasetOrder.datasetprice +
@@ -67,21 +57,7 @@ contract IexecPocoMock is ERC20 {
         if (shouldRevertOnSponsorMatchOrdersBoost) {
             revert("IexecPocoMock: Failed to sponsorMatchOrdersBoost");
         }
-        bytes32 requestOrderTypedDataHash = _toTypedDataHash(requestOrder.hash());
-        bytes32 appOrderTypedDataHash = _toTypedDataHash(appOrder.hash());
-        bytes32 workerpoolOrderTypedDataHash = _toTypedDataHash(workerpoolOrder.hash());
-        bytes32 datasetOrderTypedDataHash = _toTypedDataHash(datasetOrder.hash());
-        uint256 volume = _computeVolume(
-            appOrder.volume,
-            appOrderTypedDataHash,
-            datasetOrder.dataset != address(0),
-            datasetOrder.volume,
-            datasetOrderTypedDataHash,
-            workerpoolOrder.volume,
-            workerpoolOrderTypedDataHash,
-            requestOrder.volume,
-            requestOrderTypedDataHash
-        );
+        uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
 
         uint256 dealPrice = (appOrder.appprice +
             datasetOrder.datasetprice +
@@ -102,43 +78,24 @@ contract IexecPocoMock is ERC20 {
         IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
         IexecLibOrders_v5.RequestOrder calldata requestOrder
-    ) external view returns (uint256 volume) {
+    ) public view returns (uint256) {
         bytes32 requestOrderTypedDataHash = _toTypedDataHash(requestOrder.hash());
         bytes32 appOrderTypedDataHash = _toTypedDataHash(appOrder.hash());
         bytes32 workerpoolOrderTypedDataHash = _toTypedDataHash(workerpoolOrder.hash());
         bytes32 datasetOrderTypedDataHash = _toTypedDataHash(datasetOrder.hash());
-
         return
-            _computeVolume(
-                appOrder.volume,
-                appOrderTypedDataHash,
-                datasetOrder.dataset != address(0),
-                datasetOrder.volume,
-                datasetOrderTypedDataHash,
-                workerpoolOrder.volume,
-                workerpoolOrderTypedDataHash,
-                requestOrder.volume,
-                requestOrderTypedDataHash
+            Math.min(
+                Math.min(
+                    Math.min(
+                        appOrder.volume - m_consumed[appOrderTypedDataHash],
+                        datasetOrder.dataset != address(0)
+                            ? datasetOrder.volume - m_consumed[datasetOrderTypedDataHash]
+                            : type(uint256).max
+                    ),
+                    workerpoolOrder.volume - m_consumed[workerpoolOrderTypedDataHash]
+                ),
+                requestOrder.volume - m_consumed[requestOrderTypedDataHash]
             );
-    }
-
-    function _computeVolume(
-        uint256 appOrderVolume,
-        bytes32 appOrderTypedDataHash,
-        bool hasDataset,
-        uint256 datasetOrderVolume,
-        bytes32 datasetOrderTypedDataHash,
-        uint256 workerpoolOrderVolume,
-        bytes32 workerpoolOrderTypedDataHash,
-        uint256 requestOrderVolume,
-        bytes32 requestOrderTypedDataHash
-    ) internal view returns (uint256 volume) {
-        volume = appOrderVolume - m_consumed[appOrderTypedDataHash];
-        volume = hasDataset
-            ? volume.min(datasetOrderVolume - m_consumed[datasetOrderTypedDataHash])
-            : volume;
-        volume = volume.min(workerpoolOrderVolume - m_consumed[workerpoolOrderTypedDataHash]);
-        volume = volume.min(requestOrderVolume - m_consumed[requestOrderTypedDataHash]);
     }
 
     function _toTypedDataHash(bytes32 structHash) internal view returns (bytes32) {
