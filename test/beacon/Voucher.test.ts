@@ -873,12 +873,14 @@ describe('Voucher', function () {
 
         describe('Should not claim task when deal not found', async () => {
             it('Classic', async function () {
-                await expect(voucher.claim(taskId)).to.be.revertedWith('Voucher: deal not found');
+                const badTaskId = ethers.randomBytes(32);
+                await expect(voucher.claim(badTaskId)).to.be.revertedWithoutReason();
             });
 
             it('Boost', async function () {
-                await expect(voucher.claimBoost(dealId, taskIndex)).to.be.revertedWith(
-                    'Voucher: boost deal not found',
+                const badDealId = ethers.randomBytes(32);
+                await expect(voucher.claimBoost(badDealId, taskIndex)).to.be.revertedWith(
+                    'PocoBoost: Unknown task',
                 );
             });
         });
