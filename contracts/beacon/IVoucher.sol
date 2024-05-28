@@ -26,7 +26,8 @@ interface IVoucher {
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
         IexecLibOrders_v5.RequestOrder calldata requestOrder
     ) external returns (bytes32);
-    function claim(bytes32 dealId, uint256 index) external;
+    function claim(bytes32 taskId) external;
+    function claimBoost(bytes32 dealId, uint256 taskIndex) external;
 
     function getVoucherHub() external view returns (address);
     function getType() external view returns (uint256);

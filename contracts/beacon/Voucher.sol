@@ -38,14 +38,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         mapping(bytes32 taskId => bool) _refundedTasks;
     }
 
-    struct GenericDeal {
-        bool isBoostDeal;
-        address requester;
-        address sponsor;
-        uint256 volume;
-        uint256 price;
-    }
-
     modifier onlyAuthorized() {
         VoucherStorage storage $ = _getVoucherStorage();
         require(
@@ -185,39 +177,81 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         return dealId;
     }
 
-    function claim(bytes32 dealId, uint256 index) external {
+    function claim(bytes32 taskId) external {
+        VoucherStorage storage $ = _getVoucherStorage();
+        IVoucherHub voucherHub = IVoucherHub($._voucherHub);
+        address iexecPoco = voucherHub.getIexecPoco();
+        IexecLibCore_v5.Task memory task = IexecPocoAccessors(iexecPoco).viewTask(taskId);
+        IexecLibCore_v5.Deal memory deal = IexecPocoAccessors(iexecPoco).viewDeal(task.dealid);
+        require(deal.requester != address(0), "Voucher: deal not found");
+        _claim(
+            task.dealid,
+            task.idx,
+            deal.requester,
+            deal.sponsor,
+            deal.botSize,
+            (deal.app.price + deal.dataset.price + deal.workerpool.price) * deal.botSize,
+            false
+        );
+    }
+
+    function claimBoost(bytes32 dealId, uint256 taskIndex) external {
+        VoucherStorage storage $ = _getVoucherStorage();
+        IVoucherHub voucherHub = IVoucherHub($._voucherHub);
+        address iexecPoco = voucherHub.getIexecPoco();
+        IexecLibCore_v5.DealBoost memory deal = IexecPocoBoostAccessors(iexecPoco).viewDealBoost(
+            dealId
+        );
+        require(deal.requester != address(0), "Voucher: boost deal not found");
+        _claim(
+            dealId,
+            taskIndex,
+            deal.requester,
+            deal.sponsor,
+            deal.botSize,
+            (deal.appPrice + deal.datasetPrice + deal.workerpoolPrice) * deal.botSize,
+            true
+        );
+    }
+
+    function _claim(
+        bytes32 dealId,
+        uint256 index,
+        address requester,
+        address sponsor,
+        uint256 dealVolume,
+        uint256 dealPrice,
+        bool isBoostDeal
+    ) private {
         VoucherStorage storage $ = _getVoucherStorage();
         IVoucherHub voucherHub = IVoucherHub($._voucherHub);
         address iexecPoco = voucherHub.getIexecPoco();
         // Check if task is already claimed.
         bytes32 taskId = keccak256(abi.encodePacked(dealId, index));
         require(!$._refundedTasks[taskId], "Voucher: task already claimed");
-        // Get deal details from PoCo.
-        GenericDeal memory deal = _getDealDetails(iexecPoco, dealId);
-        require(deal.sponsor != address(0), "Voucher: deal not found");
         // Check wether the deal was matched by the voucher or not.
-        if (deal.sponsor == address(this)) {
+        if (sponsor == address(this)) {
             // The deal was matched by the voucher.
             // It is either fully, partially, or not sponsored.
             IexecLibCore_v5.Task memory task = IexecPocoAccessors(iexecPoco).viewTask(taskId);
             if (task.status != IexecLibCore_v5.TaskStatusEnum.FAILED) {
                 // Claim task on PoCo because it's not already claimed.
                 // Tx will be reverted by the PoCo if the claim is not valid.
-                _claimTaskOnPoco(iexecPoco, deal.isBoostDeal, dealId, index);
+                _claimTaskOnPoco(iexecPoco, isBoostDeal, dealId, index);
             }
-            if (deal.price != 0) {
+            if (dealPrice != 0) {
                 // For partially sponsored or non sponsored deals, send the requester's contribution
                 // back to their iExec account because all funds are, by default, sent to the sponsor
                 // (the voucher in this case).
 
                 uint256 dealSponsoredAmount = $._sponsoredAmounts[dealId];
                 // The division yields no remainder since dealPrice = taskPrice * volume.
-                uint256 taskPrice = deal.price / deal.volume;
+                uint256 taskPrice = dealPrice / dealVolume;
                 // A positive remainder is possible when the voucher balance is less than
                 // the sponsorable amount. Min(balance, dealSponsoredAmount) is computed
                 // at match orders.
                 // TODO !! do something with the remainder.
-                uint256 taskSponsoredAmount = dealSponsoredAmount / deal.volume;
+                uint256 taskSponsoredAmount = dealSponsoredAmount / dealVolume;
                 if (taskSponsoredAmount != 0) {
                     // If the voucher did fully/partially sponsor the deal then mint voucher
                     // credits back.
@@ -228,14 +262,14 @@ contract Voucher is OwnableUpgradeable, IVoucher {
                     // If the deal was not sponsored or partially sponsored
                     // by the voucher then send the non-sponsored part back
                     // to the requester.
-                    IERC20(iexecPoco).transfer(deal.requester, taskPrice - taskSponsoredAmount);
+                    IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount);
                 }
             }
             $._refundedTasks[taskId] = true;
         } else {
             // If the deal was not matched by the voucher then
             // forward the claim request to PoCo and do nothing.
-            _claimTaskOnPoco(iexecPoco, deal.isBoostDeal, dealId, index);
+            _claimTaskOnPoco(iexecPoco, isBoostDeal, dealId, index);
         }
         emit TaskClaimedWithVoucher(dealId, index);
     }
@@ -327,41 +361,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
             IexecPocoBoost(iexecPoco).claimBoost(dealId, index);
         } else {
             IexecPoco2(iexecPoco).claim(keccak256(abi.encodePacked(dealId, index)));
-        }
-    }
-
-    /**
-     * A utility function to abstract Deal and DealBoost differences.
-     * It would be relevant to add this function to PoCo.
-     * @param iexecPoco PoCo proxy address
-     * @param id of the deal
-     * @return deal
-     */
-    function _getDealDetails(
-        address iexecPoco,
-        bytes32 id
-    ) private view returns (GenericDeal memory deal) {
-        // Try to get boost deal first as it is meant to be more used than classic deals.
-        IexecLibCore_v5.DealBoost memory boostDeal = IexecPocoBoostAccessors(iexecPoco)
-            .viewDealBoost(id);
-        if (boostDeal.botSize != 0) {
-            // Boost deal exists
-            deal.isBoostDeal = true;
-            deal.requester = boostDeal.requester;
-            deal.sponsor = boostDeal.sponsor;
-            deal.volume = boostDeal.botSize;
-            deal.price =
-                (boostDeal.appPrice + boostDeal.datasetPrice + boostDeal.workerpoolPrice) *
-                boostDeal.botSize;
-        } else {
-            IexecLibCore_v5.Deal memory classicDeal = IexecPocoAccessors(iexecPoco).viewDeal(id);
-            deal.isBoostDeal = false;
-            deal.requester = classicDeal.requester;
-            deal.sponsor = classicDeal.sponsor;
-            deal.volume = classicDeal.botSize;
-            deal.price =
-                (classicDeal.app.price + classicDeal.dataset.price + classicDeal.workerpool.price) *
-                classicDeal.botSize;
         }
     }
 

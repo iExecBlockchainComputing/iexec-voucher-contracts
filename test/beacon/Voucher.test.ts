@@ -550,10 +550,10 @@ describe('Voucher', function () {
                 .then((tx: any) => tx.wait());
 
         describe('Should claim task when deal is fully sponsored', async function () {
-            it('Classic', async () => await runTest(voucherMatchOrders));
-            it('Boost', async () => await runTest(voucherMatchOrdersBoost));
+            it('Classic', async () => await runTest(voucherMatchOrders, false));
+            it('Boost', async () => await runTest(voucherMatchOrdersBoost, true));
 
-            async function runTest(matchOrdersFunction: any) {
+            async function runTest(matchOrdersFunction: any, isBoost: boolean) {
                 await addEligibleAssets([app, dataset, workerpool]);
                 await matchOrdersFunction();
                 const {
@@ -568,7 +568,10 @@ describe('Voucher', function () {
                 expect(taskSponsoredAmount).to.be.equal(taskPrice);
 
                 // Claim task
-                await expect(voucher.claim(dealId, taskIndex))
+                const claimFunction = !isBoost
+                    ? () => voucher.claim(taskId)
+                    : () => voucher.claimBoost(dealId, taskIndex);
+                await expect(claimFunction())
                     .to.emit(voucherHub, 'VoucherRefunded')
                     .withArgs(voucherAddress, taskSponsoredAmount)
                     .to.emit(voucher, 'TaskClaimedWithVoucher')

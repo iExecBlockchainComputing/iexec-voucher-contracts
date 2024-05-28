@@ -50,6 +50,7 @@ contract IexecPocoMock is ERC20 {
         deal.dataset.price = datasetOrder.datasetprice;
         deal.workerpool.price = workerpoolOrder.workerpoolprice;
         deal.sponsor = msg.sender;
+        task.dealid = dealId;
         task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
         _burn(
             msg.sender,
