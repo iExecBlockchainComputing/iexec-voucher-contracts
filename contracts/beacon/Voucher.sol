@@ -242,42 +242,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         emit TaskClaimedWithVoucher(taskId);
     }
 
-    function _refundVoucherAndRequester(
-        IVoucherHub voucherHub,
-        address iexecPoco,
-        bytes32 taskId,
-        bytes32 dealId,
-        uint256 dealVolume,
-        uint256 dealPrice,
-        address requester
-    ) private {
-        VoucherStorage storage $ = _getVoucherStorage();
-        require(!$._refundedTasks[taskId], "Voucher: task already claimed");
-        $._refundedTasks[taskId] = true;
-        if (dealPrice != 0) {
-            uint256 dealSponsoredAmount = $._sponsoredAmounts[dealId];
-            // The division yields no remainder since dealPrice = taskPrice * volume.
-            uint256 taskPrice = dealPrice / dealVolume;
-            // A positive remainder is possible when the voucher balance is less than
-            // the sponsorable amount. Min(balance, dealSponsoredAmount) is computed
-            // at match orders.
-            // TODO !! do something with the remainder.
-            uint256 taskSponsoredAmount = dealSponsoredAmount / dealVolume;
-            if (taskSponsoredAmount != 0) {
-                // If the voucher did fully/partially sponsor the deal then mint voucher
-                // credits back.
-                voucherHub.refundVoucher(taskSponsoredAmount);
-                $._sponsoredAmounts[dealId] = dealSponsoredAmount - taskSponsoredAmount;
-            }
-            if (taskSponsoredAmount < taskPrice) {
-                // If the deal was not sponsored or partially sponsored
-                // by the voucher then send the non-sponsored part back
-                // to the requester.
-                IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount);
-            }
-        }
-    }
-
     /**
      * Retrieve the address of the voucher hub associated with the voucher.
      * @return voucherHubAddress The address of the voucher hub.
@@ -340,6 +304,53 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         require(account != owner(), "Voucher: owner is already authorized.");
         VoucherStorage storage $ = _getVoucherStorage();
         $._authorizedAccounts[account] = isAuthorized;
+    }
+
+    /**
+     * Ask VoucherHub to refund voucher for a failed task and
+     * send non-sponsored part back to the requester when needed.
+     * @param voucherHub hub
+     * @param iexecPoco address of PoCo contract
+     * @param taskId id of the task
+     * @param dealId task's deal id
+     * @param dealVolume number of tasks in the deal
+     * @param dealPrice price paid at match orders
+     * @param requester of the task
+     */
+    function _refundVoucherAndRequester(
+        IVoucherHub voucherHub,
+        address iexecPoco,
+        bytes32 taskId,
+        bytes32 dealId,
+        uint256 dealVolume,
+        uint256 dealPrice,
+        address requester
+    ) private {
+        VoucherStorage storage $ = _getVoucherStorage();
+        require(!$._refundedTasks[taskId], "Voucher: task already claimed");
+        $._refundedTasks[taskId] = true;
+        if (dealPrice != 0) {
+            uint256 dealSponsoredAmount = $._sponsoredAmounts[dealId];
+            // The division yields no remainder since dealPrice = taskPrice * volume.
+            uint256 taskPrice = dealPrice / dealVolume;
+            // A positive remainder is possible when the voucher balance is less than
+            // the sponsorable amount. Min(balance, dealSponsoredAmount) is computed
+            // at match orders.
+            // TODO !! do something with the remainder.
+            uint256 taskSponsoredAmount = dealSponsoredAmount / dealVolume;
+            if (taskSponsoredAmount != 0) {
+                // If the voucher did fully/partially sponsor the deal then mint voucher
+                // credits back.
+                voucherHub.refundVoucher(taskSponsoredAmount);
+                $._sponsoredAmounts[dealId] = dealSponsoredAmount - taskSponsoredAmount;
+            }
+            if (taskSponsoredAmount < taskPrice) {
+                // If the deal was not sponsored or partially sponsored
+                // by the voucher then send the non-sponsored part back
+                // to the requester.
+                IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount);
+            }
+        }
     }
 
     function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
