@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
 import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.sol";
 import {IexecPoco1} from "@iexec/poco/contracts/modules/interfaces/IexecPoco1.v8.sol";
 import {IexecPocoBoost} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoost.sol";
-import {IexecOrderManagement} from "@iexec/poco/contracts/modules/interfaces/IexecOrderManagement.v8.sol";
+import {IexecPocoAccessors} from "@iexec/poco/contracts/modules/interfaces/IexecPocoAccessors.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVoucherHub} from "../IVoucherHub.sol";
@@ -265,7 +265,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 appPrice = appOrder.appprice;
         uint256 datasetPrice = datasetOrder.datasetprice;
         uint256 workerpoolPrice = workerpoolOrder.workerpoolprice;
-        uint256 volume = IexecOrderManagement(iexecPoco).computeDealVolume(
+        uint256 volume = IexecPocoAccessors(iexecPoco).computeDealVolume(
             appOrder,
             datasetOrder,
             workerpoolOrder,
