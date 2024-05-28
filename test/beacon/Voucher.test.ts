@@ -629,7 +629,7 @@ describe('Voucher', function () {
                     .to.emit(voucherHub, 'VoucherRefunded')
                     .withArgs(voucherAddress, taskSponsoredAmount)
                     .to.emit(voucher, 'TaskClaimedWithVoucher')
-                    .withArgs(dealId, taskIndex);
+                    .withArgs(taskId);
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
                     voucherRlcBalance: voucherRlcBalancePostClaim,
@@ -697,7 +697,7 @@ describe('Voucher', function () {
                 // Claim
                 await expect(claimBoostOrClassic())
                     .to.emit(voucher, 'TaskClaimedWithVoucher')
-                    .withArgs(dealId, taskIndex)
+                    .withArgs(taskId)
                     .and.to.not.emit(voucherHub, 'VoucherRefunded');
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
@@ -753,7 +753,7 @@ describe('Voucher', function () {
                 // Claim
                 await expect(claimBoostOrClassic())
                     .to.emit(voucher, 'TaskClaimedWithVoucher')
-                    .withArgs(dealId, taskIndex)
+                    .withArgs(taskId)
                     .and.to.not.emit(voucherHub, 'VoucherRefunded');
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
@@ -807,7 +807,7 @@ describe('Voucher', function () {
                     .to.emit(voucherHub, 'VoucherRefunded')
                     .withArgs(voucherAddress, taskSponsoredAmount)
                     .to.emit(voucher, 'TaskClaimedWithVoucher')
-                    .withArgs(dealId, taskIndex);
+                    .withArgs(taskId);
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
                     voucherRlcBalance: voucherRlcBalancePostClaim,
@@ -850,7 +850,7 @@ describe('Voucher', function () {
                     .to.emit(voucherHub, 'VoucherRefunded')
                     .withArgs(voucherAddress, taskSponsoredAmount)
                     .to.emit(voucher, 'TaskClaimedWithVoucher')
-                    .withArgs(dealId, taskIndex);
+                    .withArgs(taskId);
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
                     voucherRlcBalance: voucherRlcBalancePostClaim,
