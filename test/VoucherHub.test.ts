@@ -846,8 +846,6 @@ describe('VoucherHub', function () {
                 'VoucherHub: sender is not voucher',
             );
         });
-
-        it.skip('TODO ?? - Should not refund voucher when amount is greater than voucher value', async function () {});
     });
 
     describe('Get voucher', function () {
