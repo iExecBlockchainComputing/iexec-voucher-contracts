@@ -22,6 +22,11 @@ contract VoucherV2Mock is Initializable {
     bytes32 private constant VOUCHER_STORAGE_LOCATION =
         0xc2e244293dc04d6c7fa946e063317ff8e6770fd48cbaff411a60f1efc8a7e800;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     /**
      * Initialize new implementation contract.
      * @param newStateVariable test variable.
