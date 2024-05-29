@@ -232,7 +232,6 @@ contract VoucherHub is
      * @param amount value to be refunded
      */
     function refundVoucher(uint256 amount) external onlyVoucher {
-        // TODO ?? check if balanceOf(msg.sender) + amount < initialBalance
         _mint(msg.sender, amount);
         emit VoucherRefunded(msg.sender, amount);
     }
