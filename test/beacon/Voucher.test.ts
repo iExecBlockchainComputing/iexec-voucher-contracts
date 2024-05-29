@@ -637,7 +637,7 @@ describe('Voucher', function () {
 
             async function runTest(matchOrdersBoostOrClassic: any, claimBoostOrClassic: any) {
                 await addEligibleAssets([app, dataset]); // workerpool not eligible.
-                const dealNonSponsoredAmount = workerpoolPrice;
+                const dealNonSponsoredAmount = workerpoolPrice * volume;
                 const taskNonSponsoredAmount = dealNonSponsoredAmount / volume;
                 // Deposit non-sponsored amount for requester and approve voucher.
                 await iexecPocoInstance
@@ -685,8 +685,7 @@ describe('Voucher', function () {
             }
         });
 
-        // TODO when volume can be > 1
-        describe('Should claim task when deal is partially sponsored and sponsored amount is not divisible by volume', async () => {
+        describe('[TODO] Should claim task when deal is partially sponsored and sponsored amount is not divisible by volume', async () => {
             it.skip('Classic', async () => await runTest(voucherMatchOrders, claim));
             it.skip('Boost', async () => await runTest(voucherMatchOrdersBoost, claimBoost));
 
