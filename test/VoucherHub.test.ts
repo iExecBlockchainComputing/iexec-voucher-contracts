@@ -42,14 +42,8 @@ describe('VoucherHub', function () {
             anyone,
         ] = await ethers.getSigners();
         const beacon = await voucherUtils.deployBeaconAndImplementation(admin.address);
-        const iexecLibOrders = await ethers.getContractFactory('IexecLibOrders_v5');
-        const iexecLibOrdersInstance = await iexecLibOrders.deploy();
-        const iexecLibOrdersInstanceAddress = await iexecLibOrdersInstance.getAddress();
 
-        iexecPocoInstance = await new IexecPocoMock__factory({
-            ['@iexec/poco/contracts/libs/IexecLibOrders_v5.sol:IexecLibOrders_v5']:
-                iexecLibOrdersInstanceAddress,
-        })
+        iexecPocoInstance = await new IexecPocoMock__factory()
             .connect(admin)
             .deploy()
             .then((x) => x.waitForDeployment());

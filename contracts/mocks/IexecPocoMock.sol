@@ -13,14 +13,8 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
  */
 contract IexecPocoMock is ERC20 {
     using Math for uint256;
-    using IexecLibOrders_v5 for IexecLibOrders_v5.AppOrder;
-    using IexecLibOrders_v5 for IexecLibOrders_v5.DatasetOrder;
-    using IexecLibOrders_v5 for IexecLibOrders_v5.WorkerpoolOrder;
-    using IexecLibOrders_v5 for IexecLibOrders_v5.RequestOrder;
     bool public shouldRevertOnSponsorMatchOrders = false;
     bool public shouldRevertOnSponsorMatchOrdersBoost = false;
-    bytes32 public EIP712DOMAIN_SEPARATOR = "EIP712DOMAIN_SEPARATOR";
-    mapping(bytes32 => uint256) public m_consumed;
 
     constructor() ERC20("Staked RLC", "SRLC") {
         _mint(msg.sender, 1000000);
@@ -35,10 +29,6 @@ contract IexecPocoMock is ERC20 {
         if (shouldRevertOnSponsorMatchOrders) {
             revert("IexecPocoMock: Failed to sponsorMatchOrders");
         }
-        bytes32 requestOrderTypedDataHash = _toTypedDataHash(requestOrder.hash());
-        bytes32 appOrderTypedDataHash = _toTypedDataHash(appOrder.hash());
-        bytes32 workerpoolOrderTypedDataHash = _toTypedDataHash(workerpoolOrder.hash());
-        bytes32 datasetOrderTypedDataHash = _toTypedDataHash(datasetOrder.hash());
         uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
 
         uint256 dealPrice = (appOrder.appprice +
@@ -58,7 +48,6 @@ contract IexecPocoMock is ERC20 {
             revert("IexecPocoMock: Failed to sponsorMatchOrdersBoost");
         }
         uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
-
         uint256 dealPrice = (appOrder.appprice +
             datasetOrder.datasetprice +
             workerpoolOrder.workerpoolprice) * volume;
@@ -79,26 +68,10 @@ contract IexecPocoMock is ERC20 {
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
         IexecLibOrders_v5.RequestOrder calldata requestOrder
     ) public view returns (uint256) {
-        bytes32 requestOrderTypedDataHash = _toTypedDataHash(requestOrder.hash());
-        bytes32 appOrderTypedDataHash = _toTypedDataHash(appOrder.hash());
-        bytes32 workerpoolOrderTypedDataHash = _toTypedDataHash(workerpoolOrder.hash());
-        bytes32 datasetOrderTypedDataHash = _toTypedDataHash(datasetOrder.hash());
         return
             Math.min(
-                Math.min(
-                    Math.min(
-                        appOrder.volume - m_consumed[appOrderTypedDataHash],
-                        datasetOrder.dataset != address(0)
-                            ? datasetOrder.volume - m_consumed[datasetOrderTypedDataHash]
-                            : type(uint256).max
-                    ),
-                    workerpoolOrder.volume - m_consumed[workerpoolOrderTypedDataHash]
-                ),
-                requestOrder.volume - m_consumed[requestOrderTypedDataHash]
+                datasetOrder.dataset != address(0) ? datasetOrder.volume : type(uint256).max,
+                requestOrder.volume
             );
-    }
-
-    function _toTypedDataHash(bytes32 structHash) internal view returns (bytes32) {
-        return MessageHashUtils.toTypedDataHash(EIP712DOMAIN_SEPARATOR, structHash);
     }
 }
