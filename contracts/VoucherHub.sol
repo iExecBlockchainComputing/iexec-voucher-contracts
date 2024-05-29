@@ -237,7 +237,7 @@ contract VoucherHub is
      */
     function getVoucherType(
         uint256 id
-    ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
+    ) external view whenVoucherTypeExists(id) returns (VoucherType memory) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $.voucherTypes[id];
     }

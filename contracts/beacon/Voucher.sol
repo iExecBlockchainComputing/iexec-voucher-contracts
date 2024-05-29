@@ -104,9 +104,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
         IexecLibOrders_v5.RequestOrder calldata requestOrder
-    ) external returns (bytes32 dealId) {
-        // TODO add onlyAuthorized
-        // TODO check expiration
+    ) external onlyAuthorized onlyNotExpired returns (bytes32 dealId) {
         VoucherStorage storage $ = _getVoucherStorage();
         IVoucherHub voucherHub = IVoucherHub($._voucherHub);
         address iexecPoco = voucherHub.getIexecPoco();
