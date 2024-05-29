@@ -15,7 +15,6 @@ export async function deployBeaconAndImplementation(
     // 3. Links the implementation in the beacon contract.
     const contract: unknown = await upgrades.deployBeacon(voucherFactory, {
         initialOwner: beaconOwner,
-        unsafeAllowLinkedLibraries: true,
     });
     // Workaround openzeppelin-upgrades/pull/535;
     const beacon = contract as UpgradeableBeacon;
