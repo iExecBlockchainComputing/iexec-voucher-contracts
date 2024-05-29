@@ -74,7 +74,6 @@ contract Voucher is Initializable, IVoucher {
         $._voucherHub = voucherHub;
         $._expiration = expiration;
         $._type = voucherTypeId;
-        // TODO: deposit SRLC.
     }
 
     /**
