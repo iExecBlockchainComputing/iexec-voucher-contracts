@@ -52,11 +52,7 @@ describe('Voucher', function () {
         voucherHubAsVoucherCreationManager,
         voucherHubAsAssetEligibilityManager,
     ]: VoucherHub[] = [];
-    let [
-        voucher, // TODO: Remove this when onlyAuthorized is set to matchOrders
-        voucherAsOwner,
-        voucherAsAnyone,
-    ]: Voucher[] = [];
+    let [voucherAsOwner, voucherAsAnyone]: Voucher[] = [];
     let voucherCreationTxReceipt: ContractTransactionReceipt;
     let [appOrder, datasetOrder, workerpoolOrder, requestOrder]: ReturnType<
         typeof createMockOrder
@@ -103,9 +99,8 @@ describe('Voucher', function () {
             .then((tx) => tx.wait())
             .then((tx) => (voucherCreationTxReceipt = tx!))
             .then(() => voucherHub.getVoucher(voucherOwner1));
-        voucher = Voucher__factory.connect(voucherAddress1, voucherOwner1);
-        voucherAsOwner = voucher.connect(voucherOwner1);
-        voucherAsAnyone = voucher.connect(anyone);
+        voucherAsOwner = Voucher__factory.connect(voucherAddress1, voucherOwner1);
+        voucherAsAnyone = voucherAsOwner.connect(anyone);
         // Create mock orders.
         const mockOrder = createMockOrder();
         appOrder = { ...mockOrder, app: app, appprice: appPrice };
@@ -220,39 +215,39 @@ describe('Voucher', function () {
 
     describe('Authorization', function () {
         it('Should authorize an account', async function () {
-            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.false;
+            expect(await voucherAsOwner.isAccountAuthorized(anyone.address)).to.be.false;
             expect(await voucherAsOwner.authorizeAccount(anyone.address))
                 .to.emit(voucherAsOwner, 'AccountAuthorized')
                 .withArgs(anyone.address);
             // Check if the account is authorized
-            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
+            expect(await voucherAsOwner.isAccountAuthorized(anyone.address)).to.be.true;
         });
 
         it('Should unauthorize an account', async function () {
             await voucherAsOwner.authorizeAccount(anyone.address).then((tx) => tx.wait());
-            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
+            expect(await voucherAsOwner.isAccountAuthorized(anyone.address)).to.be.true;
             expect(await voucherAsOwner.unauthorizeAccount(anyone.address))
-                .to.emit(voucher, 'AccountUnauthorized')
+                .to.emit(voucherAsOwner, 'AccountUnauthorized')
                 .withArgs(anyone.address);
             // Check if the account is unauthorized
-            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.false;
+            expect(await voucherAsOwner.isAccountAuthorized(anyone.address)).to.be.false;
         });
 
         it('Should not authorize account if sender is not the owner', async function () {
             await expect(
                 voucherAsAnyone.authorizeAccount(anyone.address),
-            ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
+            ).to.be.revertedWithCustomError(voucherAsOwner, 'OwnableUnauthorizedAccount');
         });
 
         it('Should not unauthorize account if sender is not the owner', async function () {
             await voucherAsOwner.authorizeAccount(anyone.address).then((tx) => tx.wait());
-            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
+            expect(await voucherAsOwner.isAccountAuthorized(anyone.address)).to.be.true;
             // unauthorize the account
             await expect(
                 voucherAsAnyone.unauthorizeAccount(anyone.address),
-            ).to.be.revertedWithCustomError(voucher, 'OwnableUnauthorizedAccount');
+            ).to.be.revertedWithCustomError(voucherAsOwner, 'OwnableUnauthorizedAccount');
             // Check that the state of mapping is not modified from.
-            expect(await voucher.isAccountAuthorized(anyone.address)).to.be.true;
+            expect(await voucherAsOwner.isAccountAuthorized(anyone.address)).to.be.true;
         });
 
         it('Should not authorize owner account', async function () {
@@ -270,37 +265,39 @@ describe('Voucher', function () {
 
     describe('Match orders', async function () {
         const getVoucherBalanceOnIexecPoco = () =>
-            iexecPocoInstance.balanceOf(voucher.getAddress());
+            iexecPocoInstance.balanceOf(voucherAsOwner.getAddress());
         const getRequesterBalanceOnIexecPoco = () =>
             iexecPocoInstance.balanceOf(requester.getAddress());
 
         it('Should match orders with full sponsored amount', async () => {
             await addEligibleAssets([app, dataset, workerpool]);
-            const voucherInitialCreditBalance = await voucher.getBalance();
+            const voucherInitialCreditBalance = await voucherAsOwner.getBalance();
             const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
             const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
 
             expect(
-                await voucher.matchOrders.staticCall(
+                await voucherAsOwner.matchOrders.staticCall(
                     appOrder,
                     datasetOrder,
                     workerpoolOrder,
                     requestOrder,
                 ),
             ).to.be.equal(dealId);
-            await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
-                .to.emit(voucher, 'OrdersMatchedWithVoucher')
+            await expect(
+                voucherAsOwner.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder),
+            )
+                .to.emit(voucherAsOwner, 'OrdersMatchedWithVoucher')
                 .withArgs(dealId);
-            expect(await voucher.getBalance())
+            expect(await voucherAsOwner.getBalance())
                 .to.be.equal(voucherInitialCreditBalance - dealPrice)
                 .to.be.equal(await getVoucherBalanceOnIexecPoco())
                 .to.be.equal(voucherInitialSrlcBalance - dealPrice);
             expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(requesterInitialSrlcBalance);
-            expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealPrice);
+            expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(dealPrice);
         });
 
         it('Should match orders with full non-sponsored amount', async () => {
-            const voucherInitialCreditBalance = await voucher.getBalance();
+            const voucherInitialCreditBalance = await voucherAsOwner.getBalance();
             const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
             expect(dealPrice).to.be.greaterThan(0); // just make sure the deal will not be free
             // Deposit in iExec account of requester
@@ -308,22 +305,24 @@ describe('Voucher', function () {
             // Allow voucher to spend non-sponsored amount
             await iexecPocoInstance
                 .connect(requester)
-                .approve(await voucher.getAddress(), dealPrice)
+                .approve(await voucherAsOwner.getAddress(), dealPrice)
                 .then((tx) => tx.wait());
             const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
 
-            await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
+            await expect(
+                voucherAsOwner.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder),
+            )
                 .to.emit(iexecPocoInstance, 'Transfer')
-                .withArgs(requester.address, await voucher.getAddress(), dealPrice)
-                .to.emit(voucher, 'OrdersMatchedWithVoucher');
-            expect(await voucher.getBalance())
+                .withArgs(requester.address, await voucherAsOwner.getAddress(), dealPrice)
+                .to.emit(voucherAsOwner, 'OrdersMatchedWithVoucher');
+            expect(await voucherAsOwner.getBalance())
                 .to.be.equal(voucherInitialCreditBalance)
                 .to.be.equal(await getVoucherBalanceOnIexecPoco())
                 .to.be.equal(voucherInitialSrlcBalance);
             expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
                 requesterInitialSrlcBalance - dealPrice,
             );
-            expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(0);
+            expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(0);
         });
 
         it('Should match orders with an authorized account', async () => {
@@ -332,7 +331,7 @@ describe('Voucher', function () {
             await expect(
                 voucherAsAnyone.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder),
             )
-                .to.emit(voucher, 'OrdersMatchedWithVoucher')
+                .to.emit(voucherAsOwner, 'OrdersMatchedWithVoucher')
                 .withArgs(dealId);
         });
 
@@ -343,7 +342,7 @@ describe('Voucher', function () {
         });
 
         it('Should not match orders when voucher is expired', async () => {
-            const expirationDate = await voucher.getExpiration();
+            const expirationDate = await voucherAsOwner.getExpiration();
             await time.setNextBlockTimestamp(expirationDate);
             await expect(
                 voucherAsOwner.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder),
@@ -351,16 +350,18 @@ describe('Voucher', function () {
         });
 
         it('Should not match orders when non-sponsored amount is not transferable', async () => {
-            await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
+            await expect(
+                voucherAsOwner.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder),
+            )
                 .to.be.revertedWithCustomError(iexecPocoInstance, 'ERC20InsufficientAllowance')
-                .withArgs(await voucher.getAddress(), 0, dealPrice);
+                .withArgs(await voucherAsOwner.getAddress(), 0, dealPrice);
         });
 
         it('Should not match orders when iExec Poco matching fails', async () => {
             await iexecPocoInstance.willRevertOnSponsorMatchOrders().then((tx) => tx.wait());
 
             await expect(
-                voucher.matchOrders(
+                voucherAsOwner.matchOrders(
                     { ...appOrder, appprice: 0 },
                     { ...datasetOrder, datasetprice: 0 },
                     { ...workerpoolOrder, workerpoolprice: 0 },
@@ -373,7 +374,7 @@ describe('Voucher', function () {
             it('Should match orders boost with full sponsored amount', async () => {
                 const sponsoredValue = BigInt(appPrice + datasetPrice + workerpoolPrice);
                 await addEligibleAssets([app, dataset, workerpool]);
-                const voucherInitialCreditBalance = await voucher.getBalance();
+                const voucherInitialCreditBalance = await voucherAsOwner.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
                 const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
                 expect(
@@ -392,24 +393,28 @@ describe('Voucher', function () {
                         requestOrder,
                     ),
                 )
-                    .to.emit(voucher, 'OrdersBoostMatchedWithVoucher')
+                    .to.emit(voucherAsOwner, 'OrdersBoostMatchedWithVoucher')
                     .withArgs(dealId)
                     .to.emit(voucherHub, 'VoucherDebited')
-                    .withArgs(await voucher.getAddress(), sponsoredValue)
+                    .withArgs(await voucherAsOwner.getAddress(), sponsoredValue)
                     .to.emit(voucherHub, 'Transfer')
-                    .withArgs(await voucher.getAddress(), ethers.ZeroAddress, sponsoredValue);
-                expect(await voucher.getBalance())
+                    .withArgs(
+                        await voucherAsOwner.getAddress(),
+                        ethers.ZeroAddress,
+                        sponsoredValue,
+                    );
+                expect(await voucherAsOwner.getBalance())
                     .to.be.equal(voucherInitialCreditBalance - dealPrice)
                     .to.be.equal(await getVoucherBalanceOnIexecPoco())
                     .to.be.equal(voucherInitialSrlcBalance - dealPrice);
                 expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
                     requesterInitialSrlcBalance,
                 );
-                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealPrice);
+                expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(dealPrice);
             });
 
             it('Should match orders boost with full non-sponsored amount', async () => {
-                const voucherInitialCreditBalance = await voucher.getBalance();
+                const voucherInitialCreditBalance = await voucherAsOwner.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
                 expect(dealPrice).to.be.greaterThan(0); // just make sure the deal will not be free
                 // Deposit in iExec account of requester
@@ -417,7 +422,7 @@ describe('Voucher', function () {
                 // Allow voucher to spend non-sponsored amount
                 await iexecPocoInstance
                     .connect(requester)
-                    .approve(await voucher.getAddress(), dealPrice)
+                    .approve(await voucherAsOwner.getAddress(), dealPrice)
                     .then((tx) => tx.wait());
                 const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
 
@@ -429,24 +434,24 @@ describe('Voucher', function () {
                         requestOrder,
                     ),
                 )
-                    .to.emit(voucher, 'OrdersBoostMatchedWithVoucher')
+                    .to.emit(voucherAsOwner, 'OrdersBoostMatchedWithVoucher')
                     .to.emit(iexecPocoInstance, 'Transfer')
-                    .withArgs(requester.address, await voucher.getAddress(), dealPrice);
-                expect(await voucher.getBalance())
+                    .withArgs(requester.address, await voucherAsOwner.getAddress(), dealPrice);
+                expect(await voucherAsOwner.getBalance())
                     .to.be.equal(voucherInitialCreditBalance)
                     .to.be.equal(await getVoucherBalanceOnIexecPoco())
                     .to.be.equal(voucherInitialSrlcBalance);
                 expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
                     requesterInitialSrlcBalance - dealPrice,
                 );
-                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(0);
+                expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(0);
             });
 
             it('Should match orders boost with partial sponsored amount', async () => {
                 const sponsoredValue = BigInt(datasetPrice + workerpoolPrice);
                 const noSponsoredValue = BigInt(appPrice); // app wont be eligible for sponsoring
                 await addEligibleAssets([dataset, workerpool]);
-                const voucherInitialCreditBalance = await voucher.getBalance();
+                const voucherInitialCreditBalance = await voucherAsOwner.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
                 const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
 
@@ -459,7 +464,7 @@ describe('Voucher', function () {
                 // Allow voucher to spend non-sponsored amount
                 await iexecPocoInstance
                     .connect(requester)
-                    .approve(await voucher.getAddress(), noSponsoredValue)
+                    .approve(await voucherAsOwner.getAddress(), noSponsoredValue)
                     .then((tx) => tx.wait());
 
                 await expect(
@@ -470,26 +475,30 @@ describe('Voucher', function () {
                         requestOrder,
                     ),
                 )
-                    .to.emit(voucher, 'OrdersBoostMatchedWithVoucher')
+                    .to.emit(voucherAsOwner, 'OrdersBoostMatchedWithVoucher')
                     .withArgs(dealId)
                     .to.emit(iexecPocoInstance, 'Transfer')
                     .withArgs(
                         requester.address,
-                        await voucher.getAddress(),
+                        await voucherAsOwner.getAddress(),
                         dealPrice - sponsoredValue,
                     )
                     .to.emit(voucherHub, 'VoucherDebited')
-                    .withArgs(await voucher.getAddress(), sponsoredValue)
+                    .withArgs(await voucherAsOwner.getAddress(), sponsoredValue)
                     .to.emit(voucherHub, 'Transfer')
-                    .withArgs(await voucher.getAddress(), ethers.ZeroAddress, sponsoredValue);
-                expect(await voucher.getBalance())
+                    .withArgs(
+                        await voucherAsOwner.getAddress(),
+                        ethers.ZeroAddress,
+                        sponsoredValue,
+                    );
+                expect(await voucherAsOwner.getBalance())
                     .to.be.equal(voucherInitialCreditBalance - sponsoredValue)
                     .to.be.equal(await getVoucherBalanceOnIexecPoco())
                     .to.be.equal(voucherInitialSrlcBalance - sponsoredValue);
                 expect(await getRequesterBalanceOnIexecPoco())
                     .to.be.equal(requesterDeposietedSrlcBalance - noSponsoredValue)
                     .to.be.equal(requesterInitialSrlcBalance);
-                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(sponsoredValue);
+                expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(sponsoredValue);
             });
 
             it('Should match orders boost with an authorized account', async () => {
@@ -504,7 +513,7 @@ describe('Voucher', function () {
                         requestOrder,
                     ),
                 )
-                    .to.emit(voucher, 'OrdersBoostMatchedWithVoucher')
+                    .to.emit(voucherAsOwner, 'OrdersBoostMatchedWithVoucher')
                     .withArgs(dealId);
             });
 
@@ -520,7 +529,7 @@ describe('Voucher', function () {
             });
 
             it('Should not match orders boost when voucher is expired', async () => {
-                const expirationDate = await voucher.getExpiration();
+                const expirationDate = await voucherAsOwner.getExpiration();
                 await time.setNextBlockTimestamp(expirationDate);
                 await expect(
                     voucherAsOwner.matchOrdersBoost(
@@ -542,7 +551,7 @@ describe('Voucher', function () {
                     ),
                 )
                     .to.be.revertedWithCustomError(iexecPocoInstance, 'ERC20InsufficientAllowance')
-                    .withArgs(await voucher.getAddress(), 0, dealPrice);
+                    .withArgs(await voucherAsOwner.getAddress(), 0, dealPrice);
             });
 
             it('Should not match orders boost when iExec Poco matching fails', async () => {
