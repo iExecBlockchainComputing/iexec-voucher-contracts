@@ -40,7 +40,8 @@ interface IVoucherHub {
         address dataset,
         uint256 datasetPrice,
         address workerpool,
-        uint256 workerpoolPrice
+        uint256 workerpoolPrice,
+        uint256 volume
     ) external returns (uint256 sponsoredAmount);
     function refundVoucher(uint256 amount) external;
 

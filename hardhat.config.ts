@@ -18,10 +18,21 @@ const config: HardhatUserConfig = {
             {
                 version: '0.8.24',
                 settings: {
+                    /**
+                     * Enable Intermediate Representation (IR) to reduce `Stack too deep` occurrences
+                     * at compile time (e.g.: too many local variables in `matchOrdersBoost`).
+                     * https://hardhat.org/hardhat-runner/docs/reference/solidity-support#support-for-ir-based-codegen
+                     */
                     viaIR: true,
                     optimizer: {
                         enabled: true,
                         runs: 200,
+                        details: {
+                            yul: true,
+                            yulDetails: {
+                                optimizerSteps: 'u',
+                            },
+                        },
                     },
                 },
             },
