@@ -6,8 +6,8 @@ pragma solidity ^0.8.20;
 import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.sol";
 import {IexecPoco1} from "@iexec/poco/contracts/modules/interfaces/IexecPoco1.v8.sol";
 import {IexecPocoBoost} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoost.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IVoucherHub} from "../IVoucherHub.sol";
 import {IVoucher} from "./IVoucher.sol";
 
@@ -15,7 +15,7 @@ import {IVoucher} from "./IVoucher.sol";
  * @title Implementation of the voucher contract.
  * Deployed along the Beacon contract using "Upgrades" plugin of OZ.
  */
-contract Voucher is OwnableUpgradeable, IVoucher {
+contract Voucher is Initializable, IVoucher {
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
     // & ~bytes32(uint256(0xff));
     bytes32 private constant VOUCHER_STORAGE_LOCATION =
@@ -28,6 +28,15 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 _type;
         mapping(address => bool) _authorizedAccounts;
         mapping(bytes32 dealId => uint256) _sponsoredAmounts;
+        address _owner;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner(), "Voucher: sender is not owner");
+        _;
     }
 
     modifier onlyAuthorized() {
@@ -63,8 +72,8 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         uint256 expiration,
         uint256 voucherTypeId
     ) external initializer {
-        __Ownable_init(owner);
         VoucherStorage storage $ = _getVoucherStorage();
+        $._owner = owner;
         $._voucherHub = voucherHub;
         $._expiration = expiration;
         $._type = voucherTypeId;
@@ -168,15 +177,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
-     * Retrieve the address of the voucher hub associated with the voucher.
-     * @return voucherHubAddress The address of the voucher hub.
-     */
-    function getVoucherHub() public view returns (address) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return $._voucherHub;
-    }
-
-    /**
      * Retrieve the type of the voucher.
      * @return voucherType The type of the voucher.
      */
@@ -218,6 +218,23 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     function getSponsoredAmount(bytes32 dealId) external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._sponsoredAmounts[dealId];
+    }
+
+    /**
+     * Retrieve the address of the voucher hub associated with the voucher.
+     * @return voucherHubAddress The address of the voucher hub.
+     */
+    function getVoucherHub() public view returns (address) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._voucherHub;
+    }
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view returns (address) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._owner;
     }
 
     /**

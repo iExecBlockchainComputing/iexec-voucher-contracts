@@ -375,8 +375,6 @@ describe('VoucherHub', function () {
             await expect(createVoucherTx)
                 .to.emit(voucherAsProxy, 'BeaconUpgraded')
                 .withArgs(await beacon.getAddress())
-                .to.emit(voucher, 'OwnershipTransferred')
-                .withArgs(ethers.ZeroAddress, voucherOwner1.address)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(
                     voucherAddress,

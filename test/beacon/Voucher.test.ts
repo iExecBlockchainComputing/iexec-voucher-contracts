@@ -234,18 +234,18 @@ describe('Voucher', function () {
         });
 
         it('Should not authorize account if sender is not the owner', async function () {
-            await expect(
-                voucherAsAnyone.authorizeAccount(anyone.address),
-            ).to.be.revertedWithCustomError(voucherAsOwner, 'OwnableUnauthorizedAccount');
+            await expect(voucherAsAnyone.authorizeAccount(anyone.address)).to.be.revertedWith(
+                'Voucher: sender is not owner',
+            );
         });
 
         it('Should not unauthorize account if sender is not the owner', async function () {
             await voucherAsOwner.authorizeAccount(anyone.address).then((tx) => tx.wait());
             expect(await voucherAsOwner.isAccountAuthorized(anyone.address)).to.be.true;
             // unauthorize the account
-            await expect(
-                voucherAsAnyone.unauthorizeAccount(anyone.address),
-            ).to.be.revertedWithCustomError(voucherAsOwner, 'OwnableUnauthorizedAccount');
+            await expect(voucherAsAnyone.unauthorizeAccount(anyone.address)).to.be.revertedWith(
+                'Voucher: sender is not owner',
+            );
             // Check that the state of mapping is not modified from.
             expect(await voucherAsOwner.isAccountAuthorized(anyone.address)).to.be.true;
         });
