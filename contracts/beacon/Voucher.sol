@@ -340,7 +340,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
                 // If the voucher did fully/partially sponsor the deal then mint voucher
                 // credits back.
                 voucherHub.refundVoucher(taskSponsoredAmount);
-                $._sponsoredAmounts[dealId] = dealSponsoredAmount - taskSponsoredAmount;
             }
             if (taskSponsoredAmount < taskPrice) {
                 // If the deal was not sponsored or partially sponsored
