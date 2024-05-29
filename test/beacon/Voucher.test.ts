@@ -27,10 +27,11 @@ const voucherValue = 100;
 const app = random();
 const dataset = random();
 const workerpool = random();
+const volume = 3;
 const appPrice = 1;
 const datasetPrice = 2;
 const workerpoolPrice = 3;
-const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice);
+const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice) * BigInt(volume);
 const dealId = ethers.id('deal');
 const initVoucherHubBalance = 1000; // enough to create couple vouchers
 
@@ -108,18 +109,20 @@ describe('Voucher', function () {
         voucherAsAnyone = voucher.connect(anyone);
         // Create mock orders.
         const mockOrder = createMockOrder();
-        appOrder = { ...mockOrder, app: app, appprice: appPrice };
+        appOrder = { ...mockOrder, app: app, appprice: appPrice, volume: volume };
         datasetOrder = {
             ...mockOrder,
             dataset: dataset,
             datasetprice: datasetPrice,
+            volume: volume,
         };
         workerpoolOrder = {
             ...mockOrder,
             workerpool: workerpool,
             workerpoolprice: workerpoolPrice,
+            volume: volume,
         };
-        requestOrder = { ...mockOrder, requester: requester.address };
+        requestOrder = { ...mockOrder, requester: requester.address, volume: volume };
         // TODO remove return and update tests.
         return {
             beacon,
@@ -326,6 +329,45 @@ describe('Voucher', function () {
             expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(0);
         });
 
+        it('Should match orders without dataset', async () => {
+            const mockOrder = createMockOrder();
+            const appOrder = { ...mockOrder, app: app, appprice: appPrice, volume: volume };
+            const workerpoolOrder = {
+                ...mockOrder,
+                workerpool: workerpool,
+                workerpoolprice: workerpoolPrice,
+                volume: volume,
+            };
+            const requestOrder = { ...mockOrder, requester: requester.address, volume: volume };
+            const datasetOrder = {
+                ...mockOrder,
+            };
+            const dealPriceNoDataset = BigInt(appPrice + workerpoolPrice) * BigInt(volume);
+
+            await addEligibleAssets([app, dataset, workerpool]);
+            const voucherInitialCreditBalance = await voucher.getBalance();
+            const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
+            const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
+
+            expect(
+                await voucher.matchOrders.staticCall(
+                    appOrder,
+                    datasetOrder,
+                    workerpoolOrder,
+                    requestOrder,
+                ),
+            ).to.be.equal(dealId);
+            await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
+                .to.emit(voucher, 'OrdersMatchedWithVoucher')
+                .withArgs(dealId);
+            expect(await voucher.getBalance())
+                .to.be.equal(voucherInitialCreditBalance - dealPriceNoDataset)
+                .to.be.equal(await getVoucherBalanceOnIexecPoco())
+                .to.be.equal(voucherInitialSrlcBalance - dealPriceNoDataset);
+            expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(requesterInitialSrlcBalance);
+            expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealPriceNoDataset);
+        });
+
         it('Should not match orders when non-sponsored amount is not transferable', async () => {
             await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
                 .to.be.revertedWithCustomError(iexecPocoInstance, 'ERC20InsufficientAllowance')
@@ -347,7 +389,8 @@ describe('Voucher', function () {
 
         describe('Match orders boost', async function () {
             it('Should match orders boost with full sponsored amount', async () => {
-                const sponsoredValue = BigInt(appPrice + datasetPrice + workerpoolPrice);
+                const sponsoredValue =
+                    BigInt(appPrice + datasetPrice + workerpoolPrice) * BigInt(volume);
                 await addEligibleAssets([app, dataset, workerpool]);
                 const voucherInitialCreditBalance = await voucher.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
@@ -419,8 +462,8 @@ describe('Voucher', function () {
             });
 
             it('Should match orders boost with partial sponsored amount', async () => {
-                const sponsoredValue = BigInt(datasetPrice + workerpoolPrice);
-                const noSponsoredValue = BigInt(appPrice); // app wont be eligible for sponsoring
+                const sponsoredValue = BigInt(datasetPrice + workerpoolPrice) * BigInt(volume);
+                const noSponsoredValue = BigInt(appPrice) * BigInt(volume); // app wont be eligible for sponsoring
                 await addEligibleAssets([dataset, workerpool]);
                 const voucherInitialCreditBalance = await voucher.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
