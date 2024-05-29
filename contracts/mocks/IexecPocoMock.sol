@@ -5,14 +5,12 @@ pragma solidity ^0.8.20;
 
 import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @notice Testing purposes only.
  */
 contract IexecPocoMock is ERC20 {
-    using Math for uint256;
     bool public shouldRevertOnSponsorMatchOrders = false;
     bool public shouldRevertOnSponsorMatchOrdersBoost = false;
 
