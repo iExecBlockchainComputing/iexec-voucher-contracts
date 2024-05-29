@@ -6,6 +6,7 @@ pragma solidity ^0.8.20;
 import {IexecLibCore_v5} from "@iexec/poco/contracts/libs/IexecLibCore_v5.sol";
 import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @notice Testing purposes only.
@@ -43,19 +44,20 @@ contract IexecPocoMock is ERC20 {
         if (shouldRevertOnSponsorMatchOrders) {
             revert("IexecPocoMock: Failed to sponsorMatchOrders");
         }
-        dealId = mockDealId;
         deal.requester = requestOrder.requester;
         deal.botSize = requestOrder.volume;
         deal.app.price = appOrder.appprice;
         deal.dataset.price = datasetOrder.datasetprice;
         deal.workerpool.price = workerpoolOrder.workerpoolprice;
         deal.sponsor = msg.sender;
-        task.dealid = dealId;
+        task.dealid = mockDealId;
         task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
-        _burn(
-            msg.sender,
-            appOrder.appprice + datasetOrder.datasetprice + workerpoolOrder.workerpoolprice
-        );
+        uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
+        uint256 dealPrice = (appOrder.appprice +
+            datasetOrder.datasetprice +
+            workerpoolOrder.workerpoolprice) * volume;
+        _burn(msg.sender, dealPrice);
+        dealId = mockDealId;
     }
 
     function sponsorMatchOrdersBoost(
@@ -67,7 +69,6 @@ contract IexecPocoMock is ERC20 {
         if (shouldRevertOnSponsorMatchOrdersBoost) {
             revert("IexecPocoMock: Failed to sponsorMatchOrdersBoost");
         }
-        dealId = mockDealId;
         dealBoost.requester = requestOrder.requester;
         dealBoost.botSize = uint16(requestOrder.volume);
         dealBoost.appPrice = uint96(appOrder.appprice);
@@ -75,10 +76,12 @@ contract IexecPocoMock is ERC20 {
         dealBoost.workerpoolPrice = uint96(workerpoolOrder.workerpoolprice);
         dealBoost.sponsor = msg.sender;
         task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
-        _burn(
-            msg.sender,
-            appOrder.appprice + datasetOrder.datasetprice + workerpoolOrder.workerpoolprice
-        );
+        uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
+        uint256 dealPrice = (appOrder.appprice +
+            datasetOrder.datasetprice +
+            workerpoolOrder.workerpoolprice) * volume;
+        _burn(msg.sender, dealPrice);
+        dealId = mockDealId;
     }
 
     function willRevertOnSponsorMatchOrders() external {
@@ -138,5 +141,18 @@ contract IexecPocoMock is ERC20 {
 
     function viewTask(bytes32) external view returns (IexecLibCore_v5.Task memory) {
         return task;
+    }
+
+    function computeDealVolume(
+        IexecLibOrders_v5.AppOrder calldata,
+        IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
+        IexecLibOrders_v5.WorkerpoolOrder calldata,
+        IexecLibOrders_v5.RequestOrder calldata requestOrder
+    ) public pure returns (uint256) {
+        return
+            Math.min(
+                datasetOrder.dataset != address(0) ? datasetOrder.volume : type(uint256).max,
+                requestOrder.volume
+            );
     }
 }

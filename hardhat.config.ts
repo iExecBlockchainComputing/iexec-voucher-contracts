@@ -18,10 +18,29 @@ const config: HardhatUserConfig = {
             {
                 version: '0.8.24',
                 settings: {
+                    /**
+                     * Enable Intermediate Representation (IR) to reduce `Stack too deep` occurrences
+                     * at compile time (e.g.: too many local variables in `matchOrdersBoost`).
+                     * https://hardhat.org/hardhat-runner/docs/reference/solidity-support#support-for-ir-based-codegen
+                     */
                     viaIR: true,
                     optimizer: {
                         enabled: true,
                         runs: 200,
+                        details: {
+                            yul: true,
+                            yulDetails: {
+                                /**
+                                 * Disable temporarily.
+                                 * Causes:
+                                 * YulException: Cannot swap Slot RET with Variable value10: too deep in the stack
+                                 * by 1 slots in [ RET value15 value14 value13 value12 value11 headStart value9
+                                 * value8 value7 value6 value5 value4 value3 value2 value1 value0 value10 ]
+                                 * memoryguard was present.
+                                 */
+                                // optimizerSteps: 'u',
+                            },
+                        },
                     },
                 },
             },

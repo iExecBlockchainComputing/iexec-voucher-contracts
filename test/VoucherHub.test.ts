@@ -18,7 +18,8 @@ const description = 'Early Access';
 const duration = 3600;
 const voucherValue = 100;
 const asset = random();
-const assetPrice = 1;
+const assetPrice = 1n;
+const volume = 3n;
 const initVoucherHubBalance = 10 * voucherValue; // arbitrary value, but should support couple voucher creations
 
 // TODO use global variables (signers, addresses, ...).
@@ -43,6 +44,7 @@ describe('VoucherHub', function () {
             anyone,
         ] = await ethers.getSigners();
         const beacon = await voucherUtils.deployBeaconAndImplementation(admin.address);
+
         iexecPocoInstance = await new IexecPocoMock__factory()
             .connect(admin)
             .deploy()
@@ -683,10 +685,19 @@ describe('VoucherHub', function () {
         });
 
         it('Should debit voucher', async function () {
-            const sponsoredValue = BigInt(assetPrice * 3);
+            const sponsoredValue = assetPrice * 3n * volume;
             const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
 
-            const args = [voucherType, asset, assetPrice, asset, assetPrice, asset, assetPrice] as [
+            const args = [
+                voucherType,
+                asset,
+                assetPrice,
+                asset,
+                assetPrice,
+                asset,
+                assetPrice,
+                volume,
+            ] as [
                 voucherTypeId: BigNumberish,
                 app: AddressLike,
                 appPrice: BigNumberish,
@@ -694,6 +705,7 @@ describe('VoucherHub', function () {
                 datasetPrice: BigNumberish,
                 workerpool: AddressLike,
                 workerpoolPrice: BigNumberish,
+                volume: BigNumberish,
             ];
             expect(await voucherHub.connect(voucher).debitVoucher.staticCall(...args)).to.be.equal(
                 sponsoredValue,
@@ -721,6 +733,7 @@ describe('VoucherHub', function () {
                         assetPrice,
                         asset,
                         assetPrice,
+                        volume,
                     );
             // The matcher 'emit' cannot be chained after or before 'reverted'
             // so we call several times to check different assertions
@@ -750,6 +763,7 @@ describe('VoucherHub', function () {
                         assetPrice,
                         asset,
                         assetPrice,
+                        volume,
                     ),
             ).to.not.emit(voucherHub, 'VoucherDebited');
             expect(await voucherHub.balanceOf(emptyVoucher.address))
@@ -772,6 +786,7 @@ describe('VoucherHub', function () {
                         assetPrice,
                         unEligibleAsset,
                         assetPrice,
+                        volume,
                     ),
             ).to.not.emit(voucherHub, 'VoucherDebited');
             expect(await voucherHub.balanceOf(voucher.address)).to.equal(initialCreditBalance);
@@ -783,7 +798,16 @@ describe('VoucherHub', function () {
             await expect(
                 voucherHub
                     .connect(anyone)
-                    .debitVoucher(999, asset, assetPrice, asset, assetPrice, asset, assetPrice),
+                    .debitVoucher(
+                        999,
+                        asset,
+                        assetPrice,
+                        asset,
+                        assetPrice,
+                        asset,
+                        assetPrice,
+                        volume,
+                    ),
             ).to.not.emit(voucherHub, 'VoucherDebited');
             expect(await voucherHub.balanceOf(anyone.address)).to.equal(initialCreditBalance);
         });
@@ -812,11 +836,20 @@ describe('VoucherHub', function () {
         });
 
         it('Should refund voucher', async function () {
-            const debitedValue = BigInt(assetPrice * 3);
+            const debitedValue = assetPrice * 3n * volume;
             const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
             await voucherHub
                 .connect(voucher)
-                .debitVoucher(voucherType, asset, assetPrice, asset, assetPrice, asset, assetPrice)
+                .debitVoucher(
+                    voucherType,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    volume,
+                )
                 .then((tx) => tx.wait());
             expect(await voucherHub.balanceOf(voucher.address)).equals(
                 voucherInitialCreditBalance - debitedValue,
@@ -831,11 +864,20 @@ describe('VoucherHub', function () {
         });
 
         it('Should not refund when sender is not a voucher', async function () {
-            const debitedValue = BigInt(assetPrice * 3);
+            const debitedValue = assetPrice * 3n * volume;
             const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
             await voucherHub
                 .connect(voucher)
-                .debitVoucher(voucherType, asset, assetPrice, asset, assetPrice, asset, assetPrice)
+                .debitVoucher(
+                    voucherType,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    volume,
+                )
                 .then((tx) => tx.wait());
             expect(await voucherHub.balanceOf(voucher.address)).equals(
                 voucherInitialCreditBalance - debitedValue,
