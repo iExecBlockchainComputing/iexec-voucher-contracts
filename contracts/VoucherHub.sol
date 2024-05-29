@@ -139,7 +139,6 @@ contract VoucherHub is
     }
 
     /**
-     * TODO add checks.
      *
      * Create new voucher for the specified account and call initialize function.
      * Only 1 voucher is allowed by account. This is guaranteed by "create2" mechanism
