@@ -50,7 +50,7 @@ contract IexecPocoMock is ERC20 {
         deal.dataset.price = datasetOrder.datasetprice;
         deal.workerpool.price = workerpoolOrder.workerpoolprice;
         deal.sponsor = msg.sender;
-        task.dealid = dealId;
+        task.dealid = mockDealId;
         task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
         uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
         uint256 dealPrice = (appOrder.appprice +
@@ -144,11 +144,11 @@ contract IexecPocoMock is ERC20 {
     }
 
     function computeDealVolume(
-        IexecLibOrders_v5.AppOrder calldata appOrder,
+        IexecLibOrders_v5.AppOrder calldata,
         IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
-        IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
+        IexecLibOrders_v5.WorkerpoolOrder calldata,
         IexecLibOrders_v5.RequestOrder calldata requestOrder
-    ) public view returns (uint256) {
+    ) public pure returns (uint256) {
         return
             Math.min(
                 datasetOrder.dataset != address(0) ? datasetOrder.volume : type(uint256).max,

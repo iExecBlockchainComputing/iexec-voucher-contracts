@@ -18,8 +18,8 @@ const description = 'Early Access';
 const duration = 3600;
 const voucherValue = 100;
 const asset = random();
-const assetPrice = 1;
-const volume = 3;
+const assetPrice = 1n;
+const volume = 3n;
 const initVoucherHubBalance = 10 * voucherValue; // arbitrary value, but should support couple voucher creations
 
 // TODO use global variables (signers, addresses, ...).
@@ -685,7 +685,7 @@ describe('VoucherHub', function () {
         });
 
         it('Should debit voucher', async function () {
-            const sponsoredValue = BigInt(assetPrice * 3) * BigInt(volume);
+            const sponsoredValue = assetPrice * 3n * volume;
             const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
 
             const args = [
@@ -836,11 +836,20 @@ describe('VoucherHub', function () {
         });
 
         it('Should refund voucher', async function () {
-            const debitedValue = BigInt(assetPrice * 3);
+            const debitedValue = assetPrice * 3n * volume;
             const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
             await voucherHub
                 .connect(voucher)
-                .debitVoucher(voucherType, asset, assetPrice, asset, assetPrice, asset, assetPrice)
+                .debitVoucher(
+                    voucherType,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    volume,
+                )
                 .then((tx) => tx.wait());
             expect(await voucherHub.balanceOf(voucher.address)).equals(
                 voucherInitialCreditBalance - debitedValue,
@@ -855,11 +864,20 @@ describe('VoucherHub', function () {
         });
 
         it('Should not refund when sender is not a voucher', async function () {
-            const debitedValue = BigInt(assetPrice * 3);
+            const debitedValue = assetPrice * 3n * volume;
             const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
             await voucherHub
                 .connect(voucher)
-                .debitVoucher(voucherType, asset, assetPrice, asset, assetPrice, asset, assetPrice)
+                .debitVoucher(
+                    voucherType,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    volume,
+                )
                 .then((tx) => tx.wait());
             expect(await voucherHub.balanceOf(voucher.address)).equals(
                 voucherInitialCreditBalance - debitedValue,
