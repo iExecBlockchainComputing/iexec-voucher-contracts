@@ -588,7 +588,7 @@ describe('Voucher', function () {
                     .to.be.equal(voucherRlcBalancePreClaim + taskPrice);
                 // Requester balance should stay unchanged.
                 expect(requesterRlcBalancePostClaim).to.be.equal(requesterRlcBalancePreClaim);
-                // Sponsored amount not should decrease
+                // Sponsored amount should stay unchanged
                 expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealSponsoredAmount);
             }
         });
@@ -642,10 +642,8 @@ describe('Voucher', function () {
                 expect(requesterRlcBalancePostClaim).to.be.equal(
                     requesterRlcBalancePreClaim + taskNonSponsoredAmount,
                 );
-                // Sponsored amount should decrease
-                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(
-                    dealSponsoredAmount - taskSponsoredAmount,
-                );
+                // Sponsored amount should stay unchanged
+                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealSponsoredAmount);
             }
         });
 
@@ -818,10 +816,8 @@ describe('Voucher', function () {
                     .to.be.equal(voucherRlcBalancePreClaim + taskPrice);
                 // Requester balance should stay unchanged.
                 expect(requesterRlcBalancePostClaim).to.be.equal(requesterRlcBalancePreClaim);
-                // Sponsored amount should decrease
-                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(
-                    dealSponsoredAmount - taskSponsoredAmount,
-                );
+                // Sponsored amount should stay unchanged
+                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealSponsoredAmount);
             }
         });
 
@@ -861,10 +857,12 @@ describe('Voucher', function () {
                     .to.be.equal(voucherRlcBalancePreClaim + taskPrice);
                 // Requester balance should stay unchanged.
                 expect(requesterRlcBalancePostClaim).to.be.equal(requesterRlcBalancePreClaim);
+                // Sponsored amount should stay unchanged
+                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealSponsoredAmount);
 
                 // Second claim should revert.
                 await expect(claimBoostOrClassic()).to.be.revertedWith(
-                    'Voucher: task already claimed',
+                    'Voucher: task already refunded',
                 );
             }
         });
