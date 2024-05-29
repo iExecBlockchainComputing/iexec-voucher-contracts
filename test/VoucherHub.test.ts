@@ -18,9 +18,11 @@ const description = 'Early Access';
 const duration = 3600;
 const voucherValue = 100;
 const asset = random();
-const assetPrice = 1;
-const volume = 3;
+const assetPrice = 1n;
+const volume = 3n;
 const initVoucherHubBalance = 10 * voucherValue; // arbitrary value, but should support couple voucher creations
+
+// TODO use global variables (signers, addresses, ...).
 
 describe('VoucherHub', function () {
     let iexecPoco: string;
@@ -683,7 +685,7 @@ describe('VoucherHub', function () {
         });
 
         it('Should debit voucher', async function () {
-            const sponsoredValue = BigInt(assetPrice * 3) * BigInt(volume);
+            const sponsoredValue = assetPrice * 3n * volume;
             const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
 
             const args = [
@@ -808,6 +810,83 @@ describe('VoucherHub', function () {
                     ),
             ).to.not.emit(voucherHub, 'VoucherDebited');
             expect(await voucherHub.balanceOf(anyone.address)).to.equal(initialCreditBalance);
+        });
+    });
+
+    describe('Refund voucher', function () {
+        let [voucherOwner1, voucher, anyone]: SignerWithAddress[] = [];
+        let voucherHub: VoucherHub;
+
+        beforeEach(async function () {
+            ({ voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture));
+            // Create voucher type
+            await voucherHubWithAssetEligibilityManagerSigner
+                .createVoucherType(description, duration)
+                .then((tx) => tx.wait());
+            // Add eligible asset
+            await voucherHubWithAssetEligibilityManagerSigner
+                .addEligibleAsset(voucherType, asset)
+                .then((tx) => tx.wait());
+            // Create voucher
+            voucher = await voucherHubWithVoucherManagerSigner
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait())
+                .then(() => voucherHub.getVoucher(voucherOwner1))
+                .then((voucherAddress) => ethers.getImpersonatedSigner(voucherAddress));
+        });
+
+        it('Should refund voucher', async function () {
+            const debitedValue = assetPrice * 3n * volume;
+            const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
+            await voucherHub
+                .connect(voucher)
+                .debitVoucher(
+                    voucherType,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    volume,
+                )
+                .then((tx) => tx.wait());
+            expect(await voucherHub.balanceOf(voucher.address)).equals(
+                voucherInitialCreditBalance - debitedValue,
+            );
+            // Refund voucher.
+            const refundAmount = debitedValue / 2n; // any amount < sponsoredValue
+            await expect(voucherHub.connect(voucher).refundVoucher(refundAmount))
+                .to.emit(voucherHub, 'Transfer')
+                .withArgs(ethers.ZeroAddress, voucher.address, refundAmount)
+                .to.emit(voucherHub, 'VoucherRefunded')
+                .withArgs(voucher.address, refundAmount);
+        });
+
+        it('Should not refund when sender is not a voucher', async function () {
+            const debitedValue = assetPrice * 3n * volume;
+            const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.address);
+            await voucherHub
+                .connect(voucher)
+                .debitVoucher(
+                    voucherType,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    volume,
+                )
+                .then((tx) => tx.wait());
+            expect(await voucherHub.balanceOf(voucher.address)).equals(
+                voucherInitialCreditBalance - debitedValue,
+            );
+            // Refund voucher.
+            const refundAmount = debitedValue / 2n; // any amount < sponsoredValue
+            await expect(voucherHub.connect(anyone).refundVoucher(refundAmount)).to.be.revertedWith(
+                'VoucherHub: sender is not voucher',
+            );
         });
     });
 

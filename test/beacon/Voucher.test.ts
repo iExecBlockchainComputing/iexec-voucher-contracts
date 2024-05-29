@@ -27,12 +27,17 @@ const voucherValue = 100;
 const app = random();
 const dataset = random();
 const workerpool = random();
-const volume = 3;
-const appPrice = 1;
-const datasetPrice = 2;
-const workerpoolPrice = 3;
-const dealPrice = BigInt(appPrice + datasetPrice + workerpoolPrice) * BigInt(volume);
+const appPrice = 1n;
+const datasetPrice = 2n;
+const workerpoolPrice = 3n;
+const volume = 3n;
+const taskPrice = appPrice + datasetPrice + workerpoolPrice;
+const dealPrice = taskPrice * volume;
 const dealId = ethers.id('deal');
+const taskIndex = 0;
+const taskId = ethers.keccak256(
+    ethers.AbiCoder.defaultAbiCoder().encode(['bytes32', 'uint256'], [dealId, taskIndex]),
+);
 const initVoucherHubBalance = 1000; // enough to create couple vouchers
 
 describe('Voucher', function () {
@@ -58,6 +63,7 @@ describe('Voucher', function () {
         voucherAsOwner,
         voucherAsAnyone,
     ]: Voucher[] = [];
+    let voucherAddress: string;
     let voucherCreationTxReceipt: ContractTransactionReceipt;
     let [appOrder, datasetOrder, workerpoolOrder, requestOrder]: ReturnType<
         typeof createMockOrder
@@ -99,12 +105,12 @@ describe('Voucher', function () {
             .then((tx) => tx.wait());
         // Create one voucher.
         await voucherHubAsAssetEligibilityManager.createVoucherType(description, duration);
-        const voucherAddress1 = await voucherHubAsVoucherCreationManager
+        voucherAddress = await voucherHubAsVoucherCreationManager
             .createVoucher(voucherOwner1, voucherType, voucherValue)
             .then((tx) => tx.wait())
             .then((tx) => (voucherCreationTxReceipt = tx!))
             .then(() => voucherHub.getVoucher(voucherOwner1));
-        voucher = Voucher__factory.connect(voucherAddress1, voucherOwner1);
+        voucher = Voucher__factory.connect(voucherAddress, voucherOwner1);
         voucherAsOwner = voucher.connect(voucherOwner1);
         voucherAsAnyone = voucher.connect(anyone);
         // Create mock orders.
@@ -123,18 +129,6 @@ describe('Voucher', function () {
             volume: volume,
         };
         requestOrder = { ...mockOrder, requester: requester.address, volume: volume };
-        // TODO remove return and update tests.
-        return {
-            beacon,
-            voucherHub,
-            admin,
-            assetEligibilityManager,
-            voucherManager,
-            voucherOwner1,
-            voucherOwner2,
-            requester,
-            anyone,
-        };
     }
 
     describe('Upgrade', function () {
@@ -206,8 +200,7 @@ describe('Voucher', function () {
         });
 
         it('Should not upgrade voucher when unauthorized', async function () {
-            const { beacon, anyone } = await loadFixture(deployFixture);
-            // Save implementation.
+            // Save implementation address.
             const initialImplementation = await beacon.implementation();
             // Try to upgrade beacon.
             const voucherImplV2Factory = await ethers.getContractFactory('VoucherV2Mock', anyone);
@@ -329,6 +322,10 @@ describe('Voucher', function () {
             expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(0);
         });
 
+        it('TODO - Should match orders with partial sponsored amount', async () => {
+            // TODO
+        });
+
         it('Should match orders without dataset', async () => {
             const mockOrder = createMockOrder();
             const appOrder = { ...mockOrder, app: app, appprice: appPrice, volume: volume };
@@ -342,7 +339,7 @@ describe('Voucher', function () {
             const datasetOrder = {
                 ...mockOrder,
             };
-            const dealPriceNoDataset = BigInt(appPrice + workerpoolPrice) * BigInt(volume);
+            const dealPriceNoDataset = (appPrice + workerpoolPrice) * volume;
 
             await addEligibleAssets([app, dataset, workerpool]);
             const voucherInitialCreditBalance = await voucher.getBalance();
@@ -389,8 +386,7 @@ describe('Voucher', function () {
 
         describe('Match orders boost', async function () {
             it('Should match orders boost with full sponsored amount', async () => {
-                const sponsoredValue =
-                    BigInt(appPrice + datasetPrice + workerpoolPrice) * BigInt(volume);
+                const sponsoredValue = (appPrice + datasetPrice + workerpoolPrice) * volume;
                 await addEligibleAssets([app, dataset, workerpool]);
                 const voucherInitialCreditBalance = await voucher.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
@@ -462,8 +458,8 @@ describe('Voucher', function () {
             });
 
             it('Should match orders boost with partial sponsored amount', async () => {
-                const sponsoredValue = BigInt(datasetPrice + workerpoolPrice) * BigInt(volume);
-                const noSponsoredValue = BigInt(appPrice) * BigInt(volume); // app wont be eligible for sponsoring
+                const sponsoredValue = (datasetPrice + workerpoolPrice) * volume;
+                const noSponsoredValue = appPrice * volume; // app wont be eligible for sponsoring
                 await addEligibleAssets([dataset, workerpool]);
                 const voucherInitialCreditBalance = await voucher.getBalance();
                 const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
@@ -580,11 +576,97 @@ describe('Voucher', function () {
         });
     });
 
+    describe('Claim', async function () {
+        const voucherMatchOrders = async () =>
+            await voucher
+                .matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder)
+                .then((tx: any) => tx.wait());
+
+        const voucherMatchOrdersBoost = async () =>
+            await voucher
+                .matchOrdersBoost(appOrder, datasetOrder, workerpoolOrder, requestOrder)
+                .then((tx: any) => tx.wait());
+
+        const claim = () => voucher.claim(taskId);
+        const claimBoost = () => voucher.claimBoost(dealId, taskIndex);
+
+        describe('Should claim task when deal is fully sponsored', async function () {
+            it('Classic', async () => await runTest(voucherMatchOrders, claim));
+            it('Boost', async () => await runTest(voucherMatchOrdersBoost, claimBoost));
+
+            async function runTest(matchOrdersFunction: any, claimBoostOrClassic: any) {
+                await addEligibleAssets([app, dataset, workerpool]);
+                await matchOrdersFunction();
+                const {
+                    voucherCreditBalance: voucherCreditBalancePreClaim,
+                    voucherRlcBalance: voucherRlcBalancePreClaim,
+                    requesterRlcBalance: requesterRlcBalancePreClaim,
+                } = await getVoucherAndRequesterBalances();
+                // The voucher should've fully sponsored the deal.
+                const dealSponsoredAmount = await voucher.getSponsoredAmount(dealId);
+                const taskSponsoredAmount = dealSponsoredAmount / volume;
+                expect(dealSponsoredAmount).to.be.equal(dealPrice);
+                expect(taskSponsoredAmount).to.be.equal(taskPrice);
+
+                // Claim task
+                await expect(claimBoostOrClassic())
+                    .to.emit(voucherHub, 'VoucherRefunded')
+                    .withArgs(voucherAddress, taskSponsoredAmount)
+                    .to.emit(voucher, 'TaskClaimedWithVoucher')
+                    .withArgs(taskId);
+                const {
+                    voucherCreditBalance: voucherCreditBalancePostClaim,
+                    voucherRlcBalance: voucherRlcBalancePostClaim,
+                    requesterRlcBalance: requesterRlcBalancePostClaim,
+                } = await getVoucherAndRequesterBalances();
+                // Voucher credit and RLC balances should increase while staying equal.
+                expect(voucherCreditBalancePostClaim)
+                    .to.be.equal(voucherCreditBalancePreClaim + taskPrice)
+                    .to.be.equal(voucherRlcBalancePostClaim)
+                    .to.be.equal(voucherRlcBalancePreClaim + taskPrice);
+                // Requester balance should stay unchanged.
+                expect(requesterRlcBalancePostClaim).to.be.equal(requesterRlcBalancePreClaim);
+                // Sponsored amount not should decrease
+                expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealSponsoredAmount);
+            }
+        });
+
+        describe('Should claim task when deal is partially sponsored', async () => {});
+
+        // TODO when volume can be > 1
+        describe('Should claim task when deal is partially sponsored and sponsored amount is not divisible by volume', async () => {});
+
+        describe('Should claim task when deal is not sponsored but matched by voucher', async () => {});
+
+        describe('Should claim task when deal is not matched by voucher', async () => {});
+
+        describe('Should claim task when already claimed on PoCo', async () => {});
+
+        describe('Should not claim task twice', async () => {});
+
+        describe('Should not claim task when deal not found', async () => {});
+
+        describe('Should not claim task when task not found', async () => {});
+
+        describe('Should not claim task when PoCo claim reverts', async () => {});
+    });
+
     async function addEligibleAssets(assets: string[]) {
         for (const asset of assets) {
             await voucherHubAsAssetEligibilityManager
                 .addEligibleAsset(voucherType, asset)
                 .then((tx) => tx.wait());
         }
+    }
+
+    async function getVoucherAndRequesterBalances() {
+        const voucherCreditBalance = await voucher.getBalance();
+        const voucherRlcBalance = await iexecPocoInstance.balanceOf(voucherAddress);
+        const requesterRlcBalance = await iexecPocoInstance.balanceOf(requester.address);
+        return {
+            voucherCreditBalance,
+            voucherRlcBalance,
+            requesterRlcBalance,
+        };
     }
 });
