@@ -58,19 +58,19 @@ contract Voucher is Initializable, IVoucher {
 
     /**
      * Initialize implementation contract.
-     * @param owner The owner of the contract.
+     * @param voucherOwner The owner of the contract.
      * @param voucherTypeId The type Id of the voucher.
      * @param expiration The expiration timestamp of the voucher.
      * @param voucherHub The address of the voucher hub.
      */
     function initialize(
-        address owner,
+        address voucherOwner,
         address voucherHub,
         uint256 expiration,
         uint256 voucherTypeId
     ) external initializer {
         VoucherStorage storage $ = _getVoucherStorage();
-        $._owner = owner;
+        $._owner = voucherOwner;
         $._voucherHub = voucherHub;
         $._expiration = expiration;
         $._type = voucherTypeId;
