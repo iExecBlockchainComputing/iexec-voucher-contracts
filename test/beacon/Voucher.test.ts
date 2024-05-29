@@ -326,6 +326,30 @@ describe('Voucher', function () {
             expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(0);
         });
 
+        it('Should match orders with an authorized account', async () => {
+            await addEligibleAssets([app, dataset, workerpool]);
+            await voucherAsOwner.authorizeAccount(anyone.address).then((tx) => tx.wait());
+            await expect(
+                voucherAsAnyone.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder),
+            )
+                .to.emit(voucher, 'OrdersMatchedWithVoucher')
+                .withArgs(dealId);
+        });
+
+        it('Should not match orders when sender is not allowed', async () => {
+            await expect(
+                voucherAsAnyone.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder),
+            ).to.be.revertedWith('Voucher: sender is not authorized');
+        });
+
+        it('Should not match orders when voucher is expired', async () => {
+            const expirationDate = await voucher.getExpiration();
+            await time.setNextBlockTimestamp(expirationDate);
+            await expect(
+                voucherAsOwner.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder),
+            ).to.be.revertedWith('Voucher: voucher is expired');
+        });
+
         it('Should not match orders when non-sponsored amount is not transferable', async () => {
             await expect(voucher.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder))
                 .to.be.revertedWithCustomError(iexecPocoInstance, 'ERC20InsufficientAllowance')
