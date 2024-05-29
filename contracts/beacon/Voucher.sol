@@ -31,9 +31,6 @@ contract Voucher is Initializable, IVoucher {
         address _owner;
     }
 
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
     modifier onlyOwner() {
         require(msg.sender == owner(), "Voucher: sender is not owner");
         _;
