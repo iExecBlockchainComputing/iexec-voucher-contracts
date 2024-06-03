@@ -23,7 +23,6 @@ jobs:
           slug: iExecBlockchainComputing/iexec-voucher-contracts
       - name: Run static analysis with slither
         uses: crytic/slither-action@v0.4.0
-        continue-on-error: true
         with:
           target: "contracts/beacon/"
           slither-config: 'slither.config.json'
