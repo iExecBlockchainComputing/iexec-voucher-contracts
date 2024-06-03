@@ -750,7 +750,7 @@ describe('Voucher', function () {
 
             async function runTest(matchOrdersBoostOrClassic: any, claimBoostOrClassic: any) {
                 // Assets are not eligible.
-                // Deposit dealPrice amount for requester and approve voucherAsOwner.
+                // Deposit dealPrice amount for requester and approve voucher.
                 await iexecPocoInstance
                     .transfer(requester, dealPrice)
                     .then((tx) => tx.wait())
