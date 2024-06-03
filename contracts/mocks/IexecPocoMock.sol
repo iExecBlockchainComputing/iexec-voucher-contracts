@@ -100,7 +100,7 @@ contract IexecPocoMock is ERC20 {
         if (shouldRevertOnClaim) {
             revert("IexecPocoMock: Failed to claim");
         }
-        // This simulates non existent tasks.
+        // This simulates non existent task/deal.
         if (taskId != mockTaskId) {
             revert(); // no reason, same as PoCo.
         }
@@ -108,12 +108,12 @@ contract IexecPocoMock is ERC20 {
         _mint(deal.sponsor, deal.app.price + deal.dataset.price + deal.workerpool.price);
     }
 
-    function claimBoost(bytes32, uint256 taskIndex) external {
+    function claimBoost(bytes32 dealId, uint256 taskIndex) external {
         if (shouldRevertOnClaim) {
             revert("IexecPocoMock: Failed to claim boost");
         }
-        // This simulates non existent tasks.
-        if (taskIndex != mockTaskIndex) {
+        // This simulates non existent task/deal.
+        if (dealId != mockDealId || taskIndex != mockTaskIndex) {
             revert("PocoBoost: Unknown task"); // same as PoCo.
         }
         task.status = IexecLibCore_v5.TaskStatusEnum.FAILED;
