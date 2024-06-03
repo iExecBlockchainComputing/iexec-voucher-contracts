@@ -247,14 +247,6 @@ contract Voucher is Initializable, IVoucher {
     }
 
     /**
-     * @dev Returns the address of the current owner.
-     */
-    function owner() public view returns (address) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return $._owner;
-    }
-
-    /**
      * Retrieve the expiration timestamp of the voucher.
      * @return expirationTimestamp The expiration timestamp.
      */
@@ -296,6 +288,14 @@ contract Voucher is Initializable, IVoucher {
     function getSponsoredAmount(bytes32 dealId) external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._sponsoredAmounts[dealId];
+    }
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view returns (address) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._owner;
     }
 
     /**
