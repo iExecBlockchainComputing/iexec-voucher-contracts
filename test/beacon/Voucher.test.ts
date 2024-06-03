@@ -695,9 +695,9 @@ describe('Voucher', function () {
                 voucher = await voucherHubAsVoucherCreationManager
                     .createVoucher(voucherOwner2, voucherType, smallVoucherValue)
                     .then((tx) => tx.wait())
-                    .then(() => voucherHub.getVoucher(voucherOwner1))
+                    .then(() => voucherHub.getVoucher(voucherOwner2))
                     .then((voucherAddress) =>
-                        Voucher__factory.connect(voucherAddress, voucherOwner1),
+                        Voucher__factory.connect(voucherAddress, voucherOwner2),
                     );
             }
         });
