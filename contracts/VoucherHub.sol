@@ -147,7 +147,6 @@ contract VoucherHub is
     }
 
     /**
-     * TODO add checks.
      *
      * Create new voucher for the specified account and call initialize function.
      * Only 1 voucher is allowed by account. This is guaranteed by "create2" mechanism
@@ -237,12 +236,10 @@ contract VoucherHub is
         emit VoucherRefunded(msg.sender, amount);
     }
 
-    // TODO make view functions external whenever possible.
-
     /**
      * Get iExec Poco address used by vouchers.
      */
-    function getIexecPoco() public view returns (address) {
+    function getIexecPoco() external view returns (address) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $._iexecPoco;
     }
@@ -250,25 +247,15 @@ contract VoucherHub is
     /**
      * Get voucher beacon address.
      */
-    function getVoucherBeacon() public view returns (address) {
+    function getVoucherBeacon() external view returns (address) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $._voucherBeacon;
     }
 
     /**
-     * Get the voucher type details by ID.
-     */
-    function getVoucherType(
-        uint256 id
-    ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.voucherTypes[id];
-    }
-
-    /**
      * Get voucher types count.
      */
-    function getVoucherTypeCount() public view returns (uint256) {
+    function getVoucherTypeCount() external view returns (uint256) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $.voucherTypes.length;
     }
@@ -281,7 +268,7 @@ contract VoucherHub is
     function isAssetEligibleToMatchOrdersSponsoring(
         uint256 voucherTypeId,
         address asset
-    ) public view returns (bool) {
+    ) external view returns (bool) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $.matchOrdersEligibility[voucherTypeId][asset];
     }
@@ -291,13 +278,23 @@ contract VoucherHub is
      * Returns address(0) if voucher is not found.
      * @param account voucher's owner address.
      */
-    function getVoucher(address account) public view returns (address voucherAddress) {
+    function getVoucher(address account) external view returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         voucherAddress = Create2.computeAddress(
             _getCreate2Salt(account), // salt
             $._voucherCreationCodeHash // bytecode hash
         );
         return voucherAddress.code.length > 0 ? voucherAddress : address(0);
+    }
+
+    /**
+     * Get the voucher type details by ID.
+     */
+    function getVoucherType(
+        uint256 id
+    ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $.voucherTypes[id];
     }
 
     function _authorizeUpgrade(

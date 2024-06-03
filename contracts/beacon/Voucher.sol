@@ -12,6 +12,7 @@ import {IexecPocoBoost} from "@iexec/poco/contracts/modules/interfaces/IexecPoco
 import {IexecPocoBoostAccessors} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoostAccessors.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IVoucherHub} from "../IVoucherHub.sol";
 import {IVoucher} from "./IVoucher.sol";
 
@@ -21,7 +22,7 @@ import {IVoucher} from "./IVoucher.sol";
  * @title Implementation of the voucher contract.
  * Deployed along the Beacon contract using "Upgrades" plugin of OZ.
  */
-contract Voucher is OwnableUpgradeable, IVoucher {
+contract Voucher is Initializable, IVoucher {
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
     // & ~bytes32(uint256(0xff));
     bytes32 private constant VOUCHER_STORAGE_LOCATION =
@@ -29,6 +30,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
 
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
+        address _owner;
         address _voucherHub;
         uint256 _expiration;
         uint256 _type;
@@ -36,6 +38,11 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         mapping(bytes32 dealId => uint256) _sponsoredAmounts;
         // Save refunded tasks to disable replay attacks.
         mapping(bytes32 taskId => bool) _refundedTasks;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner(), "Voucher: sender is not owner");
+        _;
     }
 
     modifier onlyAuthorized() {
@@ -60,23 +67,22 @@ contract Voucher is OwnableUpgradeable, IVoucher {
 
     /**
      * Initialize implementation contract.
-     * @param owner The owner of the contract.
+     * @param voucherOwner The owner of the contract.
      * @param voucherTypeId The type Id of the voucher.
      * @param expiration The expiration timestamp of the voucher.
      * @param voucherHub The address of the voucher hub.
      */
     function initialize(
-        address owner,
+        address voucherOwner,
         address voucherHub,
         uint256 expiration,
         uint256 voucherTypeId
     ) external initializer {
-        __Ownable_init(owner);
         VoucherStorage storage $ = _getVoucherStorage();
+        $._owner = voucherOwner;
         $._voucherHub = voucherHub;
         $._expiration = expiration;
         $._type = voucherTypeId;
-        // TODO: deposit SRLC.
     }
 
     /**
@@ -112,9 +118,7 @@ contract Voucher is OwnableUpgradeable, IVoucher {
         IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
         IexecLibOrders_v5.RequestOrder calldata requestOrder
-    ) external returns (bytes32 dealId) {
-        // TODO add onlyAuthorized
-        // TODO check expiration
+    ) external onlyAuthorized onlyNotExpired returns (bytes32 dealId) {
         VoucherStorage storage $ = _getVoucherStorage();
         IVoucherHub voucherHub = IVoucherHub($._voucherHub);
         address iexecPoco = voucherHub.getIexecPoco();
@@ -243,12 +247,12 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     }
 
     /**
-     * Retrieve the address of the voucher hub associated with the voucher.
-     * @return voucherHubAddress The address of the voucher hub.
+     * Retrieve the expiration timestamp of the voucher.
+     * @return expirationTimestamp The expiration timestamp.
      */
-    function getVoucherHub() public view returns (address) {
+    function getExpiration() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
-        return $._voucherHub;
+        return $._expiration;
     }
 
     /**
@@ -258,15 +262,6 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     function getType() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._type;
-    }
-
-    /**
-     * Retrieve the expiration timestamp of the voucher.
-     * @return expirationTimestamp The expiration timestamp.
-     */
-    function getExpiration() external view returns (uint256) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return $._expiration;
     }
 
     /**
@@ -293,6 +288,23 @@ contract Voucher is OwnableUpgradeable, IVoucher {
     function getSponsoredAmount(bytes32 dealId) external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._sponsoredAmounts[dealId];
+    }
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view returns (address) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._owner;
+    }
+
+    /**
+     * Retrieve the address of the voucher hub associated with the voucher.
+     * @return voucherHubAddress The address of the voucher hub.
+     */
+    function getVoucherHub() public view returns (address) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._voucherHub;
     }
 
     /**
