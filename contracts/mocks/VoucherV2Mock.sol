@@ -32,7 +32,7 @@ contract VoucherV2Mock is Initializable {
      * Initialize new implementation contract.
      * @param newStateVariable test variable.
      */
-    function initializeV2(uint256 newStateVariable) external {
+    function initializeV2(uint256 newStateVariable) external reinitializer(2) {
         VoucherStorage storage $ = _getVoucherStorage();
         $._newStateVariable = newStateVariable;
     }
