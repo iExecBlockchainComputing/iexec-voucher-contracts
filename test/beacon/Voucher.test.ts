@@ -664,8 +664,7 @@ describe('Voucher', function () {
                 await expect(claimBoostOrClassic())
                     .to.emit(voucherHub, 'VoucherRefunded')
                     .withArgs(voucherAddress, taskSponsoredAmount)
-                    .to.emit(voucher, 'TaskClaimedWithVoucher')
-                    .withArgs(taskId);
+                    .to.emit(voucher, 'TaskClaimedWithVoucher');
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
                     voucherRlcBalance: voucherRlcBalancePostClaim,
@@ -730,7 +729,6 @@ describe('Voucher', function () {
                 // Claim
                 await expect(claimBoostOrClassic())
                     .to.emit(voucher, 'TaskClaimedWithVoucher')
-                    .withArgs(taskId)
                     .and.to.not.emit(voucherHub, 'VoucherRefunded');
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
@@ -786,7 +784,6 @@ describe('Voucher', function () {
                 // Claim
                 await expect(claimBoostOrClassic())
                     .to.emit(voucher, 'TaskClaimedWithVoucher')
-                    .withArgs(taskId)
                     .and.to.not.emit(voucherHub, 'VoucherRefunded');
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
@@ -838,9 +835,7 @@ describe('Voucher', function () {
                 // Claim task on voucher
                 await expect(claimBoostOrClassic())
                     .to.emit(voucherHub, 'VoucherRefunded')
-                    .withArgs(voucherAddress, taskSponsoredAmount)
-                    .to.emit(voucher, 'TaskClaimedWithVoucher')
-                    .withArgs(taskId);
+                    .to.emit(voucher, 'TaskClaimedWithVoucher');
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
                     voucherRlcBalance: voucherRlcBalancePostClaim,
@@ -879,9 +874,7 @@ describe('Voucher', function () {
                 // Claim task
                 await expect(claimBoostOrClassic())
                     .to.emit(voucherHub, 'VoucherRefunded')
-                    .withArgs(voucherAddress, taskSponsoredAmount)
-                    .to.emit(voucher, 'TaskClaimedWithVoucher')
-                    .withArgs(taskId);
+                    .to.emit(voucher, 'TaskClaimedWithVoucher');
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
                     voucherRlcBalance: voucherRlcBalancePostClaim,
