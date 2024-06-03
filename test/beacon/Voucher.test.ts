@@ -99,7 +99,7 @@ describe('Voucher', function () {
         await iexecPocoInstance
             .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
             .then((tx) => tx.wait());
-        // Create one voucherAsOwner.
+        // Create one voucher.
         await voucherHubAsAssetEligibilityManager.createVoucherType(description, duration);
         voucherAddress = await voucherHubAsVoucherCreationManager
             .createVoucher(voucherOwner1, voucherType, voucherValue)
