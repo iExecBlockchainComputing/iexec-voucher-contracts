@@ -247,12 +247,11 @@ contract Voucher is Initializable, IVoucher {
     }
 
     /**
-     * Retrieve the type of the voucher.
-     * @return voucherType The type of the voucher.
+     * @dev Returns the address of the current owner.
      */
-    function getType() external view returns (uint256) {
+    function owner() public view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
-        return $._type;
+        return $._owner;
     }
 
     /**
@@ -262,6 +261,15 @@ contract Voucher is Initializable, IVoucher {
     function getExpiration() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._expiration;
+    }
+
+    /**
+     * Retrieve the type of the voucher.
+     * @return voucherType The type of the voucher.
+     */
+    function getType() external view returns (uint256) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._type;
     }
 
     /**
@@ -297,14 +305,6 @@ contract Voucher is Initializable, IVoucher {
     function getVoucherHub() public view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._voucherHub;
-    }
-
-    /**
-     * @dev Returns the address of the current owner.
-     */
-    function owner() public view returns (address) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return $._owner;
     }
 
     /**
