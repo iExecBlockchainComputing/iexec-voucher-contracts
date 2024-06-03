@@ -3,6 +3,14 @@
 
 import { ethers } from 'hardhat';
 
+export enum TaskStatusEnum {
+    UNSET,
+    ACTIVE,
+    REVEALING,
+    COMPLETED,
+    FAILED,
+}
+
 export function createMockOrder() {
     return {
         app: ethers.ZeroAddress,

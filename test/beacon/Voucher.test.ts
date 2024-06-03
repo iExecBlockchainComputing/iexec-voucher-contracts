@@ -18,7 +18,7 @@ import {
     Voucher__factory,
 } from '../../typechain-types';
 import { random } from '../utils/address-utils';
-import { createMockOrder } from '../utils/poco-utils';
+import { TaskStatusEnum, createMockOrder } from '../utils/poco-utils';
 
 const voucherType = 0;
 const duration = 3600;
@@ -628,6 +628,10 @@ describe('Voucher', function () {
                 expect(requesterRlcBalancePostClaim).to.be.equal(requesterRlcBalancePreClaim);
                 // Sponsored amount should stay unchanged
                 expect(await voucher.getSponsoredAmount(dealId)).to.be.equal(dealSponsoredAmount);
+                // Check task status.
+                expect((await iexecPocoInstance.viewTask(taskId)).status).to.equal(
+                    TaskStatusEnum.FAILED,
+                );
             }
         });
 
@@ -832,6 +836,9 @@ describe('Voucher', function () {
 
                 // Claim task on PoCo.
                 await pocoClaimBoostOrClassic();
+                expect((await iexecPocoInstance.viewTask(taskId)).status).to.equal(
+                    TaskStatusEnum.FAILED,
+                );
                 // Claim task on voucher
                 await expect(claimBoostOrClassic())
                     .to.emit(voucherHub, 'VoucherRefunded')
@@ -924,7 +931,6 @@ describe('Voucher', function () {
                         [dealId, badTaskIndex],
                     ),
                 );
-                // await expect(iexecPocoInstance.claim(badTaskId)).to.be.revertedWithoutReason();
                 await expect(voucher.claim(badTaskId)).to.be.revertedWithoutReason();
             });
 
