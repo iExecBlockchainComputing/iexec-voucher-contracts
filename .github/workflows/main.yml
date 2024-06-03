@@ -25,7 +25,6 @@ jobs:
         uses: crytic/slither-action@v0.4.0
         with:
           target: "contracts/beacon/"
-          slither-config: 'slither.config.json'
           solc-version: '0.8.21'
           slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
           node-version: "20"
