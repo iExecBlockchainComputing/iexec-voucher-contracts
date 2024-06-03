@@ -30,6 +30,7 @@ contract Voucher is Initializable, IVoucher {
 
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
+        address _owner;
         address _voucherHub;
         uint256 _expiration;
         uint256 _type;
@@ -37,7 +38,6 @@ contract Voucher is Initializable, IVoucher {
         mapping(bytes32 dealId => uint256) _sponsoredAmounts;
         // Save refunded tasks to disable replay attacks.
         mapping(bytes32 taskId => bool) _refundedTasks;
-        address _owner;
     }
 
     modifier onlyOwner() {

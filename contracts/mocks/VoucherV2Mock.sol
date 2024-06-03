@@ -8,13 +8,13 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 contract VoucherV2Mock is Initializable {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
+        address _owner;
         address _voucherHub;
         uint256 _expiration;
         uint256 _type;
         mapping(address => bool) _authorizedAccounts;
         mapping(bytes32 dealId => uint256) _sponsoredAmounts;
         mapping(bytes32 taskId => bool) _refundedTasks;
-        address _owner;
         uint256 _newStateVariable;
     }
 
