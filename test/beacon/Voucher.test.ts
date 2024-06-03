@@ -99,7 +99,7 @@ describe('Voucher', function () {
         await iexecPocoInstance
             .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
             .then((tx) => tx.wait());
-        // Create one voucherAsOwner.
+        // Create one voucher.
         await voucherHubAsAssetEligibilityManager.createVoucherType(description, duration);
         voucherAddress = await voucherHubAsVoucherCreationManager
             .createVoucher(voucherOwner1, voucherType, voucherValue)
@@ -680,7 +680,7 @@ describe('Voucher', function () {
                 await addEligibleAssets([app, dataset]); // workerpool not eligible.
                 const dealNonSponsoredAmount = workerpoolPrice * volume;
                 const taskNonSponsoredAmount = dealNonSponsoredAmount / volume;
-                // Deposit non-sponsored amount for requester and approve voucherAsOwner.
+                // Deposit non-sponsored amount for requester and approve voucher.
                 await iexecPocoInstance
                     .transfer(requester, dealNonSponsoredAmount)
                     .then((tx) => tx.wait());
@@ -750,7 +750,7 @@ describe('Voucher', function () {
 
             async function runTest(matchOrdersBoostOrClassic: any, claimBoostOrClassic: any) {
                 // Assets are not eligible.
-                // Deposit dealPrice amount for requester and approve voucherAsOwner.
+                // Deposit dealPrice amount for requester and approve voucher.
                 await iexecPocoInstance
                     .transfer(requester, dealPrice)
                     .then((tx) => tx.wait())
