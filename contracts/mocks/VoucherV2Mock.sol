@@ -46,6 +46,7 @@ contract VoucherV2Mock is Initializable {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._newStateVariable;
     }
+
     function owner() public view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._owner;
