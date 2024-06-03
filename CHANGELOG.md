@@ -1,6 +1,8 @@
 # Changelog
 
 ## vNEXT
+- Claim task part 1 - Solidity with minimal tests. (#20)
+- Compute deal price with proper volume. (#19)
 - Refactor voucher tests file. (#18)
 - Use real poco address if available at deployment. (#17)
 - Match orders boost through voucher. (#16)

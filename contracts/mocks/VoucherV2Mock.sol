@@ -13,6 +13,7 @@ contract VoucherV2Mock is Initializable {
         uint256 _type;
         mapping(address => bool) _authorizedAccounts;
         mapping(bytes32 dealId => uint256) _sponsoredAmounts;
+        mapping(bytes32 taskId => bool) _refundedTasks;
         address _owner;
         uint256 _newStateVariable;
     }

@@ -8,6 +8,9 @@ import { UpgradeableBeacon } from '../typechain-types';
 
 // TODO move this to a config file and determine
 // poco address according to chain id.
+// TODO provide admin wallet addresses to this script
+// (admin, assetEligibilityManager, voucherManager).
+
 const pocoAddress = process.env.IEXEC_POCO_ADDRESS || '0x123456789a123456789b123456789b123456789d'; // random
 
 export default async function () {

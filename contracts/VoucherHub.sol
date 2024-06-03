@@ -47,11 +47,19 @@ contract VoucherHub is
         bytes32 _voucherCreationCodeHash;
         VoucherType[] voucherTypes;
         mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
+        // Track created vouchers to avoid replay in certain operations such as refund.
+        mapping(address voucherAddress => bool) _isVoucher;
     }
 
     modifier whenVoucherTypeExists(uint256 id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require(id < $.voucherTypes.length, "VoucherHub: type index out of bounds");
+        _;
+    }
+
+    modifier onlyVoucher() {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        require($._isVoucher[msg.sender], "VoucherHub: sender is not voucher");
         _;
     }
 
@@ -165,6 +173,7 @@ contract VoucherHub is
         Voucher(voucherAddress).initialize(owner, address(this), voucherExpiration, voucherType);
         IERC20($._iexecPoco).transfer(voucherAddress, value); // SRLC
         _mint(voucherAddress, value); // VCHR
+        $._isVoucher[voucherAddress] = true;
         emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType, value);
     }
 
@@ -178,6 +187,9 @@ contract VoucherHub is
      * possible to try to debit the voucher in best effort mode (In short: "use
      * voucher if possible"), before trying other payment methods.
      *
+     * Note: no need for "onlyVoucher" modifier because if the sender is not a voucher,
+     * its balance would be null, then "_burn()" would revert.
+     *
      * @param voucherTypeId The type ID of the voucher to debit.
      * @param app The app address.
      * @param appPrice The app price.
@@ -185,6 +197,7 @@ contract VoucherHub is
      * @param datasetPrice The dataset price.
      * @param workerpool The workerpool address.
      * @param workerpoolPrice The workerpool price.
+     * @param volume Volume of the deal.
      */
     function debitVoucher(
         uint256 voucherTypeId,
@@ -193,7 +206,8 @@ contract VoucherHub is
         address dataset,
         uint256 datasetPrice,
         address workerpool,
-        uint256 workerpoolPrice
+        uint256 workerpoolPrice,
+        uint256 volume
     ) external returns (uint256 sponsoredAmount) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         mapping(address asset => bool) storage eligible = $.matchOrdersEligibility[voucherTypeId];
@@ -206,11 +220,20 @@ contract VoucherHub is
         if (eligible[workerpool]) {
             sponsoredAmount += workerpoolPrice;
         }
-        sponsoredAmount = Math.min(balanceOf(msg.sender), sponsoredAmount);
+        sponsoredAmount = Math.min(balanceOf(msg.sender), sponsoredAmount * volume);
         if (sponsoredAmount > 0) {
             _burn(msg.sender, sponsoredAmount);
             emit VoucherDebited(msg.sender, sponsoredAmount);
         }
+    }
+
+    /**
+     * Refund sender if it is a voucher.
+     * @param amount value to be refunded
+     */
+    function refundVoucher(uint256 amount) external onlyVoucher {
+        _mint(msg.sender, amount);
+        emit VoucherRefunded(msg.sender, amount);
     }
 
     /**
