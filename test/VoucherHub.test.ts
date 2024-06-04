@@ -699,7 +699,7 @@ describe('VoucherHub', function () {
             const expectedExpiration = await commonUtils.getExpectedExpiration(duration, txReceipt);
             await expect(tx)
                 .to.emit(voucherHub, 'VoucherToppedUp')
-                .withArgs(voucherAddress, topUpValue, expectedExpiration);
+                .withArgs(voucherAddress, expectedExpiration, topUpValue);
             const voucherCreditBalanceAfter = await voucherHub.balanceOf(voucherAddress);
             const voucherRlcBalanceAfter = await iexecPocoInstance.balanceOf(voucherAddress);
             expect(voucherCreditBalanceAfter)

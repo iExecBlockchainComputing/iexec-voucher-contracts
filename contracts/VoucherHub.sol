@@ -165,16 +165,16 @@ contract VoucherHub is
         uint256 value
     ) external onlyRole(VOUCHER_MANAGER_ROLE) returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        uint256 voucherExpiration = block.timestamp + getVoucherType(voucherType).duration;
+        uint256 expiration = block.timestamp + getVoucherType(voucherType).duration;
         voucherAddress = address(new VoucherProxy{salt: _getCreate2Salt(owner)}($._voucherBeacon));
         // Initialize the created proxy contract.
         // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
-        Voucher(voucherAddress).initialize(owner, address(this), voucherExpiration, voucherType);
+        Voucher(voucherAddress).initialize(owner, address(this), expiration, voucherType);
         IERC20($._iexecPoco).transfer(voucherAddress, value); // SRLC
         _mint(voucherAddress, value); // VCHR
         $._isVoucher[voucherAddress] = true;
-        emit VoucherCreated(voucherAddress, owner, voucherType, voucherExpiration, value);
+        emit VoucherCreated(voucherAddress, owner, voucherType, expiration, value);
     }
 
     /**
@@ -189,10 +189,9 @@ contract VoucherHub is
             _mint(voucher, value); // VCHR
             IERC20($._iexecPoco).transfer(voucher, value); // SRLC
         }
-        uint256 voucherExpiration = block.timestamp +
-            $.voucherTypes[Voucher(voucher).getType()].duration;
-        Voucher(voucher).setExpiration(voucherExpiration);
-        emit VoucherToppedUp(voucher, value, voucherExpiration);
+        uint256 expiration = block.timestamp + $.voucherTypes[Voucher(voucher).getType()].duration;
+        Voucher(voucher).setExpiration(expiration);
+        emit VoucherToppedUp(voucher, expiration, value);
     }
 
     /**
