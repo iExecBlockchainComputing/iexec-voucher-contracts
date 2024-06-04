@@ -92,6 +92,16 @@ contract Voucher is Initializable, IVoucher {
     }
 
     /**
+     * Set the expiration timestamp of the voucher.
+     * @param expiration The expiration timestamp.
+     */
+    function setExpiration(uint256 expiration) external onlyVoucherHub {
+        VoucherStorage storage $ = _getVoucherStorage();
+        $._expiration = expiration;
+        emit ExpirationUpdated(expiration);
+    }
+
+    /**
      * Sets authorization for an account.
      * @param account The account to authorize.
      */
@@ -259,16 +269,6 @@ contract Voucher is Initializable, IVoucher {
     function getExpiration() external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._expiration;
-    }
-
-    /**
-     * Set the expiration timestamp of the voucher.
-     * @param expiration The expiration timestamp.
-     */
-    function setExpiration(uint256 expiration) external onlyVoucherHub {
-        VoucherStorage storage $ = _getVoucherStorage();
-        $._expiration = expiration;
-        emit ExpirationUpdated(expiration);
     }
 
     /**

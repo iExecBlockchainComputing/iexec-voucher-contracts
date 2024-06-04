@@ -13,6 +13,7 @@ interface IVoucher {
     event OrdersBoostMatchedWithVoucher(bytes32 dealId);
     event TaskClaimedWithVoucher(bytes32 taskId);
 
+    function setExpiration(uint256 expiration) external;
     function authorizeAccount(address account) external;
     function unauthorizeAccount(address account) external;
     function matchOrders(
@@ -33,7 +34,6 @@ interface IVoucher {
     function getVoucherHub() external view returns (address);
     function getType() external view returns (uint256);
     function getExpiration() external view returns (uint256);
-    function setExpiration(uint256 expiration) external;
     function getBalance() external view returns (uint256);
     function isAccountAuthorized(address account) external view returns (bool);
     function getSponsoredAmount(bytes32 dealId) external view returns (uint256);
