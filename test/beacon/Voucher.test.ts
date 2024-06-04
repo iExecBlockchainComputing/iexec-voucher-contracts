@@ -238,7 +238,7 @@ describe('Voucher', function () {
                 .not.equal(expirationBefore);
         });
 
-        it('Should not set expiration', async function () {
+        it('Should not set expiration when sender is not authorized', async function () {
             await expect(
                 voucherAsAnyone.setExpiration(789), // any expiration value is fine
             ).to.be.revertedWith('Voucher: sender is not VoucherHub');

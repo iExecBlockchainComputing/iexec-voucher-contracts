@@ -178,8 +178,7 @@ contract VoucherHub is
     }
 
     /**
-     * Top up a voucher by increasing its balance and extending the validity
-     * period before expiration.
+     * Top up a voucher by increasing its balance and pushing its expiration date.
      * @param voucher The address of the voucher.
      * @param value The amount of credits to top up.
      */
