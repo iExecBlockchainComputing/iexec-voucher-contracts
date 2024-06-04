@@ -178,6 +178,25 @@ contract VoucherHub is
     }
 
     /**
+     * Top up a voucher by increasing its balance and extending the validity
+     * period before expiration.
+     * @param voucher The address of the voucher.
+     * @param value The amount of credits to top up.
+     */
+    function topUpVoucher(address voucher, uint256 value) external onlyRole(VOUCHER_MANAGER_ROLE) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        require($._isVoucher[voucher], "VoucherHub: unknown voucher");
+        if (value > 0) {
+            _mint(voucher, value); // VCHR
+            IERC20($._iexecPoco).transfer(voucher, value); // SRLC
+        }
+        uint256 voucherExpiration = block.timestamp +
+            $.voucherTypes[Voucher(voucher).getType()].duration;
+        Voucher(voucher).setExpiration(voucherExpiration);
+        emit VoucherToppedUp(voucher, value, voucherExpiration);
+    }
+
+    /**
      * Debit voucher balance when used assets are eligible to voucher sponsoring.
      * @notice (1) If this function is called by an account which is not a voucher,
      * it will have no effect other than consummnig gas since balance would be

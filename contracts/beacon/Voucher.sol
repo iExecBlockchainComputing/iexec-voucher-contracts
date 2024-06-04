@@ -256,6 +256,17 @@ contract Voucher is Initializable, IVoucher {
     }
 
     /**
+     * Set the expiration timestamp of the voucher.
+     * @param expiration The expiration timestamp.
+     */
+    function setExpiration(uint256 expiration) external {
+        VoucherStorage storage $ = _getVoucherStorage();
+        require(msg.sender == $._voucherHub, "Voucher: sender is not VoucherHub");
+        $._expiration = expiration;
+        emit ExpirationUpdated(expiration);
+    }
+
+    /**
      * Retrieve the type of the voucher.
      * @return voucherType The type of the voucher.
      */

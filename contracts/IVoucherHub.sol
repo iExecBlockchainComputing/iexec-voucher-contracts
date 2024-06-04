@@ -15,6 +15,7 @@ interface IVoucherHub {
         uint256 voucherType,
         uint256 value
     );
+    event VoucherToppedUp(address indexed voucher, uint256 value, uint256 voucherExpiration);
     event VoucherDebited(address indexed voucher, uint256 sponsoredAmount);
     event VoucherRefunded(address indexed voucher, uint256 amount);
     event VoucherTypeCreated(uint256 indexed id, string description, uint256 duration);
@@ -33,6 +34,7 @@ interface IVoucherHub {
         uint256 voucherType,
         uint256 value
     ) external returns (address voucherAddress);
+    function topUpVoucher(address voucher, uint256 value) external;
     function debitVoucher(
         uint256 voucherTypeId,
         address app,

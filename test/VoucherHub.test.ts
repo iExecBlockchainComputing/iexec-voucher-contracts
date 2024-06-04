@@ -4,12 +4,17 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
-import { AddressLike, BigNumberish } from 'ethers';
+import { AddressLike, BigNumberish, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 import * as commonUtils from '../scripts/common';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
-import { IexecPocoMock, IexecPocoMock__factory, Voucher } from '../typechain-types';
+import {
+    IexecPocoMock,
+    IexecPocoMock__factory,
+    Voucher,
+    Voucher__factory,
+} from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 import { random } from './utils/address-utils';
 
@@ -656,6 +661,86 @@ describe('VoucherHub', function () {
                     voucherValue,
                 ),
             ).to.be.revertedWith('VoucherHub: type index out of bounds');
+        });
+    });
+
+    describe('Top up voucher', function () {
+        let [voucherOwner1, anyone]: SignerWithAddress[] = [];
+        let voucherHub: VoucherHub;
+        let voucherAddress: string;
+
+        beforeEach(async function () {
+            ({ voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture));
+            await voucherHubWithAssetEligibilityManagerSigner
+                .createVoucherType(description, duration)
+                .then((tx) => tx.wait());
+            voucherAddress = await voucherHubWithVoucherManagerSigner
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait())
+                .then(() => voucherHub.getVoucher(voucherOwner1));
+        });
+
+        it('Should top up voucher', async function () {
+            const topUpValue = 123n; // arbitrary value
+            const voucherCreditBalanceBefore = await voucherHub.balanceOf(voucherAddress);
+            const voucherRlcBalanceBefore = await iexecPocoInstance.balanceOf(voucherAddress);
+
+            const tx = await voucherHubWithVoucherManagerSigner.topUpVoucher(
+                voucherAddress,
+                topUpValue,
+            );
+            const txReceipt = await tx.wait();
+            const expectedExpiration = await commonUtils.getExpectedExpiration(duration, txReceipt);
+            await expect(tx)
+                .to.emit(voucherHub, 'VoucherToppedUp')
+                .withArgs(voucherAddress, topUpValue, expectedExpiration);
+            const voucherCreditBalanceAfter = await voucherHub.balanceOf(voucherAddress);
+            const voucherRlcBalanceAfter = await iexecPocoInstance.balanceOf(voucherAddress);
+            expect(voucherCreditBalanceAfter)
+                .equal(voucherCreditBalanceBefore + topUpValue)
+                .equal(voucherRlcBalanceBefore + topUpValue)
+                .equal(voucherRlcBalanceAfter);
+            expect(
+                await Voucher__factory.connect(voucherAddress, anyone).getExpiration(),
+            ).to.be.equal(expectedExpiration);
+        });
+
+        it('Should top up voucher without value', async function () {
+            const voucherCreditBalanceBefore = await voucherHub.balanceOf(voucherAddress);
+            const voucherRlcBalanceBefore = await iexecPocoInstance.balanceOf(voucherAddress);
+            const expirationBefore = await Voucher__factory.connect(
+                voucherAddress,
+                anyone,
+            ).getExpiration();
+
+            await expect(
+                voucherHubWithVoucherManagerSigner.topUpVoucher(voucherAddress, 0n),
+            ).to.emit(voucherHub, 'VoucherToppedUp');
+            expect(await voucherHub.balanceOf(voucherAddress))
+                .equal(voucherCreditBalanceBefore)
+                .equal(await iexecPocoInstance.balanceOf(voucherAddress))
+                .equal(voucherRlcBalanceBefore);
+            expect(
+                // expiration is extended even if top up value is empty
+                await Voucher__factory.connect(voucherAddress, anyone).getExpiration(),
+            ).greaterThan(expirationBefore);
+        });
+
+        it('Should not top up by anyone', async function () {
+            await expect(
+                voucherHub
+                    .connect(anyone)
+                    .topUpVoucher(Wallet.createRandom().address, voucherValue),
+            ).to.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
+        });
+
+        it('Should not top up unknown voucher', async function () {
+            await expect(
+                voucherHubWithVoucherManagerSigner.topUpVoucher(
+                    Wallet.createRandom().address,
+                    voucherValue,
+                ),
+            ).to.revertedWith('VoucherHub: unknown voucher');
         });
     });
 
