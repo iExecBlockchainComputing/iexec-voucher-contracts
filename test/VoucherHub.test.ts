@@ -388,8 +388,8 @@ describe('VoucherHub', function () {
                 .withArgs(
                     voucherAddress,
                     voucherOwner1.address,
-                    expectedExpiration,
                     voucherType,
+                    expectedExpiration,
                     voucherValue,
                 );
             // Voucher as proxy
@@ -481,23 +481,29 @@ describe('VoucherHub', function () {
                 duration1,
             );
             // Create voucher1.
-            const createVoucherTx1 = await voucherHubWithVoucherManagerSigner
-                .createVoucher(voucherOwner1, voucherType, voucherValue)
-                .then((tx) => tx.wait());
+            const createVoucherTx1 = await voucherHubWithVoucherManagerSigner.createVoucher(
+                voucherOwner1,
+                voucherType,
+                voucherValue,
+            );
+            const createVoucherReceipt1 = await createVoucherTx1.wait();
             const expectedExpirationVoucher1 = await commonUtils.getExpectedExpiration(
                 duration,
-                createVoucherTx1,
+                createVoucherReceipt1,
             );
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucher1 = await commonUtils.getVoucher(voucherAddress1);
             const voucherAsProxy1 = await commonUtils.getVoucherAsProxy(voucherAddress1);
             // Create voucher2.
-            const createVoucherTx2 = await voucherHubWithVoucherManagerSigner
-                .createVoucher(voucherOwner2, voucherType1, voucherValue1)
-                .then((tx) => tx.wait());
+            const createVoucherTx2 = await voucherHubWithVoucherManagerSigner.createVoucher(
+                voucherOwner2,
+                voucherType1,
+                voucherValue1,
+            );
+            const createVoucherReceipt2 = await createVoucherTx2.wait();
             const expectedExpirationVoucher2 = await commonUtils.getExpectedExpiration(
                 duration1,
-                createVoucherTx2,
+                createVoucherReceipt2,
             );
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucher2 = await commonUtils.getVoucher(voucherAddress2);
@@ -506,22 +512,22 @@ describe('VoucherHub', function () {
                 voucherHub.getAddress(),
             );
             // Events
-            expect(createVoucherTx1)
+            await expect(createVoucherTx1)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(
                     voucherAddress1,
                     voucherOwner1.address,
-                    expectedExpirationVoucher1,
                     voucherType,
+                    expectedExpirationVoucher1,
                     voucherValue,
                 );
-            expect(createVoucherTx2)
+            await expect(createVoucherTx2)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(
                     voucherAddress2,
                     voucherOwner2.address,
-                    expectedExpirationVoucher2,
                     voucherType1,
+                    expectedExpirationVoucher2,
                     voucherValue1,
                 );
             // Voucher as proxy

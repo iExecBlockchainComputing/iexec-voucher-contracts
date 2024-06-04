@@ -11,8 +11,8 @@ interface IVoucherHub {
     event VoucherCreated(
         address indexed voucher,
         address owner,
-        uint256 expiration,
         uint256 voucherType,
+        uint256 expiration,
         uint256 value
     );
     event VoucherToppedUp(address indexed voucher, uint256 value, uint256 voucherExpiration);

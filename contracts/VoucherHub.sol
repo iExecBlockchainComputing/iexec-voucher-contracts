@@ -174,7 +174,7 @@ contract VoucherHub is
         IERC20($._iexecPoco).transfer(voucherAddress, value); // SRLC
         _mint(voucherAddress, value); // VCHR
         $._isVoucher[voucherAddress] = true;
-        emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType, value);
+        emit VoucherCreated(voucherAddress, owner, voucherType, voucherExpiration, value);
     }
 
     /**
