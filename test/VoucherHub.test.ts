@@ -690,6 +690,10 @@ describe('VoucherHub', function () {
             const topUpValue = 123n; // arbitrary value
             const voucherCreditBalanceBefore = await voucherHub.balanceOf(voucherAddress);
             const voucherRlcBalanceBefore = await iexecPocoInstance.balanceOf(voucherAddress);
+            const expirationBefore = await Voucher__factory.connect(
+                voucherAddress,
+                anyone,
+            ).getExpiration();
 
             const tx = await voucherHubWithVoucherManagerSigner.topUpVoucher(
                 voucherAddress,
@@ -706,9 +710,9 @@ describe('VoucherHub', function () {
                 .equal(voucherCreditBalanceBefore + topUpValue)
                 .equal(voucherRlcBalanceBefore + topUpValue)
                 .equal(voucherRlcBalanceAfter);
-            expect(
-                await Voucher__factory.connect(voucherAddress, anyone).getExpiration(),
-            ).to.be.equal(expectedExpiration);
+            expect(await Voucher__factory.connect(voucherAddress, anyone).getExpiration())
+                .to.be.greaterThan(expirationBefore)
+                .to.be.equal(expectedExpiration);
         });
 
         it('Should top up voucher without value', async function () {
