@@ -54,6 +54,12 @@ contract Voucher is Initializable, IVoucher {
         _;
     }
 
+    modifier onlyVoucherHub() {
+        VoucherStorage storage $ = _getVoucherStorage();
+        require(msg.sender == $._voucherHub, "Voucher: sender is not VoucherHub");
+        _;
+    }
+
     modifier onlyNotExpired() {
         VoucherStorage storage $ = _getVoucherStorage();
         require(block.timestamp < $._expiration, "Voucher: voucher is expired");
@@ -259,9 +265,8 @@ contract Voucher is Initializable, IVoucher {
      * Set the expiration timestamp of the voucher.
      * @param expiration The expiration timestamp.
      */
-    function setExpiration(uint256 expiration) external {
+    function setExpiration(uint256 expiration) external onlyVoucherHub {
         VoucherStorage storage $ = _getVoucherStorage();
-        require(msg.sender == $._voucherHub, "Voucher: sender is not VoucherHub");
         $._expiration = expiration;
         emit ExpirationUpdated(expiration);
     }
