@@ -8,6 +8,9 @@ pragma solidity ^0.8.20;
 /**
  * @notice This contract is for upgradeability testing purposes only.
  */
+
+// TODO add the same storage structure to enable storage check in upgrade tests.
+
 contract VoucherHubV2Mock is VoucherHub {
     // For production use, please instead use ERC7201 when adding new variables
     string public foo;

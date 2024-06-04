@@ -1,12 +1,15 @@
 # Changelog
 
 ## vNEXT
+- Claim task part 2 - Add voucher tests. (#21)
+- Claim task part 1 - Solidity with minimal tests. (#20)
+- Compute deal price with proper volume. (#19)
 - Refactor voucher tests file. (#18)
 - Use real poco address if available at deployment. (#17)
 - Match orders boost through voucher. (#16)
 - Use hardhat deploy. (#15)
 - Upload coverage reports to Codecov. (#14)
-- Clean some TODOs. (#13)
+- Clean some TODOs. (#13, #22)
 - Match orders through voucher. (#12)
 - Add external-hardhat network configuration. (#11)
 - Add voucher credit and SRLC manipulation. (#10)
