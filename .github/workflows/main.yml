@@ -27,7 +27,7 @@ jobs:
         with:
           target: "contracts/"
           solc-version: '0.8.21'
-          slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
+          slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/  --print contract-summary
           node-version: "20"
           fail-on: none
           sarif: results.sarif
