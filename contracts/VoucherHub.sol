@@ -26,6 +26,7 @@ contract VoucherHub is
     // Granted to msg.sender == defaultAdmin() == owner()
     // DEFAULT_ADMIN_ROLE
 
+    // TODO: Rename roles.
     // Upgrade VoucherHub and Vouchers contracts.
     // Granted to msg.sender
     bytes32 public constant UPGRADE_MANAGER_ROLE = keccak256("UPGRADE_MANAGER_ROLE");
