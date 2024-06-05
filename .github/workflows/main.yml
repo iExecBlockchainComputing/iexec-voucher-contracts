@@ -26,7 +26,6 @@ jobs:
         id: slither
         with:
           target: "contracts/"
-          solc-version: '0.8.24'
           slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
           node-version: "20"
           fail-on: none
