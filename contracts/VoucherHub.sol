@@ -15,6 +15,8 @@ import {VoucherProxy} from "./beacon/VoucherProxy.sol";
 import {NonTransferableERC20Upgradeable} from "./NonTransferableERC20Upgradeable.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
 
+// TODO sort functions.
+
 contract VoucherHub is
     AccessControlDefaultAdminRulesUpgradeable,
     UUPSUpgradeable,
@@ -58,8 +60,7 @@ contract VoucherHub is
     }
 
     modifier onlyVoucher() {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        require($._isVoucher[msg.sender], "VoucherHub: sender is not voucher");
+        require(_isVoucher(msg.sender), "VoucherHub: sender is not voucher");
         _;
     }
 
@@ -237,6 +238,21 @@ contract VoucherHub is
     }
 
     /**
+     * Drain funds from voucher if it is expired. Transfer all RLC balance
+     * on PoCo from voucher to voucherHub and burn all credits.
+     * @param voucherAddress address of the expired voucher to drain
+     */
+    function drainVoucher(
+        address voucherAddress
+    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
+        require(_isVoucher(voucherAddress), "VoucherHub: voucher not found");
+        uint256 amount = balanceOf(voucherAddress);
+        Voucher(voucherAddress).drain(amount);
+        _burn(voucherAddress, amount);
+        emit VoucherDrained(voucherAddress, amount);
+    }
+
+    /**
      * Get iExec Poco address used by vouchers.
      */
     function getIexecPoco() external view returns (address) {
@@ -304,6 +320,11 @@ contract VoucherHub is
     function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
+    }
+
+    function _isVoucher(address voucherAddress) private view returns (bool) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $._isVoucher[voucherAddress];
     }
 
     function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {

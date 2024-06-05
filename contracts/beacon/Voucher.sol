@@ -54,9 +54,19 @@ contract Voucher is Initializable, IVoucher {
         _;
     }
 
+    modifier onlyExpired() {
+        require(getExpiration() < block.timestamp, "Voucher: voucher is not expired");
+        _;
+    }
+
     modifier onlyNotExpired() {
+        require(block.timestamp < getExpiration(), "Voucher: voucher is expired");
+        _;
+    }
+
+    modifier onlyVoucherHub() {
         VoucherStorage storage $ = _getVoucherStorage();
-        require(block.timestamp < $._expiration, "Voucher: voucher is expired");
+        require(msg.sender == $._voucherHub, "Voucher: sender is not voucher hub");
         _;
     }
 
@@ -247,12 +257,13 @@ contract Voucher is Initializable, IVoucher {
     }
 
     /**
-     * Retrieve the expiration timestamp of the voucher.
-     * @return expirationTimestamp The expiration timestamp.
+     * Drain balance of expired voucher.
+     * @param amount amount to be drained
      */
-    function getExpiration() external view returns (uint256) {
+    function drain(uint256 amount) external onlyVoucherHub onlyExpired {
         VoucherStorage storage $ = _getVoucherStorage();
-        return $._expiration;
+        address voucherHubAddress = $._voucherHub;
+        IERC20(IVoucherHub(voucherHubAddress).getIexecPoco()).transfer(voucherHubAddress, amount);
     }
 
     /**
@@ -305,6 +316,15 @@ contract Voucher is Initializable, IVoucher {
     function getVoucherHub() public view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._voucherHub;
+    }
+
+    /**
+     * Retrieve the expiration timestamp of the voucher.
+     * @return expirationTimestamp The expiration timestamp.
+     */
+    function getExpiration() public view returns (uint256) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._expiration;
     }
 
     /**
