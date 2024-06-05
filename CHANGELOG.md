@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Add slither github action. (#24)
 - Top up voucher. (#23)
 - Claim task part 2 - Add voucher tests. (#21)
 - Claim task part 1 - Solidity with minimal tests. (#20)
