@@ -26,12 +26,11 @@ jobs:
         id: slither
         with:
           target: "contracts/"
-          solc-version: '0.8.21'
+          # solc-version: '0.8.21'
           slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
           node-version: "20"
           fail-on: none
           sarif: results.sarif
-          slither-config: 'slither.config.json'
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
         with:
