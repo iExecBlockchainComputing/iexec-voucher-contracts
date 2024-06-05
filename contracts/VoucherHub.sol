@@ -184,12 +184,11 @@ contract VoucherHub is
      * @param value The amount of credits to top up.
      */
     function topUpVoucher(address voucher, uint256 value) external onlyRole(VOUCHER_MANAGER_ROLE) {
+        require(value > 0, "VoucherHub: no value");
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require($._isVoucher[voucher], "VoucherHub: unknown voucher");
-        if (value > 0) {
-            _mint(voucher, value); // VCHR
-            IERC20($._iexecPoco).transfer(voucher, value); // SRLC
-        }
+        _mint(voucher, value); // VCHR
+        IERC20($._iexecPoco).transfer(voucher, value); // SRLC
         uint256 expiration = block.timestamp + $.voucherTypes[Voucher(voucher).getType()].duration;
         Voucher(voucher).setExpiration(expiration);
         emit VoucherToppedUp(voucher, expiration, value);
