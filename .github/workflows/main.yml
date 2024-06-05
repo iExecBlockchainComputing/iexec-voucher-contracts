@@ -28,7 +28,7 @@ jobs:
           target: "contracts/"
           slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
           node-version: "20"
-          fail-on: none
+          fail-on: none # TODO set this to high or other
           sarif: results.sarif
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
