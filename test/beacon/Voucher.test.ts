@@ -15,6 +15,7 @@ import {
     UpgradeableBeacon,
     Voucher,
     VoucherHub,
+    VoucherProxy__factory,
     Voucher__factory,
 } from '../../typechain-types';
 import { random } from '../utils/address-utils';
@@ -206,6 +207,41 @@ describe('Voucher', function () {
             expect(await beacon.implementation(), 'Implementation has changed').to.be.equal(
                 initialImplementation,
             );
+        });
+    });
+
+    describe('Voucher expiration', function () {
+        it('Should get expiration', async function () {
+            const expiration = 42; // arbitrary value
+            const voucher = await new VoucherProxy__factory(anyone)
+                .deploy(await beacon.getAddress())
+                .then((tx) => tx.waitForDeployment())
+                .then((proxy) => proxy.getAddress())
+                .then((address) => Voucher__factory.connect(address, anyone));
+            await voucher.initialize(anyone.address, voucherHub, expiration, voucherType);
+            expect(await voucher.getExpiration()).equal(expiration);
+        });
+
+        it('Should set expiration', async function () {
+            const voucherHubSigner = await ethers.getImpersonatedSigner(
+                await voucherHub.getAddress(),
+            );
+            const expirationBefore = await voucherAsAnyone.getExpiration();
+            const expirationAfter = 13; // arbitrary value
+            await expect(
+                await voucherAsAnyone.connect(voucherHubSigner).setExpiration(expirationAfter),
+            )
+                .to.emit(voucherAsAnyone, 'ExpirationUpdated')
+                .withArgs(expirationAfter);
+            expect(await voucherAsAnyone.getExpiration())
+                .equal(expirationAfter)
+                .not.equal(expirationBefore);
+        });
+
+        it('Should not set expiration when sender is not authorized', async function () {
+            await expect(
+                voucherAsAnyone.setExpiration(789), // any expiration value is fine
+            ).to.be.revertedWith('Voucher: sender is not VoucherHub');
         });
     });
 

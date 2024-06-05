@@ -4,12 +4,17 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
-import { AddressLike, BigNumberish } from 'ethers';
+import { AddressLike, BigNumberish, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 import * as commonUtils from '../scripts/common';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
-import { IexecPocoMock, IexecPocoMock__factory, Voucher } from '../typechain-types';
+import {
+    IexecPocoMock,
+    IexecPocoMock__factory,
+    Voucher,
+    Voucher__factory,
+} from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 import { random } from './utils/address-utils';
 
@@ -383,8 +388,8 @@ describe('VoucherHub', function () {
                 .withArgs(
                     voucherAddress,
                     voucherOwner1.address,
-                    expectedExpiration,
                     voucherType,
+                    expectedExpiration,
                     voucherValue,
                 );
             // Voucher as proxy
@@ -476,23 +481,29 @@ describe('VoucherHub', function () {
                 duration1,
             );
             // Create voucher1.
-            const createVoucherTx1 = await voucherHubWithVoucherManagerSigner
-                .createVoucher(voucherOwner1, voucherType, voucherValue)
-                .then((tx) => tx.wait());
+            const createVoucherTx1 = await voucherHubWithVoucherManagerSigner.createVoucher(
+                voucherOwner1,
+                voucherType,
+                voucherValue,
+            );
+            const createVoucherReceipt1 = await createVoucherTx1.wait();
             const expectedExpirationVoucher1 = await commonUtils.getExpectedExpiration(
                 duration,
-                createVoucherTx1,
+                createVoucherReceipt1,
             );
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
             const voucher1 = await commonUtils.getVoucher(voucherAddress1);
             const voucherAsProxy1 = await commonUtils.getVoucherAsProxy(voucherAddress1);
             // Create voucher2.
-            const createVoucherTx2 = await voucherHubWithVoucherManagerSigner
-                .createVoucher(voucherOwner2, voucherType1, voucherValue1)
-                .then((tx) => tx.wait());
+            const createVoucherTx2 = await voucherHubWithVoucherManagerSigner.createVoucher(
+                voucherOwner2,
+                voucherType1,
+                voucherValue1,
+            );
+            const createVoucherReceipt2 = await createVoucherTx2.wait();
             const expectedExpirationVoucher2 = await commonUtils.getExpectedExpiration(
                 duration1,
-                createVoucherTx2,
+                createVoucherReceipt2,
             );
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
             const voucher2 = await commonUtils.getVoucher(voucherAddress2);
@@ -501,22 +512,22 @@ describe('VoucherHub', function () {
                 voucherHub.getAddress(),
             );
             // Events
-            expect(createVoucherTx1)
+            await expect(createVoucherTx1)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(
                     voucherAddress1,
                     voucherOwner1.address,
-                    expectedExpirationVoucher1,
                     voucherType,
+                    expectedExpirationVoucher1,
                     voucherValue,
                 );
-            expect(createVoucherTx2)
+            await expect(createVoucherTx2)
                 .to.emit(voucherHub, 'VoucherCreated')
                 .withArgs(
                     voucherAddress2,
                     voucherOwner2.address,
-                    expectedExpirationVoucher2,
                     voucherType1,
+                    expectedExpirationVoucher2,
                     voucherValue1,
                 );
             // Voucher as proxy
@@ -656,6 +667,75 @@ describe('VoucherHub', function () {
                     voucherValue,
                 ),
             ).to.be.revertedWith('VoucherHub: type index out of bounds');
+        });
+    });
+
+    describe('Top up voucher', function () {
+        let [voucherOwner1, anyone]: SignerWithAddress[] = [];
+        let voucherHub: VoucherHub;
+        let voucherAddress: string;
+
+        beforeEach(async function () {
+            ({ voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture));
+            await voucherHubWithAssetEligibilityManagerSigner
+                .createVoucherType(description, duration)
+                .then((tx) => tx.wait());
+            voucherAddress = await voucherHubWithVoucherManagerSigner
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait())
+                .then(() => voucherHub.getVoucher(voucherOwner1));
+        });
+
+        it('Should top up voucher', async function () {
+            const topUpValue = 123n; // arbitrary value
+            const voucherCreditBalanceBefore = await voucherHub.balanceOf(voucherAddress);
+            const voucherRlcBalanceBefore = await iexecPocoInstance.balanceOf(voucherAddress);
+            const expirationBefore = await Voucher__factory.connect(
+                voucherAddress,
+                anyone,
+            ).getExpiration();
+
+            const tx = await voucherHubWithVoucherManagerSigner.topUpVoucher(
+                voucherAddress,
+                topUpValue,
+            );
+            const txReceipt = await tx.wait();
+            const expectedExpiration = await commonUtils.getExpectedExpiration(duration, txReceipt);
+            await expect(tx)
+                .to.emit(voucherHub, 'VoucherToppedUp')
+                .withArgs(voucherAddress, expectedExpiration, topUpValue);
+            const voucherCreditBalanceAfter = await voucherHub.balanceOf(voucherAddress);
+            const voucherRlcBalanceAfter = await iexecPocoInstance.balanceOf(voucherAddress);
+            expect(voucherCreditBalanceAfter)
+                .equal(voucherCreditBalanceBefore + topUpValue)
+                .equal(voucherRlcBalanceBefore + topUpValue)
+                .equal(voucherRlcBalanceAfter);
+            expect(await Voucher__factory.connect(voucherAddress, anyone).getExpiration())
+                .to.be.greaterThan(expirationBefore)
+                .to.be.equal(expectedExpiration);
+        });
+
+        it('Should not top up by anyone', async function () {
+            await expect(
+                voucherHub
+                    .connect(anyone)
+                    .topUpVoucher(Wallet.createRandom().address, voucherValue),
+            ).to.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
+        });
+
+        it('Should not top up voucher without value', async function () {
+            await expect(
+                voucherHubWithVoucherManagerSigner.topUpVoucher(Wallet.createRandom().address, 0),
+            ).to.revertedWith('VoucherHub: no value');
+        });
+
+        it('Should not top up unknown voucher', async function () {
+            await expect(
+                voucherHubWithVoucherManagerSigner.topUpVoucher(
+                    Wallet.createRandom().address,
+                    voucherValue,
+                ),
+            ).to.revertedWith('VoucherHub: unknown voucher');
         });
     });
 
