@@ -992,59 +992,43 @@ describe('VoucherHub', function () {
             voucher = Voucher__factory.connect(voucherAddress, anyone);
         });
 
-        it('Should drain expired voucher', async function () {
+        it('Should drain all funds of expired voucher', async function () {
             const voucherHubAddress = await voucherHub.getAddress();
             const voucherHubRlcBalanceBefore = await iexecPocoInstance.balanceOf(voucherHubAddress);
             // Expire voucher
             const expirationDate = await voucher.getExpiration();
-            time.setNextBlockTimestamp(expirationDate);
+            await time.setNextBlockTimestamp(expirationDate + 100n); // after expiration
             // Drain
-            await expect(voucherHubWithAssetEligibilityManagerSigner.drainVoucher(voucherAddress))
-                .to.emit(iexecPocoInstance, 'Approval')
-                .withArgs(voucherAddress, voucherHubAddress, voucherValue)
+            await expect(voucherHubWithVoucherManagerSigner.drainVoucher(voucherAddress))
                 .to.emit(iexecPocoInstance, 'Transfer')
-                .withArgs(voucherAddress, voucherHubAddress)
+                .withArgs(voucherAddress, voucherHubAddress, voucherValue)
+                .to.emit(voucherHub, 'Transfer')
+                .withArgs(voucherAddress, ethers.ZeroAddress, voucherValue)
                 .to.emit(voucherHub, 'VoucherDrained')
                 .withArgs(voucherAddress, voucherValue);
-            expect(await iexecPocoInstance.balanceOf(voucherAddress)).to.equal(0);
+            expect(await iexecPocoInstance.balanceOf(voucherAddress))
+                .to.equal(await voucherHub.balanceOf(voucherAddress))
+                .to.equal(await voucher.getBalance())
+                .to.equal(0);
+            // Should send RLCs to VoucherHub contract.
             expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(
                 voucherHubRlcBalanceBefore + voucherValue,
             );
-            expect(await voucher.getBalance()).to.equal(0);
         });
 
-        it.skip('Should not drain voucher if sender is not authorized', async function () {
+        it('Should not drain voucher if sender is not authorized', async function () {
             await expect(
                 voucherHubWithAnyoneSigner.drainVoucher(voucherAddress),
             ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
         });
 
-        it.skip('Should not drain voucher if not expired', async function () {
-            // Expire voucher
-            // const expirationDate = await voucher.getExpiration();
-            // time.setNextBlockTimestamp(expirationDate);
+        it('Should not drain if address is unknown', async function () {
             await expect(
-                voucherHubWithAssetEligibilityManagerSigner.drainVoucher(voucherAddress),
-            ).to.be.revertedWith('Voucher: voucher is not expired');
+                voucherHubWithVoucherManagerSigner.drainVoucher(
+                    ethers.Wallet.createRandom().address,
+                ),
+            ).to.be.revertedWith('VoucherHub: unknown voucher');
         });
-
-        it.skip('Should not drain if address is not a voucher', async function () {
-            await expect(
-                voucherHubWithAssetEligibilityManagerSigner
-                    .connect(anyone)
-                    .drainVoucher(voucherAddress),
-            ).to.be.revertedWith('Voucher: not yet expired');
-        });
-
-        it.skip('Should not drain voucher twice', async function () {
-            await expect(
-                voucherHubWithAssetEligibilityManagerSigner
-                    .connect(anyone)
-                    .drainVoucher(voucherAddress),
-            ).to.be.revertedWith('Voucher: not yet expired');
-        });
-
-        // it('', async function () {});
     });
 
     describe('Get voucher', function () {

@@ -59,6 +59,7 @@ describe('Voucher', function () {
         voucherHubAsVoucherCreationManager,
         voucherHubAsAssetEligibilityManager,
     ]: VoucherHub[] = [];
+    let voucherHubAddress: string;
     let [voucherAsOwner, voucherAsAnyone]: Voucher[] = [];
     let voucherAddress: string;
     let voucherCreationTxReceipt: ContractTransactionReceipt;
@@ -96,6 +97,7 @@ describe('Voucher', function () {
         );
         voucherHubAsVoucherCreationManager = voucherHub.connect(voucherManager);
         voucherHubAsAssetEligibilityManager = voucherHub.connect(assetEligibilityManager);
+        voucherHubAddress = await voucherHub.getAddress();
         // Fund VoucherHub with RLCs.
         await iexecPocoInstance
             .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
@@ -1048,6 +1050,33 @@ describe('Voucher', function () {
                     'IexecPocoMock: Failed to claim boost',
                 );
             });
+        });
+    });
+
+    describe('Drain', async function () {
+        it('Should drain RLC balance of voucher', async function () {
+            // Expire voucher
+            const expirationDate = await voucherAsAnyone.getExpiration();
+            await time.setNextBlockTimestamp(expirationDate + 100n); // after expiration
+            // Drain
+            const voucherHubSigner = await ethers.getImpersonatedSigner(voucherHubAddress);
+            await expect(voucherAsAnyone.connect(voucherHubSigner).drain(voucherValue))
+                .to.emit(iexecPocoInstance, 'Transfer')
+                .withArgs(voucherAddress, voucherHubAddress, voucherValue);
+            expect(await iexecPocoInstance.balanceOf(voucherAddress)).to.equal(0);
+        });
+
+        it('Should not drain voucher if sender is not authorized', async function () {
+            await expect(voucherAsAnyone.drain(voucherValue)).to.be.revertedWith(
+                'Voucher: sender is not VoucherHub',
+            );
+        });
+
+        it('Should not drain voucher if not expired', async function () {
+            const voucherHubSigner = await ethers.getImpersonatedSigner(voucherHubAddress);
+            await expect(
+                voucherAsAnyone.connect(voucherHubSigner).drain(voucherValue),
+            ).to.be.revertedWith('Voucher: voucher is not expired');
         });
     });
 

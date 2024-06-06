@@ -272,8 +272,8 @@ contract Voucher is Initializable, IVoucher {
      */
     function drain(uint256 amount) external onlyVoucherHub onlyExpired {
         VoucherStorage storage $ = _getVoucherStorage();
-        address voucherHubAddress = $._voucherHub;
-        IERC20(IVoucherHub(voucherHubAddress).getIexecPoco()).transfer(voucherHubAddress, amount);
+        address voucherHub = $._voucherHub;
+        IERC20(IVoucherHub(voucherHub).getIexecPoco()).transfer(voucherHub, amount);
     }
 
     /**
