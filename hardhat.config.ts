@@ -62,6 +62,7 @@ const config: HardhatUserConfig = {
     },
     dependencyCompiler: {
         paths: ['@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol'],
+        keep: true, // Keep it for slither
     },
 };
 

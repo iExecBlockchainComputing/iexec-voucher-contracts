@@ -11,8 +11,8 @@ interface IVoucherHub {
     event VoucherCreated(
         address indexed voucher,
         address owner,
-        uint256 expiration,
         uint256 voucherType,
+        uint256 expiration,
         uint256 value
     );
     event VoucherTypeCreated(uint256 indexed id, string description, uint256 duration);
@@ -22,6 +22,7 @@ interface IVoucherHub {
     event EligibleAssetRemoved(uint256 indexed id, address asset);
     event VoucherDebited(address indexed voucher, uint256 sponsoredAmount);
     event VoucherRefunded(address indexed voucher, uint256 amount);
+    event VoucherToppedUp(address indexed voucher, uint256 expiration, uint256 value);
     event VoucherDrained(address indexed voucher, uint256 amount);
 
     function createVoucherType(string memory description, uint256 duration) external;
@@ -34,6 +35,7 @@ interface IVoucherHub {
         uint256 voucherType,
         uint256 value
     ) external returns (address voucherAddress);
+    function topUpVoucher(address voucher, uint256 value) external;
     function debitVoucher(
         uint256 voucherTypeId,
         address app,
