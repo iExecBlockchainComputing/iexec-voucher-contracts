@@ -980,10 +980,6 @@ describe('VoucherHub', function () {
             await voucherHubWithAssetEligibilityManagerSigner
                 .createVoucherType(description, duration)
                 .then((tx) => tx.wait());
-            // Add eligible asset
-            await voucherHubWithAssetEligibilityManagerSigner
-                .addEligibleAsset(voucherType, asset)
-                .then((tx) => tx.wait());
             // Create voucher
             voucherAddress = await voucherHubWithVoucherManagerSigner
                 .createVoucher(voucherOwner1, voucherType, voucherValue)

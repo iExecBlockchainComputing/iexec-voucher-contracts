@@ -15,8 +15,6 @@ import {VoucherProxy} from "./beacon/VoucherProxy.sol";
 import {NonTransferableERC20Upgradeable} from "./NonTransferableERC20Upgradeable.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
 
-// TODO sort functions.
-
 contract VoucherHub is
     AccessControlDefaultAdminRulesUpgradeable,
     UUPSUpgradeable,
@@ -199,7 +197,7 @@ contract VoucherHub is
     /**
      * Debit voucher balance when used assets are eligible to voucher sponsoring.
      * @notice (1) If this function is called by an account which is not a voucher,
-     * it will have no effect other than consummnig gas since balance would be
+     * it will have no effect other than consuming gas since balance would be
      * empty (tokens are only minted for vouchers).
      * (2) This function should not revert even if the amount debited is zero when
      * no asset is eligible or balance from caller is empty. Thanks to that it is

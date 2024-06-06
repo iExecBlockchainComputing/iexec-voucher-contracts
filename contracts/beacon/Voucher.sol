@@ -269,7 +269,8 @@ contract Voucher is Initializable, IVoucher {
     }
 
     /**
-     * Drain balance of expired voucher.
+     * Drain balance of voucher on PoCo if it is expired.
+     * Funds are sent to the VoucherHub contract.
      * @param amount amount to be drained
      */
     function drain(uint256 amount) external onlyVoucherHub onlyExpired {

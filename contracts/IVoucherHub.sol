@@ -8,6 +8,11 @@ interface IVoucherHub {
         string description;
         uint256 duration;
     }
+    event VoucherTypeCreated(uint256 indexed id, string description, uint256 duration);
+    event VoucherTypeDescriptionUpdated(uint256 indexed id, string description);
+    event VoucherTypeDurationUpdated(uint256 indexed id, uint256 duration);
+    event EligibleAssetAdded(uint256 indexed id, address asset);
+    event EligibleAssetRemoved(uint256 indexed id, address asset);
     event VoucherCreated(
         address indexed voucher,
         address owner,
@@ -15,14 +20,9 @@ interface IVoucherHub {
         uint256 expiration,
         uint256 value
     );
-    event VoucherTypeCreated(uint256 indexed id, string description, uint256 duration);
-    event VoucherTypeDescriptionUpdated(uint256 indexed id, string description);
-    event VoucherTypeDurationUpdated(uint256 indexed id, uint256 duration);
-    event EligibleAssetAdded(uint256 indexed id, address asset);
-    event EligibleAssetRemoved(uint256 indexed id, address asset);
+    event VoucherToppedUp(address indexed voucher, uint256 expiration, uint256 value);
     event VoucherDebited(address indexed voucher, uint256 sponsoredAmount);
     event VoucherRefunded(address indexed voucher, uint256 amount);
-    event VoucherToppedUp(address indexed voucher, uint256 expiration, uint256 value);
     event VoucherDrained(address indexed voucher, uint256 amount);
 
     function createVoucherType(string memory description, uint256 duration) external;
