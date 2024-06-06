@@ -61,7 +61,8 @@ contract VoucherHub is
     }
 
     modifier onlyVoucher() {
-        require(_isVoucher(msg.sender), "VoucherHub: sender is not voucher");
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        require($._isVoucher[msg.sender], "VoucherHub: sender is not voucher");
         _;
     }
 
@@ -260,7 +261,8 @@ contract VoucherHub is
      * @param voucher address of the expired voucher to drain
      */
     function drainVoucher(address voucher) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
-        require(_isVoucher(voucher), "VoucherHub: voucher not found");
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        require($._isVoucher[voucher], "VoucherHub: voucher not found");
         uint256 amount = balanceOf(voucher);
         Voucher(voucher).drain(amount);
         _burn(voucher, amount);
@@ -335,11 +337,6 @@ contract VoucherHub is
     function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
-    }
-
-    function _isVoucher(address voucherAddress) private view returns (bool) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $._isVoucher[voucherAddress];
     }
 
     function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
