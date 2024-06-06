@@ -257,16 +257,14 @@ contract VoucherHub is
     /**
      * Drain funds from voucher if it is expired. Transfer all RLC balance
      * on PoCo from voucher to voucherHub and burn all credits.
-     * @param voucherAddress address of the expired voucher to drain
+     * @param voucher address of the expired voucher to drain
      */
-    function drainVoucher(
-        address voucherAddress
-    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
-        require(_isVoucher(voucherAddress), "VoucherHub: voucher not found");
-        uint256 amount = balanceOf(voucherAddress);
-        Voucher(voucherAddress).drain(amount);
-        _burn(voucherAddress, amount);
-        emit VoucherDrained(voucherAddress, amount);
+    function drainVoucher(address voucher) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
+        require(_isVoucher(voucher), "VoucherHub: voucher not found");
+        uint256 amount = balanceOf(voucher);
+        Voucher(voucher).drain(amount);
+        _burn(voucher, amount);
+        emit VoucherDrained(voucher, amount);
     }
 
     /**
