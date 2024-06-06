@@ -15,3 +15,5 @@ node_modules
 
 /deployments/hardhat
 /deployments/localhost
+
+/contracts/hardhat-dependency-compiler
