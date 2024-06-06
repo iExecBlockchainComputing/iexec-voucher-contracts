@@ -48,6 +48,7 @@ interface IVoucherHub {
     ) external returns (uint256 sponsoredAmount);
     function refundVoucher(uint256 amount) external;
     function drainVoucher(address voucher) external;
+    function withdraw(address receiver) external;
 
     function getIexecPoco() external view returns (address);
     function getVoucherBeacon() external view returns (address);

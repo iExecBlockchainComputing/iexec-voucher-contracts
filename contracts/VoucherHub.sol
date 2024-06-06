@@ -270,6 +270,17 @@ contract VoucherHub is
     }
 
     /**
+     * Withdraw full balance of this contract from PoCo and send it to the
+     * specified address.
+     * @param receiver address that will receive withdrawn funds
+     */
+    function withdraw(address receiver) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        uint256 amount = IERC20($._iexecPoco).balanceOf(address(this));
+        IERC20($._iexecPoco).transfer(receiver, amount);
+    }
+
+    /**
      * Get iExec Poco address used by vouchers.
      */
     function getIexecPoco() external view returns (address) {

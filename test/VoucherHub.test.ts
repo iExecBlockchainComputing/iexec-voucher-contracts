@@ -35,6 +35,7 @@ describe('VoucherHub', function () {
     let voucherHubWithVoucherManagerSigner: VoucherHub;
     let voucherHubWithAssetEligibilityManagerSigner: VoucherHub;
     let voucherHubWithAnyoneSigner: VoucherHub;
+    let voucherHubAddress: string;
     // We define a fixture to reuse the same setup in every test.
     // We use loadFixture to run this setup once, snapshot that state,
     // and reset Hardhat Network to that snapshot in every test.
@@ -64,6 +65,7 @@ describe('VoucherHub', function () {
         voucherHubWithVoucherManagerSigner = voucherHub.connect(voucherManager);
         voucherHubWithAssetEligibilityManagerSigner = voucherHub.connect(assetEligibilityManager);
         voucherHubWithAnyoneSigner = voucherHub.connect(anyone);
+        voucherHubAddress = await voucherHub.getAddress();
         await iexecPocoInstance
             .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
             .then((tx) => tx.wait());
@@ -108,7 +110,6 @@ describe('VoucherHub', function () {
             expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
             expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
             // Check VoucherProxy code hash
-            const voucherHubAddress = await voucherHub.getAddress();
             const actualCodeHash =
                 await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
             const expectedHashes =
@@ -134,7 +135,6 @@ describe('VoucherHub', function () {
     describe('Upgrade', function () {
         it('Should upgrade', async function () {
             const { voucherHub, admin } = await loadFixture(deployFixture);
-            const voucherHubAddress = await voucherHub.getAddress();
             const VoucherHubV2Factory = await ethers.getContractFactory('VoucherHubV2Mock', admin);
             // Next line should throw if new storage schema is not compatible with previous one
             await voucherHubUtils.upgradeProxy(voucherHubAddress, VoucherHubV2Factory);
@@ -993,7 +993,6 @@ describe('VoucherHub', function () {
         });
 
         it('Should drain all funds of expired voucher', async function () {
-            const voucherHubAddress = await voucherHub.getAddress();
             const voucherHubRlcBalanceBefore = await iexecPocoInstance.balanceOf(voucherHubAddress);
             // Expire voucher
             const expirationDate = await voucher.getExpiration();
@@ -1028,6 +1027,36 @@ describe('VoucherHub', function () {
                     ethers.Wallet.createRandom().address,
                 ),
             ).to.be.revertedWith('VoucherHub: unknown voucher');
+        });
+    });
+
+    describe('Withdraw', function () {
+        beforeEach(async function () {
+            await loadFixture(deployFixture);
+        });
+
+        it('Should withdraw funds', async function () {
+            expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(
+                initVoucherHubBalance,
+            );
+            const withdrawAddress = ethers.Wallet.createRandom().address;
+            await expect(voucherHubWithAssetEligibilityManagerSigner.withdraw(withdrawAddress))
+                .to.emit(iexecPocoInstance, 'Transfer')
+                .withArgs(voucherHubAddress, withdrawAddress, initVoucherHubBalance);
+            expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(0);
+            expect(await iexecPocoInstance.balanceOf(withdrawAddress)).to.equal(
+                initVoucherHubBalance,
+            );
+        });
+
+        it('Should not withdraw funds when sender is not authorized', async function () {
+            const withdrawAddress = ethers.Wallet.createRandom().address;
+            await expect(
+                voucherHubWithAnyoneSigner.withdraw(withdrawAddress),
+            ).to.be.revertedWithCustomError(
+                voucherHubWithAnyoneSigner,
+                'AccessControlUnauthorizedAccount',
+            );
         });
     });
 

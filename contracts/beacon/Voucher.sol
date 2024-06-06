@@ -20,7 +20,9 @@ import {IVoucher} from "./IVoucher.sol";
 
 /**
  * @title Implementation of the voucher contract.
- * Deployed along the Beacon contract using "Upgrades" plugin of OZ.
+ * Note:
+ *  - This contract and the Beacon are deployed using "Upgrades" plugin of OZ.
+ *  - Vouchers must not be transferable.
  */
 contract Voucher is Initializable, IVoucher {
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
