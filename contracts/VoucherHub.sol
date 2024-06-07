@@ -263,8 +263,8 @@ contract VoucherHub is
         require($._isVoucher[voucher], "VoucherHub: unknown voucher");
         uint256 amount = balanceOf(voucher);
         _burn(voucher, amount);
-        Voucher(voucher).drain(amount);
         emit VoucherDrained(voucher, amount);
+        Voucher(voucher).drain(amount);
     }
 
     /**
