@@ -22,7 +22,7 @@ import {IVoucher} from "./IVoucher.sol";
  * @title Implementation of the voucher contract.
  * Note:
  *  - This contract and the Beacon are deployed using "Upgrades" plugin of OZ.
- *  - Vouchers must not be transferable.
+ *  - Vouchers ownership must not be transferable.
  */
 contract Voucher is Initializable, IVoucher {
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
