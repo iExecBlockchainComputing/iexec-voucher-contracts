@@ -273,7 +273,7 @@ contract Voucher is Initializable, IVoucher {
      * Funds are sent to the VoucherHub contract.
      * @param amount amount to be drained
      */
-    function drain(uint256 amount) external onlyExpired {
+    function drain(uint256 amount) external onlyVoucherHub onlyExpired {
         VoucherStorage storage $ = _getVoucherStorage();
         address voucherHub = $._voucherHub;
         // Although transfer function in PoCo always returns true (or reverts),

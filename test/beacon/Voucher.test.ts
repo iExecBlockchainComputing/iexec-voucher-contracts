@@ -1059,10 +1059,17 @@ describe('Voucher', function () {
             const expirationDate = await voucherAsAnyone.getExpiration();
             await time.setNextBlockTimestamp(expirationDate + 100n); // after expiration
             // Drain
-            await expect(voucherAsAnyone.drain(voucherValue))
+            const voucherHubSigner = await ethers.getImpersonatedSigner(voucherHubAddress);
+            await expect(voucherAsAnyone.connect(voucherHubSigner).drain(voucherValue))
                 .to.emit(iexecPocoInstance, 'Transfer')
                 .withArgs(voucherAddress, voucherHubAddress, voucherValue);
             expect(await iexecPocoInstance.balanceOf(voucherAddress)).to.equal(0);
+        });
+
+        it('Should not drain voucher if sender is not authorized', async function () {
+            await expect(voucherAsAnyone.drain(voucherValue)).to.be.revertedWith(
+                'Voucher: sender is not VoucherHub',
+            );
         });
 
         it('Should not drain voucher if not expired', async function () {
