@@ -1027,28 +1027,45 @@ describe('VoucherHub', function () {
     });
 
     describe('Withdraw', function () {
+        let receiver: string = ethers.Wallet.createRandom().address;
+
         beforeEach(async function () {
             await loadFixture(deployFixture);
         });
 
-        it('Should withdraw funds', async function () {
+        it('Should withdraw all funds', async function () {
             expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(
                 initVoucherHubBalance,
             );
-            const withdrawAddress = ethers.Wallet.createRandom().address;
-            await expect(voucherHubWithAssetEligibilityManagerSigner.withdraw(withdrawAddress))
+            await expect(
+                voucherHubWithAssetEligibilityManagerSigner.withdraw(
+                    receiver,
+                    initVoucherHubBalance,
+                ),
+            )
                 .to.emit(iexecPocoInstance, 'Transfer')
-                .withArgs(voucherHubAddress, withdrawAddress, initVoucherHubBalance);
+                .withArgs(voucherHubAddress, receiver, initVoucherHubBalance);
             expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(0);
-            expect(await iexecPocoInstance.balanceOf(withdrawAddress)).to.equal(
+            expect(await iexecPocoInstance.balanceOf(receiver)).to.equal(initVoucherHubBalance);
+        });
+
+        it('Should withdraw some funds', async function () {
+            expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(
                 initVoucherHubBalance,
             );
+            const amount = initVoucherHubBalance / 2n;
+            await expect(voucherHubWithAssetEligibilityManagerSigner.withdraw(receiver, amount))
+                .to.emit(iexecPocoInstance, 'Transfer')
+                .withArgs(voucherHubAddress, receiver, amount);
+            expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(
+                initVoucherHubBalance - amount,
+            );
+            expect(await iexecPocoInstance.balanceOf(receiver)).to.equal(amount);
         });
 
         it('Should not withdraw funds when sender is not authorized', async function () {
-            const withdrawAddress = ethers.Wallet.createRandom().address;
             await expect(
-                voucherHubWithAnyoneSigner.withdraw(withdrawAddress),
+                voucherHubWithAnyoneSigner.withdraw(receiver, initVoucherHubBalance),
             ).to.be.revertedWithCustomError(
                 voucherHubWithAnyoneSigner,
                 'AccessControlUnauthorizedAccount',

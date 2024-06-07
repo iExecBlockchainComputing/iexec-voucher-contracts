@@ -268,13 +268,16 @@ contract VoucherHub is
     }
 
     /**
-     * Withdraw full balance of this contract from PoCo and send it to the
-     * specified address.
+     * Withdraw specified amount from this contract's balance on PoCo and send it
+     * to the specified address.
      * @param receiver address that will receive withdrawn funds
+     * @param amount amount to withdraw
      */
-    function withdraw(address receiver) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
+    function withdraw(
+        address receiver,
+        uint256 amount
+    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        uint256 amount = IERC20($._iexecPoco).balanceOf(address(this));
         // Slither raises a "transfer-unchecked" warning for the next line
         // if return value of transfer() is not checked.
         // Although transfer function in PoCo always returns true (or reverts),
