@@ -994,7 +994,7 @@ describe('VoucherHub', function () {
             const expirationDate = await voucher.getExpiration();
             await time.setNextBlockTimestamp(expirationDate + 100n); // after expiration
             // Drain
-            await expect(voucherHubWithVoucherManagerSigner.drainVoucher(voucherAddress))
+            await expect(voucherHubWithAnyoneSigner.drainVoucher(voucherAddress))
                 .to.emit(iexecPocoInstance, 'Transfer')
                 .withArgs(voucherAddress, voucherHubAddress, voucherValue)
                 .to.emit(voucherHub, 'Transfer')
@@ -1009,12 +1009,6 @@ describe('VoucherHub', function () {
             expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(
                 voucherHubRlcBalanceBefore + voucherValue,
             );
-        });
-
-        it('Should not drain voucher if sender is not authorized', async function () {
-            await expect(
-                voucherHubWithAnyoneSigner.drainVoucher(voucherAddress),
-            ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
         });
 
         it('Should not drain if address is unknown', async function () {

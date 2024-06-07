@@ -258,7 +258,7 @@ contract VoucherHub is
      * on PoCo from voucher to voucherHub and burn all credits.
      * @param voucher address of the expired voucher to drain
      */
-    function drainVoucher(address voucher) external onlyRole(VOUCHER_MANAGER_ROLE) {
+    function drainVoucher(address voucher) external {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require($._isVoucher[voucher], "VoucherHub: unknown voucher");
         uint256 amount = balanceOf(voucher);
