@@ -12,8 +12,6 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
  * @notice Testing purposes only.
  */
 contract IexecPocoMock is ERC20 {
-    // TODO multiply task price by volume in _mint() and burn().
-
     bool public shouldRevertOnSponsorMatchOrders = false;
     bool public shouldRevertOnSponsorMatchOrdersBoost = false;
     bool public shouldRevertOnClaim = false;
@@ -45,7 +43,6 @@ contract IexecPocoMock is ERC20 {
             revert("IexecPocoMock: Failed to sponsorMatchOrders");
         }
         deal.requester = requestOrder.requester;
-        deal.botSize = requestOrder.volume;
         deal.app.price = appOrder.appprice;
         deal.dataset.price = datasetOrder.datasetprice;
         deal.workerpool.price = workerpoolOrder.workerpoolprice;
@@ -53,6 +50,7 @@ contract IexecPocoMock is ERC20 {
         task.dealid = mockDealId;
         task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
         uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
+        deal.botSize = volume;
         uint256 dealPrice = (appOrder.appprice +
             datasetOrder.datasetprice +
             workerpoolOrder.workerpoolprice) * volume;
@@ -70,13 +68,13 @@ contract IexecPocoMock is ERC20 {
             revert("IexecPocoMock: Failed to sponsorMatchOrdersBoost");
         }
         dealBoost.requester = requestOrder.requester;
-        dealBoost.botSize = uint16(requestOrder.volume);
         dealBoost.appPrice = uint96(appOrder.appprice);
         dealBoost.datasetPrice = uint96(datasetOrder.datasetprice);
         dealBoost.workerpoolPrice = uint96(workerpoolOrder.workerpoolprice);
         dealBoost.sponsor = msg.sender;
         task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
         uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
+        dealBoost.botSize = uint16(volume);
         uint256 dealPrice = (appOrder.appprice +
             datasetOrder.datasetprice +
             workerpoolOrder.workerpoolprice) * volume;
@@ -105,6 +103,7 @@ contract IexecPocoMock is ERC20 {
             revert(); // no reason, same as PoCo.
         }
         task.status = IexecLibCore_v5.TaskStatusEnum.FAILED;
+        // mint task price.
         _mint(deal.sponsor, deal.app.price + deal.dataset.price + deal.workerpool.price);
     }
 
@@ -117,6 +116,7 @@ contract IexecPocoMock is ERC20 {
             revert("PocoBoost: Unknown task"); // same as PoCo.
         }
         task.status = IexecLibCore_v5.TaskStatusEnum.FAILED;
+        // mint task price.
         _mint(
             dealBoost.sponsor,
             dealBoost.appPrice + dealBoost.datasetPrice + dealBoost.workerpoolPrice
