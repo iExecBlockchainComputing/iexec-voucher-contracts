@@ -62,13 +62,13 @@ contract Voucher is Initializable, IVoucher {
         _;
     }
 
-    modifier onlyExpired() {
-        require(getExpiration() < block.timestamp, "Voucher: voucher is not expired");
+    modifier onlyNotExpired() {
+        require(block.timestamp < getExpiration(), "Voucher: voucher is expired");
         _;
     }
 
-    modifier onlyNotExpired() {
-        require(block.timestamp < getExpiration(), "Voucher: voucher is expired");
+    modifier onlyExpired() {
+        require(getExpiration() < block.timestamp, "Voucher: voucher is not expired");
         _;
     }
 
