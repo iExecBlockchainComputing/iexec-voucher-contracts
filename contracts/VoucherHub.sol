@@ -275,7 +275,13 @@ contract VoucherHub is
     function withdraw(address receiver) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         uint256 amount = IERC20($._iexecPoco).balanceOf(address(this));
-        IERC20($._iexecPoco).transfer(receiver, amount);
+        // Slither raises a "transfer-unchecked" warning for the next line
+        // if return value of transfer() is not checked.
+        // Although transfer function in PoCo always returns true (or reverts),
+        // a return value check is added here in case its behavior changes.
+        if (!IERC20($._iexecPoco).transfer(receiver, amount)) {
+            revert("VoucherHub: withdraw failed");
+        }
     }
 
     /**
