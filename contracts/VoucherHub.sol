@@ -262,8 +262,8 @@ contract VoucherHub is
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require($._isVoucher[voucher], "VoucherHub: unknown voucher");
         uint256 amount = balanceOf(voucher);
-        Voucher(voucher).drain(amount);
         _burn(voucher, amount);
+        Voucher(voucher).drain(amount);
         emit VoucherDrained(voucher, amount);
     }
 
