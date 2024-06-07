@@ -1011,7 +1011,7 @@ describe('VoucherHub', function () {
             );
         });
 
-        it('Should not drain if address is unknown', async function () {
+        it('Should not drain if unknown voucher', async function () {
             await expect(
                 voucherHubWithVoucherManagerSigner.drainVoucher(
                     ethers.Wallet.createRandom().address,
