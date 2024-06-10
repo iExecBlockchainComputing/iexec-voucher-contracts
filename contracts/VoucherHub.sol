@@ -259,9 +259,8 @@ contract VoucherHub is
      * @param voucher address of the expired voucher to drain
      */
     function drainVoucher(address voucher) external {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        require($._isVoucher[voucher], "VoucherHub: unknown voucher");
         uint256 amount = balanceOf(voucher);
+        require(amount > 0, "VoucherHub: nothing to drain");
         _burn(voucher, amount);
         emit VoucherDrained(voucher, amount);
         Voucher(voucher).drain(amount);
