@@ -326,9 +326,11 @@ contract VoucherHub is
     }
 
     function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
+        //slither-disable-start assembly
         assembly {
             $.slot := VOUCHER_HUB_STORAGE_LOCATION
         }
+        //slither-disable-end assembly
     }
 
     function _getCreate2Salt(address account) private pure returns (bytes32) {

@@ -380,9 +380,11 @@ contract Voucher is Initializable, IVoucher {
     }
 
     function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
+        //slither-disable-start assembly
         assembly {
             $.slot := VOUCHER_STORAGE_LOCATION
         }
+        //slither-disable-end assembly
     }
 
     // TODO move this function before private view functions.
