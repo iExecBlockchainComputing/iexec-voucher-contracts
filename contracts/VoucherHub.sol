@@ -263,7 +263,7 @@ contract VoucherHub is
         require(amount > 0, "VoucherHub: nothing to drain");
         _burn(voucher, amount);
         emit VoucherDrained(voucher, amount);
-        Voucher(voucher).drain(amount);
+        Voucher(voucher).drain();
     }
 
     /**

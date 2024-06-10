@@ -271,14 +271,14 @@ contract Voucher is Initializable, IVoucher {
     /**
      * Drain balance of voucher on PoCo if it is expired.
      * Funds are sent to the VoucherHub contract.
-     * @param amount amount to be drained
      */
-    function drain(uint256 amount) external onlyVoucherHub onlyExpired {
+    function drain() external onlyVoucherHub onlyExpired {
         VoucherStorage storage $ = _getVoucherStorage();
         address voucherHub = $._voucherHub;
         // Although transfer function in PoCo always returns true (or reverts),
         // a return value check is added here in case its behavior changes.
-        if (!IERC20(IVoucherHub(voucherHub).getIexecPoco()).transfer(voucherHub, amount)) {
+        IERC20 iexecPoco = IERC20(IVoucherHub(voucherHub).getIexecPoco());
+        if (!iexecPoco.transfer(voucherHub, iexecPoco.balanceOf(address(this)))) {
             revert("Voucher: drain failed");
         }
     }

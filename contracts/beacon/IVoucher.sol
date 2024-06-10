@@ -30,7 +30,7 @@ interface IVoucher {
     ) external returns (bytes32);
     function claim(bytes32 taskId) external;
     function claimBoost(bytes32 dealId, uint256 taskIndex) external;
-    function drain(uint256 amount) external;
+    function drain() external;
 
     function getVoucherHub() external view returns (address);
     function getType() external view returns (uint256);
