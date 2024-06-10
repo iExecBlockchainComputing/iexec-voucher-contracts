@@ -172,7 +172,10 @@ contract VoucherHub is
         // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
         Voucher(voucherAddress).initialize(owner, address(this), expiration, voucherType);
-        IERC20($._iexecPoco).transfer(voucherAddress, value); // SRLC
+        if (!IERC20($._iexecPoco).transfer(voucherAddress, value)) {
+            // SRLC
+            revert("VoucherHub: SRLC transfer to voucher failed");
+        }
         _mint(voucherAddress, value); // VCHR
         $._isVoucher[voucherAddress] = true;
         emit VoucherCreated(voucherAddress, owner, voucherType, expiration, value);
@@ -188,7 +191,10 @@ contract VoucherHub is
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require($._isVoucher[voucher], "VoucherHub: unknown voucher");
         _mint(voucher, value); // VCHR
-        IERC20($._iexecPoco).transfer(voucher, value); // SRLC
+        if (!IERC20($._iexecPoco).transfer(voucher, value)) {
+            // SRLC
+            revert("VoucherHub: SRLC transfer to voucher failed");
+        }
         uint256 expiration = block.timestamp + $.voucherTypes[Voucher(voucher).getType()].duration;
         Voucher(voucher).setExpiration(expiration);
         emit VoucherToppedUp(voucher, expiration, value);

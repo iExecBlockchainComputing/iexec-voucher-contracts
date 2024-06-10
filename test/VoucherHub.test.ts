@@ -668,6 +668,22 @@ describe('VoucherHub', function () {
                 ),
             ).to.be.revertedWith('VoucherHub: type index out of bounds');
         });
+        it('Should not create voucher when SLRC transfer fails', async function () {
+            const { voucherOwner1 } = await loadFixture(deployFixture);
+            await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
+                description,
+                duration,
+            );
+            await iexecPocoInstance.willRevertOnTransfer().then((tx) => tx.wait());
+            // Create voucher.
+            await expect(
+                voucherHubWithVoucherManagerSigner.createVoucher(
+                    voucherOwner1,
+                    voucherType,
+                    voucherValue,
+                ),
+            ).to.be.revertedWith('VoucherHub: SRLC transfer to voucher failed');
+        });
     });
 
     describe('Top up voucher', function () {
@@ -736,6 +752,14 @@ describe('VoucherHub', function () {
                     voucherValue,
                 ),
             ).to.revertedWith('VoucherHub: unknown voucher');
+        });
+        it('Should not top up when SLRC transfer fails', async function () {
+            const topUpValue = 123n; // arbitrary value
+            await iexecPocoInstance.willRevertOnTransfer().then((tx) => tx.wait());
+            // Create voucher.
+            await expect(
+                voucherHubWithVoucherManagerSigner.topUpVoucher(voucherAddress, topUpValue),
+            ).to.be.revertedWith('VoucherHub: SRLC transfer to voucher failed');
         });
     });
 
