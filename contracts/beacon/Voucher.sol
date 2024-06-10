@@ -373,7 +373,9 @@ contract Voucher is Initializable, IVoucher {
                 // If the deal was not sponsored or partially sponsored
                 // by the voucher then send the non-sponsored part back
                 // to the requester.
-                IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount);
+                if (!IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount)) {
+                    revert("Voucher: transfer to requester failed");
+                }
             }
         }
     }
@@ -432,11 +434,16 @@ contract Voucher is Initializable, IVoucher {
         if (sponsoredAmount != dealPrice) {
             // Transfer non-sponsored amount from the iExec account of the
             // requester to the iExec account of the voucher
-            IERC20(iexecPoco).transferFrom(
-                requestOrder.requester,
-                address(this),
-                dealPrice - sponsoredAmount
-            );
+            if (
+                !IERC20(iexecPoco).transferFrom(
+                    requestOrder.requester,
+                    address(this),
+                    dealPrice - sponsoredAmount
+                )
+            ) {
+                // SRLC
+                revert("Voucher: Transfer of non-sponsored amount failed");
+            }
         }
     }
 }

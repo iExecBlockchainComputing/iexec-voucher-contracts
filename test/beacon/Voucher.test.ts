@@ -644,6 +644,28 @@ describe('Voucher', function () {
                     ),
                 ).to.be.revertedWith('IexecPocoMock: Failed to sponsorMatchOrdersBoost');
             });
+
+            it('Should not match orders boost when SRLC transfer fails', async () => {
+                const noSponsoredValue = appPrice * volume;
+                await addEligibleAssets([dataset, workerpool]);
+                await iexecPocoInstance
+                    .transfer(requester, noSponsoredValue)
+                    .then((tx) => tx.wait());
+
+                await iexecPocoInstance
+                    .connect(requester)
+                    .approve(await voucherAsOwner.getAddress(), noSponsoredValue)
+                    .then((tx) => tx.wait());
+                await iexecPocoInstance.willRevertOnTransferFrom().then((tx) => tx.wait());
+                await expect(
+                    voucherAsOwner.matchOrdersBoost(
+                        appOrder,
+                        datasetOrder,
+                        workerpoolOrder,
+                        requestOrder,
+                    ),
+                ).to.be.revertedWith('Voucher: Transfer of non-sponsored amount failed');
+            });
         });
     });
 
@@ -1048,6 +1070,28 @@ describe('Voucher', function () {
                     'IexecPocoMock: Failed to claim boost',
                 );
             });
+        });
+        describe('Should not claim task when SLRC transfer fails', async () => {
+            it('Classic', async () => await runTest(voucherMatchOrders, claim));
+            it('Boost', async () => await runTest(voucherMatchOrdersBoost, claimBoost));
+
+            async function runTest(matchOrdersBoostOrClassic: any, claimBoostOrClassic: any) {
+                await addEligibleAssets([app, dataset]); // workerpool not eligible.
+                const dealNonSponsoredAmount = workerpoolPrice * volume;
+                // Deposit non-sponsored amount for requester and approve voucher.
+                await iexecPocoInstance
+                    .transfer(requester, dealNonSponsoredAmount)
+                    .then((tx) => tx.wait());
+                await iexecPocoInstance
+                    .connect(requester)
+                    .approve(voucherAddress, dealNonSponsoredAmount)
+                    .then((tx) => tx.wait());
+                await matchOrdersBoostOrClassic();
+                await iexecPocoInstance.willRevertOnTransfer().then((tx) => tx.wait());
+                await expect(claimBoostOrClassic()).to.be.revertedWith(
+                    'Voucher: transfer to requester failed',
+                );
+            }
         });
     });
 
