@@ -172,8 +172,8 @@ contract VoucherHub is
         // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
         Voucher(voucherAddress).initialize(owner, address(this), expiration, voucherType);
+        // SRLC
         if (!IERC20($._iexecPoco).transfer(voucherAddress, value)) {
-            // SRLC
             revert("VoucherHub: SRLC transfer to voucher failed");
         }
         _mint(voucherAddress, value); // VCHR
