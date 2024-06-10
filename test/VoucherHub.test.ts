@@ -992,7 +992,7 @@ describe('VoucherHub', function () {
             const voucherHubRlcBalanceBefore = await iexecPocoInstance.balanceOf(voucherHubAddress);
             // Expire voucher
             const expirationDate = await voucher.getExpiration();
-            await time.setNextBlockTimestamp(expirationDate + 100n); // after expiration
+            await time.setNextBlockTimestamp(expirationDate); // after expiration
             // Drain
             await expect(voucherHubWithAnyoneSigner.drainVoucher(voucherAddress))
                 .to.emit(iexecPocoInstance, 'Transfer')
@@ -1022,7 +1022,7 @@ describe('VoucherHub', function () {
         it('Should not drain if balance is empty', async function () {
             // Expire voucher
             const expirationDate = await voucher.getExpiration();
-            await time.setNextBlockTimestamp(expirationDate + 100n); // after expiration
+            await time.setNextBlockTimestamp(expirationDate); // after expiration
             // Drain to empty the voucher from its balance.
             await voucherHubWithVoucherManagerSigner
                 .drainVoucher(voucherAddress)
