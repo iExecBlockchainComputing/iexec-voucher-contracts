@@ -656,7 +656,7 @@ describe('Voucher', function () {
                     .connect(requester)
                     .approve(await voucherAsOwner.getAddress(), noSponsoredValue)
                     .then((tx) => tx.wait());
-                await iexecPocoInstance.willRevertOnTransferFrom().then((tx) => tx.wait());
+                await iexecPocoInstance.willFailOnTransferFrom().then((tx) => tx.wait());
                 await expect(
                     voucherAsOwner.matchOrdersBoost(
                         appOrder,
@@ -1088,7 +1088,7 @@ describe('Voucher', function () {
                     .approve(voucherAddress, dealNonSponsoredAmount)
                     .then((tx) => tx.wait());
                 await matchOrdersBoostOrClassic();
-                await iexecPocoInstance.willRevertOnTransfer().then((tx) => tx.wait());
+                await iexecPocoInstance.willFailOnTransfer().then((tx) => tx.wait());
                 await expect(claimBoostOrClassic()).to.be.revertedWith(
                     'Voucher: transfer to requester failed',
                 );

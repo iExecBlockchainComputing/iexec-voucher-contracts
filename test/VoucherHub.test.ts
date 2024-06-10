@@ -675,7 +675,7 @@ describe('VoucherHub', function () {
                 description,
                 duration,
             );
-            await iexecPocoInstance.willRevertOnTransfer().then((tx) => tx.wait());
+            await iexecPocoInstance.willFailOnTransfer().then((tx) => tx.wait());
             // Create voucher.
             await expect(
                 voucherHubWithVoucherManagerSigner.createVoucher(
@@ -756,7 +756,7 @@ describe('VoucherHub', function () {
         });
         it('Should not top up when SLRC transfer fails', async function () {
             const topUpValue = 123n; // arbitrary value
-            await iexecPocoInstance.willRevertOnTransfer().then((tx) => tx.wait());
+            await iexecPocoInstance.willFailOnTransfer().then((tx) => tx.wait());
             // Create voucher.
             await expect(
                 voucherHubWithVoucherManagerSigner.topUpVoucher(voucherAddress, topUpValue),

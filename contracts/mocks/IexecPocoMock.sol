@@ -94,11 +94,11 @@ contract IexecPocoMock is ERC20 {
         shouldRevertOnSponsorMatchOrdersBoost = true;
     }
 
-    function willRevertOnTransfer() external {
+    function willFailOnTransfer() external {
         shouldFailOnTransfer = true;
     }
 
-    function willRevertOnTransferFrom() external {
+    function willFailOnTransferFrom() external {
         shouldFailOnTransferFrom = true;
     }
 
