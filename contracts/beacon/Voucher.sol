@@ -435,6 +435,8 @@ contract Voucher is Initializable, IVoucher {
             // Transfer non-sponsored amount from the iExec account of the
             // requester to the iExec account of the voucher
             //slither-disable-start arbitrary-send-erc20
+            // Note: We can disable this check since request order is signed by requester so he agrees to pay for it
+            // & caller is only authorized.
             if (
                 !IERC20(iexecPoco).transferFrom(
                     requestOrder.requester,
