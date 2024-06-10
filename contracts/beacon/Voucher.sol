@@ -359,21 +359,32 @@ contract Voucher is Initializable, IVoucher {
         $._refundedTasks[taskId] = true;
         if (taskPrice != 0) {
             uint256 dealSponsoredAmount = $._sponsoredAmounts[dealId];
-            // A positive remainder is possible when the voucher balance is less than
-            // the sponsorable amount. Min(balance, dealSponsoredAmount) is computed
+            // Positive remainders for task sponsored amount or task non-sponsored
+            // amount are possible when the voucher balance is less than the
+            // sponsorable amount. Min(balance, dealSponsoredAmount) is computed
             // at match orders.
-            // TODO !! do something with the remainder.
+            // When a task of a deal is refunded, only the divisible part can be refunded:
+            // - If it were decided to refund remainders to the requester, it would
+            //      be possible to "extract" credits out of the voucher by claiming
+            //      tasks in order to get plain RLC.
+            // - If it were decided to refund remainders to the voucher, it would
+            //      be possible to "top up" credits on the voucher by claiming tasks.
+            // As a matter of facts, since remainders will not be refunded, the
+            // difference between the poco balance of the voucher and the number
+            // of voucher credits will increase on the long run.
             uint256 taskSponsoredAmount = dealSponsoredAmount / dealVolume;
             if (taskSponsoredAmount != 0) {
                 // If the voucher did fully/partially sponsor the deal then mint voucher
                 // credits back.
                 voucherHub.refundVoucher(taskSponsoredAmount);
             }
-            if (taskSponsoredAmount < taskPrice) {
+            uint256 taskNonSponsoredAmount = ((taskPrice * dealVolume) - dealSponsoredAmount) /
+                dealVolume;
+            if (taskNonSponsoredAmount > 0) {
                 // If the deal was not sponsored or partially sponsored
                 // by the voucher then send the non-sponsored part back
                 // to the requester.
-                IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount);
+                IERC20(iexecPoco).transfer(requester, taskNonSponsoredAmount);
             }
         }
     }

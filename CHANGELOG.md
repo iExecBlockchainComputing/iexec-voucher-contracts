@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Update requester refund to not return more than was provided. (#28)
 - Add slither github action. (#24)
 - Top up voucher. (#23)
 - Claim task part 2 - Add voucher tests. (#21)
