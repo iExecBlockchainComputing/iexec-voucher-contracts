@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Drain expired vouchers and withdraw funds. (#25)
 - Add slither github action. (#24)
 - Top up voucher. (#23)
 - Claim task part 2 - Add voucher tests. (#21)
