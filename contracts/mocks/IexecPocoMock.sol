@@ -18,8 +18,8 @@ contract IexecPocoMock is ERC20 {
     bool public shouldRevertOnSponsorMatchOrdersBoost = false;
     bool public shouldRevertOnClaim = false;
     bool public shouldReturnTaskWithFailedStatus = false;
-    bool public shouldRevertOnTransfer = false;
-    bool public shouldRevertOnTransferFrom = false;
+    bool public shouldFailOnTransfer = false;
+    bool public shouldFailOnTransferFrom = false;
 
     bytes32 public mockDealId = keccak256("deal");
     uint256 public mockTaskIndex = 0;
@@ -95,11 +95,11 @@ contract IexecPocoMock is ERC20 {
     }
 
     function willRevertOnTransfer() external {
-        shouldRevertOnTransfer = true;
+        shouldFailOnTransfer = true;
     }
 
     function willRevertOnTransferFrom() external {
-        shouldRevertOnTransferFrom = true;
+        shouldFailOnTransferFrom = true;
     }
 
     /**
@@ -171,7 +171,7 @@ contract IexecPocoMock is ERC20 {
      */
     function transfer(address recipient, uint256 amount) public override returns (bool) {
         if (shouldFailOnTransfer) {
-            return !shouldRevertOnTransfer;
+            return false;
         }
         return super.transfer(recipient, amount);
     }
@@ -181,8 +181,8 @@ contract IexecPocoMock is ERC20 {
         address recipient,
         uint256 amount
     ) public override returns (bool) {
-        if (shouldRevertOnTransferFrom) {
-            return !shouldRevertOnTransferFrom;
+        if (shouldFailOnTransferFrom) {
+            return false;
         }
         return super.transferFrom(sender, recipient, amount);
     }
