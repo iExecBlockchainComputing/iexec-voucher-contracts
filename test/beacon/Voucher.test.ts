@@ -330,6 +330,49 @@ describe('Voucher', function () {
             expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(dealPrice);
         });
 
+        it('Should match orders with partial sponsored amount', async () => {
+            await addEligibleAssets([app, dataset]); // not workerpool.
+            // Deposit non-sponsored amount in requester's account and approve voucher.
+            const dealSponsoredAmount = (appPrice + datasetPrice) * volume;
+            const dealNonSponsoredAmount = dealPrice - dealSponsoredAmount;
+            await iexecPocoInstance
+                .transfer(requester, dealSponsoredAmount)
+                .then((tx) => tx.wait());
+            // Allow voucher to spend non-sponsored amount.
+            await iexecPocoInstance
+                .connect(requester)
+                .approve(voucherAddress, dealPrice)
+                .then((tx) => tx.wait());
+            // Save initial balances.
+            const voucherInitialCreditBalance = await voucherAsOwner.getBalance();
+            const voucherInitialRlcBalance = await getVoucherBalanceOnIexecPoco();
+            const requesterInitialRlcBalance = await getRequesterBalanceOnIexecPoco();
+
+            expect(
+                await voucherAsOwner.matchOrders.staticCall(
+                    appOrder,
+                    datasetOrder,
+                    workerpoolOrder,
+                    requestOrder,
+                ),
+            ).to.be.equal(dealId);
+            await expect(
+                voucherAsOwner.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder),
+            )
+                .to.emit(voucherAsOwner, 'OrdersMatchedWithVoucher')
+                .withArgs(dealId);
+            expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(
+                dealSponsoredAmount,
+            );
+            expect(await voucherAsOwner.getBalance())
+                .to.be.equal(voucherInitialCreditBalance - dealSponsoredAmount)
+                .to.be.equal(await getVoucherBalanceOnIexecPoco())
+                .to.be.equal(voucherInitialRlcBalance - dealSponsoredAmount);
+            expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
+                requesterInitialRlcBalance - dealNonSponsoredAmount,
+            );
+        });
+
         it('Should match orders with full non-sponsored amount', async () => {
             const voucherInitialCreditBalance = await voucherAsOwner.getBalance();
             const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
@@ -381,10 +424,6 @@ describe('Voucher', function () {
             await expect(
                 voucherAsOwner.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder),
             ).to.be.revertedWith('Voucher: voucher is expired');
-        });
-
-        it('TODO - Should match orders with partial sponsored amount', async () => {
-            // TODO
         });
 
         it('Should match orders without dataset', async () => {
