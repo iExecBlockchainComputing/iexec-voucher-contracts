@@ -668,6 +668,7 @@ describe('VoucherHub', function () {
                 ),
             ).to.be.revertedWith('VoucherHub: type index out of bounds');
         });
+
         it('Should not create voucher when SLRC transfer fails', async function () {
             const { voucherOwner1 } = await loadFixture(deployFixture);
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(

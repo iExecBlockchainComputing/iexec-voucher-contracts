@@ -1071,6 +1071,7 @@ describe('Voucher', function () {
                 );
             });
         });
+
         describe('Should not claim task when SLRC transfer fails', async () => {
             it('Classic', async () => await runTest(voucherMatchOrders, claim));
             it('Boost', async () => await runTest(voucherMatchOrdersBoost, claimBoost));
