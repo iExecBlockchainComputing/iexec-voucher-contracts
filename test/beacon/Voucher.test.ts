@@ -21,6 +21,8 @@ import {
 import { random } from '../utils/address-utils';
 import { TaskStatusEnum, createMockOrder } from '../utils/poco-utils';
 
+// TODO use srlc instead of rlc.
+
 const voucherType = 0;
 const duration = 3600;
 const description = 'Early Access';
