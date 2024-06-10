@@ -170,7 +170,7 @@ contract IexecPocoMock is ERC20 {
      * Override transfer and transferFrom to mock revert case
      */
     function transfer(address recipient, uint256 amount) public override returns (bool) {
-        if (shouldRevertOnTransfer) {
+        if (shouldFailOnTransfer) {
             return !shouldRevertOnTransfer;
         }
         return super.transfer(recipient, amount);
