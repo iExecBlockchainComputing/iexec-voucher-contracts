@@ -1016,7 +1016,21 @@ describe('VoucherHub', function () {
                 voucherHubWithVoucherManagerSigner.drainVoucher(
                     ethers.Wallet.createRandom().address,
                 ),
-            ).to.be.revertedWith('VoucherHub: unknown voucher');
+            ).to.be.revertedWith('VoucherHub: nothing to drain');
+        });
+
+        it('Should not drain if balance is empty', async function () {
+            // Expire voucher
+            const expirationDate = await voucher.getExpiration();
+            await time.setNextBlockTimestamp(expirationDate + 100n); // after expiration
+            // Drain to empty the voucher from its balance.
+            await voucherHubWithVoucherManagerSigner
+                .drainVoucher(voucherAddress)
+                .then((tx) => tx.wait());
+            // Drain a second time when balance is empty.
+            await expect(
+                voucherHubWithVoucherManagerSigner.drainVoucher(voucherAddress),
+            ).to.be.revertedWith('VoucherHub: nothing to drain');
         });
     });
 
