@@ -1,6 +1,6 @@
 {
     "solc_remaps": "@=node_modules/@",
     "filter_paths": "(mocks/|node_modules/)",
-    "detectors_to_exclude": "pragma,solc-version,assembly,too-many-digits",
+    "detectors_to_exclude": "pragma,solc-version,assembly",
     "solc_args": "--optimize --via-ir"
 }

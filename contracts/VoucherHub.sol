@@ -86,12 +86,15 @@ contract VoucherHub is
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;
         $._voucherBeacon = voucherBeacon;
+        //slither-disable-start too-many-digits
+        // See : https://github.com/crytic/slither/issues/1223
         $._voucherCreationCodeHash = keccak256(
             abi.encodePacked(
                 type(VoucherProxy).creationCode, // bytecode
                 abi.encode($._voucherBeacon) // constructor args
             )
         );
+        //slither-disable-end too-many-digits
     }
 
     function createVoucherType(
