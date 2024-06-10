@@ -654,7 +654,7 @@ describe('Voucher', function () {
 
                 await iexecPocoInstance
                     .connect(requester)
-                    .approve(await voucherAsOwner.getAddress(), noSponsoredValue)
+                    .approve(voucherAddress, noSponsoredValue)
                     .then((tx) => tx.wait());
                 await iexecPocoInstance.willFailOnTransferFrom().then((tx) => tx.wait());
                 await expect(
