@@ -177,7 +177,7 @@ contract VoucherHub is
         _mint(voucherAddress, value); // VCHR
         $._isVoucher[voucherAddress] = true;
         emit VoucherCreated(voucherAddress, owner, voucherType, expiration, value);
-        _transfertFundsToVoucher($._iexecPoco, voucherAddress, value); // SRLC
+        _transfertFundsToVoucherOnPoco($._iexecPoco, voucherAddress, value); // SRLC
     }
 
     /**
@@ -190,7 +190,7 @@ contract VoucherHub is
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require($._isVoucher[voucher], "VoucherHub: unknown voucher");
         _mint(voucher, value); // VCHR
-        _transfertFundsToVoucher($._iexecPoco, voucher, value); // SRLC
+        _transfertFundsToVoucherOnPoco($._iexecPoco, voucher, value); // SRLC
         uint256 expiration = block.timestamp + $.voucherTypes[Voucher(voucher).getType()].duration;
         Voucher(voucher).setExpiration(expiration);
         emit VoucherToppedUp(voucher, expiration, value);
@@ -337,7 +337,7 @@ contract VoucherHub is
         return bytes32(uint256(uint160(account)));
     }
 
-    function _transfertFundsToVoucher(
+    function _transfertFundsToVoucherOnPoco(
         address iexecPoco,
         address voucherAddress,
         uint256 value
