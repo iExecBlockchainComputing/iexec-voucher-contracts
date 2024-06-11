@@ -8,6 +8,11 @@ interface IVoucherHub {
         string description;
         uint256 duration;
     }
+    event VoucherTypeCreated(uint256 indexed id, string description, uint256 duration);
+    event VoucherTypeDescriptionUpdated(uint256 indexed id, string description);
+    event VoucherTypeDurationUpdated(uint256 indexed id, uint256 duration);
+    event EligibleAssetAdded(uint256 indexed id, address asset);
+    event EligibleAssetRemoved(uint256 indexed id, address asset);
     event VoucherCreated(
         address indexed voucher,
         address owner,
@@ -18,11 +23,7 @@ interface IVoucherHub {
     event VoucherToppedUp(address indexed voucher, uint256 expiration, uint256 value);
     event VoucherDebited(address indexed voucher, uint256 sponsoredAmount);
     event VoucherRefunded(address indexed voucher, uint256 amount);
-    event VoucherTypeCreated(uint256 indexed id, string description, uint256 duration);
-    event VoucherTypeDescriptionUpdated(uint256 indexed id, string description);
-    event VoucherTypeDurationUpdated(uint256 indexed id, uint256 duration);
-    event EligibleAssetAdded(uint256 indexed id, address asset);
-    event EligibleAssetRemoved(uint256 indexed id, address asset);
+    event VoucherDrained(address indexed voucher, uint256 amount);
 
     function createVoucherType(string memory description, uint256 duration) external;
     function updateVoucherTypeDescription(uint256 id, string memory description) external;
@@ -46,6 +47,8 @@ interface IVoucherHub {
         uint256 volume
     ) external returns (uint256 sponsoredAmount);
     function refundVoucher(uint256 amount) external;
+    function drainVoucher(address voucher) external;
+    function withdraw(address receiver, uint256 amount) external;
 
     function getIexecPoco() external view returns (address);
     function getVoucherBeacon() external view returns (address);

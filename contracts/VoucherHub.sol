@@ -7,7 +7,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {AccessControlDefaultAdminRulesUpgradeable} from "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {Voucher} from "./beacon/Voucher.sol";
@@ -86,12 +85,15 @@ contract VoucherHub is
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;
         $._voucherBeacon = voucherBeacon;
+        //slither-disable-start too-many-digits
+        // See : https://github.com/crytic/slither/issues/1223
         $._voucherCreationCodeHash = keccak256(
             abi.encodePacked(
                 type(VoucherProxy).creationCode, // bytecode
                 abi.encode($._voucherBeacon) // constructor args
             )
         );
+        //slither-disable-end too-many-digits
     }
 
     function createVoucherType(
@@ -172,10 +174,10 @@ contract VoucherHub is
         // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
         Voucher(voucherAddress).initialize(owner, address(this), expiration, voucherType);
-        IERC20($._iexecPoco).transfer(voucherAddress, value); // SRLC
         _mint(voucherAddress, value); // VCHR
         $._isVoucher[voucherAddress] = true;
         emit VoucherCreated(voucherAddress, owner, voucherType, expiration, value);
+        _transferFundsToVoucherOnPoco(voucherAddress, value); // SRLC
     }
 
     /**
@@ -188,7 +190,7 @@ contract VoucherHub is
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require($._isVoucher[voucher], "VoucherHub: unknown voucher");
         _mint(voucher, value); // VCHR
-        IERC20($._iexecPoco).transfer(voucher, value); // SRLC
+        _transferFundsToVoucherOnPoco(voucher, value); // SRLC
         uint256 expiration = block.timestamp + $.voucherTypes[Voucher(voucher).getType()].duration;
         Voucher(voucher).setExpiration(expiration);
         emit VoucherToppedUp(voucher, expiration, value);
@@ -197,7 +199,7 @@ contract VoucherHub is
     /**
      * Debit voucher balance when used assets are eligible to voucher sponsoring.
      * @notice (1) If this function is called by an account which is not a voucher,
-     * it will have no effect other than consummnig gas since balance would be
+     * it will have no effect other than consuming gas since balance would be
      * empty (tokens are only minted for vouchers).
      * (2) This function should not revert even if the amount debited is zero when
      * no asset is eligible or balance from caller is empty. Thanks to that it is
@@ -256,6 +258,39 @@ contract VoucherHub is
     function refundVoucher(uint256 amount) external onlyVoucher {
         _mint(msg.sender, amount);
         emit VoucherRefunded(msg.sender, amount);
+    }
+
+    /**
+     * Drain funds from voucher if it is expired. Transfer all SRLC balance
+     * on PoCo from voucher to voucherHub and burn all credits.
+     * @param voucher address of the expired voucher to drain
+     */
+    function drainVoucher(address voucher) external {
+        uint256 amount = balanceOf(voucher);
+        require(amount > 0, "VoucherHub: nothing to drain");
+        _burn(voucher, amount);
+        emit VoucherDrained(voucher, amount);
+        Voucher(voucher).drain(amount);
+    }
+
+    /**
+     * Withdraw specified amount from this contract's balance on PoCo and send it
+     * to the specified address.
+     * @param receiver address that will receive withdrawn funds
+     * @param amount amount to withdraw
+     */
+    function withdraw(
+        address receiver,
+        uint256 amount
+    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        // Slither raises a "transfer-unchecked" warning for the next line
+        // if return value of transfer() is not checked.
+        // Although transfer function in PoCo always returns true (or reverts),
+        // a return value check is added here in case its behavior changes.
+        if (!IERC20($._iexecPoco).transfer(receiver, amount)) {
+            revert("VoucherHub: withdraw failed");
+        }
     }
 
     /**
@@ -329,12 +364,21 @@ contract VoucherHub is
     }
 
     function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
+        //slither-disable-start assembly
         assembly {
             $.slot := VOUCHER_HUB_STORAGE_LOCATION
         }
+        //slither-disable-end assembly
     }
 
     function _getCreate2Salt(address account) private pure returns (bytes32) {
         return bytes32(uint256(uint160(account)));
+    }
+
+    function _transferFundsToVoucherOnPoco(address voucherAddress, uint256 value) private {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        if (!IERC20($._iexecPoco).transfer(voucherAddress, value)) {
+            revert("VoucherHub: SRLC transfer to voucher failed");
+        }
     }
 }

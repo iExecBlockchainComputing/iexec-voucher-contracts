@@ -10,7 +10,6 @@ import {IexecPoco2} from "@iexec/poco/contracts/modules/interfaces/IexecPoco2.v8
 import {IexecPocoAccessors} from "@iexec/poco/contracts/modules/interfaces/IexecPocoAccessors.sol";
 import {IexecPocoBoost} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoost.sol";
 import {IexecPocoBoostAccessors} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoostAccessors.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IVoucherHub} from "../IVoucherHub.sol";
@@ -20,7 +19,9 @@ import {IVoucher} from "./IVoucher.sol";
 
 /**
  * @title Implementation of the voucher contract.
- * Deployed along the Beacon contract using "Upgrades" plugin of OZ.
+ * Note:
+ *  - This contract and the Beacon are deployed using "Upgrades" plugin of OZ.
+ *  - Vouchers ownership must not be transferable.
  */
 contract Voucher is Initializable, IVoucher {
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
@@ -61,8 +62,12 @@ contract Voucher is Initializable, IVoucher {
     }
 
     modifier onlyNotExpired() {
-        VoucherStorage storage $ = _getVoucherStorage();
-        require(block.timestamp < $._expiration, "Voucher: voucher is expired");
+        require(block.timestamp < getExpiration(), "Voucher: voucher is expired");
+        _;
+    }
+
+    modifier onlyExpired() {
+        require(getExpiration() <= block.timestamp, "Voucher: voucher is not expired");
         _;
     }
 
@@ -263,12 +268,18 @@ contract Voucher is Initializable, IVoucher {
     }
 
     /**
-     * Retrieve the expiration timestamp of the voucher.
-     * @return expirationTimestamp The expiration timestamp.
+     * Drain balance of voucher on PoCo if it is expired.
+     * Funds are sent to the VoucherHub contract.
+     * @param amount amount to be drained
      */
-    function getExpiration() external view returns (uint256) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return $._expiration;
+    function drain(uint256 amount) external onlyVoucherHub onlyExpired {
+        // Although transfer function in PoCo always returns true (or reverts),
+        // a return value check is added here in case its behavior changes.
+        //
+        // msg.sender is the VoucherHub. No need to read the address from storage.
+        if (!IERC20(IVoucherHub(msg.sender).getIexecPoco()).transfer(msg.sender, amount)) {
+            revert("Voucher: drain failed");
+        }
     }
 
     /**
@@ -324,6 +335,15 @@ contract Voucher is Initializable, IVoucher {
     }
 
     /**
+     * Retrieve the expiration timestamp of the voucher.
+     * @return expirationTimestamp The expiration timestamp.
+     */
+    function getExpiration() public view returns (uint256) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._expiration;
+    }
+
+    /**
      * Internal function to set authorization for an account.
      * @param account The account to set authorization for.
      * @param isAuthorized Whether to authorize or unauthorize the account.
@@ -369,15 +389,19 @@ contract Voucher is Initializable, IVoucher {
                 // If the deal was not sponsored or partially sponsored
                 // by the voucher then send the non-sponsored part back
                 // to the requester.
-                IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount);
+                if (!IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount)) {
+                    revert("Voucher: transfer to requester failed");
+                }
             }
         }
     }
 
     function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
+        //slither-disable-start assembly
         assembly {
             $.slot := VOUCHER_STORAGE_LOCATION
         }
+        //slither-disable-end assembly
     }
 
     // TODO move this function before private view functions.
@@ -428,11 +452,20 @@ contract Voucher is Initializable, IVoucher {
         if (sponsoredAmount != dealPrice) {
             // Transfer non-sponsored amount from the iExec account of the
             // requester to the iExec account of the voucher
-            IERC20(iexecPoco).transferFrom(
-                requestOrder.requester,
-                address(this),
-                dealPrice - sponsoredAmount
-            );
+            //slither-disable-start arbitrary-send-erc20
+            // Note: We can disable this check since the requester signed the request order and agreed to pay for the deal.
+            // & caller is only authorized.
+            // SRLC
+            if (
+                !IERC20(iexecPoco).transferFrom(
+                    requestOrder.requester,
+                    address(this),
+                    dealPrice - sponsoredAmount
+                )
+            ) {
+                revert("Voucher: Transfer of non-sponsored amount failed");
+            }
+            //slither-disable-end arbitrary-send-erc20
         }
     }
 }
