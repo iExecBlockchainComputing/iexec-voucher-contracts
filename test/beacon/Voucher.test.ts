@@ -798,8 +798,8 @@ describe('Voucher', function () {
                 expect(requesterRlcBalancePreClaim).equal(0);
                 let taskSponsoredAmount = dealSponsoredAmount / volume;
                 let taskNonSponsoredAmount = dealNonSponsoredAmount / volume;
-                expect(taskSponsoredAmount).gt(0);
-                expect(taskNonSponsoredAmount).gt(0);
+                expect(taskSponsoredAmount).to.be.greaterThan(0);
+                expect(taskNonSponsoredAmount).to.be.greaterThan(0);
                 for (let taskIndex = 0; taskIndex < volume; taskIndex++) {
                     await expect(
                         isBoost
@@ -1056,7 +1056,7 @@ describe('Voucher', function () {
                 expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(dealPrice);
                 // Claim task
                 const badTaskIndex = 99;
-                const badTaskId = ethers.keccak256(getTaskId(dealId, badTaskIndex));
+                const badTaskId = getTaskId(dealId, badTaskIndex);
                 await expect(voucherAsOwner.claim(badTaskId)).to.be.revertedWithoutReason();
             });
 
