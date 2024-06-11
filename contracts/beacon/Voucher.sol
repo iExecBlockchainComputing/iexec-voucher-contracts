@@ -10,7 +10,6 @@ import {IexecPoco2} from "@iexec/poco/contracts/modules/interfaces/IexecPoco2.v8
 import {IexecPocoAccessors} from "@iexec/poco/contracts/modules/interfaces/IexecPocoAccessors.sol";
 import {IexecPocoBoost} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoost.sol";
 import {IexecPocoBoostAccessors} from "@iexec/poco/contracts/modules/interfaces/IexecPocoBoostAccessors.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IVoucherHub} from "../IVoucherHub.sol";
@@ -394,15 +393,19 @@ contract Voucher is Initializable, IVoucher {
                 // If the deal was not sponsored or partially sponsored
                 // by the voucher then send the non-sponsored part back
                 // to the requester.
-                IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount);
+                if (!IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount)) {
+                    revert("Voucher: transfer to requester failed");
+                }
             }
         }
     }
 
     function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
+        //slither-disable-start assembly
         assembly {
             $.slot := VOUCHER_STORAGE_LOCATION
         }
+        //slither-disable-end assembly
     }
 
     // TODO move this function before private view functions.
@@ -453,11 +456,20 @@ contract Voucher is Initializable, IVoucher {
         if (sponsoredAmount != dealPrice) {
             // Transfer non-sponsored amount from the iExec account of the
             // requester to the iExec account of the voucher
-            IERC20(iexecPoco).transferFrom(
-                requestOrder.requester,
-                address(this),
-                dealPrice - sponsoredAmount
-            );
+            //slither-disable-start arbitrary-send-erc20
+            // Note: We can disable this check since the requester signed the request order and agreed to pay for the deal.
+            // & caller is only authorized.
+            // SRLC
+            if (
+                !IERC20(iexecPoco).transferFrom(
+                    requestOrder.requester,
+                    address(this),
+                    dealPrice - sponsoredAmount
+                )
+            ) {
+                revert("Voucher: Transfer of non-sponsored amount failed");
+            }
+            //slither-disable-end arbitrary-send-erc20
         }
     }
 }
