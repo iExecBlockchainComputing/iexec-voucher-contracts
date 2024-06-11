@@ -45,15 +45,15 @@ contract VoucherHub is
         address _voucherBeacon;
         /// @dev This hash should be updated when `VoucherProxy` is updated.
         bytes32 _voucherCreationCodeHash;
-        VoucherType[] voucherTypes;
-        mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
+        VoucherType[] _voucherTypes;
+        mapping(uint256 voucherTypeId => mapping(address asset => bool)) _matchOrdersEligibility;
         // Track created vouchers to avoid replay in certain operations such as refund.
         mapping(address voucherAddress => bool) _isVoucher;
     }
 
     modifier whenVoucherTypeExists(uint256 id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        require(id < $.voucherTypes.length, "VoucherHub: type index out of bounds");
+        require(id < $._voucherTypes.length, "VoucherHub: type index out of bounds");
         _;
     }
 
@@ -101,8 +101,8 @@ contract VoucherHub is
         uint256 duration
     ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.voucherTypes.push(VoucherType(description, duration));
-        emit VoucherTypeCreated($.voucherTypes.length - 1, description, duration);
+        $._voucherTypes.push(VoucherType(description, duration));
+        emit VoucherTypeCreated($._voucherTypes.length - 1, description, duration);
     }
 
     function updateVoucherTypeDescription(
@@ -110,7 +110,7 @@ contract VoucherHub is
         string memory description
     ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) whenVoucherTypeExists(id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.voucherTypes[id].description = description;
+        $._voucherTypes[id].description = description;
         emit VoucherTypeDescriptionUpdated(id, description);
     }
 
@@ -119,7 +119,7 @@ contract VoucherHub is
         uint256 duration
     ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) whenVoucherTypeExists(id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.voucherTypes[id].duration = duration;
+        $._voucherTypes[id].duration = duration;
         emit VoucherTypeDurationUpdated(id, duration);
     }
 
@@ -191,7 +191,7 @@ contract VoucherHub is
         require($._isVoucher[voucher], "VoucherHub: unknown voucher");
         _mint(voucher, value); // VCHR
         _transferFundsToVoucherOnPoco(voucher, value); // SRLC
-        uint256 expiration = block.timestamp + $.voucherTypes[Voucher(voucher).getType()].duration;
+        uint256 expiration = block.timestamp + $._voucherTypes[Voucher(voucher).getType()].duration;
         Voucher(voucher).setExpiration(expiration);
         emit VoucherToppedUp(voucher, expiration, value);
     }
@@ -229,7 +229,7 @@ contract VoucherHub is
         uint256 volume
     ) external returns (uint256 sponsoredAmount) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        mapping(address asset => bool) storage eligible = $.matchOrdersEligibility[voucherTypeId];
+        mapping(address asset => bool) storage eligible = $._matchOrdersEligibility[voucherTypeId];
         if (eligible[app]) {
             sponsoredAmount += appPrice;
         }
@@ -314,7 +314,7 @@ contract VoucherHub is
      */
     function getVoucherTypeCount() external view returns (uint256) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.voucherTypes.length;
+        return $._voucherTypes.length;
     }
 
     /**
@@ -327,7 +327,7 @@ contract VoucherHub is
         address asset
     ) external view returns (bool) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.matchOrdersEligibility[voucherTypeId][asset];
+        return $._matchOrdersEligibility[voucherTypeId][asset];
     }
 
     /**
@@ -351,7 +351,7 @@ contract VoucherHub is
         uint256 id
     ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.voucherTypes[id];
+        return $._voucherTypes[id];
     }
 
     function _authorizeUpgrade(
@@ -360,7 +360,14 @@ contract VoucherHub is
 
     function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
+        $._matchOrdersEligibility[voucherTypeId][asset] = isEligible;
+    }
+
+    function _transferFundsToVoucherOnPoco(address voucherAddress, uint256 value) private {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        if (!IERC20($._iexecPoco).transfer(voucherAddress, value)) {
+            revert("VoucherHub: SRLC transfer to voucher failed");
+        }
     }
 
     function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
@@ -373,12 +380,5 @@ contract VoucherHub is
 
     function _getCreate2Salt(address account) private pure returns (bytes32) {
         return bytes32(uint256(uint160(account)));
-    }
-
-    function _transferFundsToVoucherOnPoco(address voucherAddress, uint256 value) private {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        if (!IERC20($._iexecPoco).transfer(voucherAddress, value)) {
-            revert("VoucherHub: SRLC transfer to voucher failed");
-        }
     }
 }
