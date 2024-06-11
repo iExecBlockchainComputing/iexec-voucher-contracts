@@ -25,15 +25,12 @@ contract VoucherHub is
     // Granted to msg.sender == defaultAdmin() == owner()
     // DEFAULT_ADMIN_ROLE
 
-    // TODO: Rename roles.
     // Upgrade VoucherHub and Vouchers contracts.
-    // Granted to msg.sender
-    bytes32 public constant UPGRADE_MANAGER_ROLE = keccak256("UPGRADE_MANAGER_ROLE");
-    // Add/remove eligible assets.
-    bytes32 public constant ASSET_ELIGIBILITY_MANAGER_ROLE =
-        keccak256("ASSET_ELIGIBILITY_MANAGER_ROLE");
-    // Create & top up Vouchers.
-    bytes32 public constant VOUCHER_MANAGER_ROLE = keccak256("VOUCHER_MANAGER_ROLE");
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+    // Create types required for creating vouchers, add/remove eligible assets, withdraw, [...]
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    // Create vouchers & top up vouchers.
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 private constant VOUCHER_HUB_STORAGE_LOCATION =
@@ -69,16 +66,16 @@ contract VoucherHub is
     }
 
     function initialize(
-        address assetEligibilityManager,
-        address voucherManager,
+        address manager,
+        address minter,
         address iexecPoco,
         address voucherBeacon
     ) external initializer {
         // DEFAULT_ADMIN_ROLE is granted to msg.sender.
         __AccessControlDefaultAdminRules_init(0, msg.sender);
-        _grantRole(UPGRADE_MANAGER_ROLE, msg.sender);
-        _grantRole(ASSET_ELIGIBILITY_MANAGER_ROLE, assetEligibilityManager);
-        _grantRole(VOUCHER_MANAGER_ROLE, voucherManager);
+        _grantRole(UPGRADER_ROLE, msg.sender);
+        _grantRole(MANAGER_ROLE, manager);
+        _grantRole(MINTER_ROLE, minter);
         // This ERC20 is used solely to keep track of the SRLC's accounting in circulation for all emitted vouchers.
         __ERC20_init("iExec Voucher token", "VCHR");
         __UUPSUpgradeable_init();
@@ -99,7 +96,7 @@ contract VoucherHub is
     function createVoucherType(
         string memory description,
         uint256 duration
-    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
+    ) external onlyRole(MANAGER_ROLE) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._voucherTypes.push(VoucherType(description, duration));
         emit VoucherTypeCreated($._voucherTypes.length - 1, description, duration);
@@ -108,7 +105,7 @@ contract VoucherHub is
     function updateVoucherTypeDescription(
         uint256 id,
         string memory description
-    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) whenVoucherTypeExists(id) {
+    ) external onlyRole(MANAGER_ROLE) whenVoucherTypeExists(id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._voucherTypes[id].description = description;
         emit VoucherTypeDescriptionUpdated(id, description);
@@ -117,7 +114,7 @@ contract VoucherHub is
     function updateVoucherTypeDuration(
         uint256 id,
         uint256 duration
-    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) whenVoucherTypeExists(id) {
+    ) external onlyRole(MANAGER_ROLE) whenVoucherTypeExists(id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._voucherTypes[id].duration = duration;
         emit VoucherTypeDurationUpdated(id, duration);
@@ -131,7 +128,7 @@ contract VoucherHub is
     function addEligibleAsset(
         uint256 voucherTypeId,
         address asset
-    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
+    ) external onlyRole(MANAGER_ROLE) {
         _setAssetEligibility(voucherTypeId, asset, true);
         emit EligibleAssetAdded(voucherTypeId, asset);
     }
@@ -144,7 +141,7 @@ contract VoucherHub is
     function removeEligibleAsset(
         uint256 voucherTypeId,
         address asset
-    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
+    ) external onlyRole(MANAGER_ROLE) {
         _setAssetEligibility(voucherTypeId, asset, false);
         emit EligibleAssetRemoved(voucherTypeId, asset);
     }
@@ -166,7 +163,7 @@ contract VoucherHub is
         address owner,
         uint256 voucherType,
         uint256 value
-    ) external onlyRole(VOUCHER_MANAGER_ROLE) returns (address voucherAddress) {
+    ) external onlyRole(MINTER_ROLE) returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         uint256 expiration = block.timestamp + getVoucherType(voucherType).duration;
         voucherAddress = address(new VoucherProxy{salt: _getCreate2Salt(owner)}($._voucherBeacon));
@@ -185,7 +182,7 @@ contract VoucherHub is
      * @param voucher The address of the voucher.
      * @param value The amount of credits to top up.
      */
-    function topUpVoucher(address voucher, uint256 value) external onlyRole(VOUCHER_MANAGER_ROLE) {
+    function topUpVoucher(address voucher, uint256 value) external onlyRole(MINTER_ROLE) {
         require(value > 0, "VoucherHub: no value");
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         require($._isVoucher[voucher], "VoucherHub: unknown voucher");
@@ -279,10 +276,7 @@ contract VoucherHub is
      * @param receiver address that will receive withdrawn funds
      * @param amount amount to withdraw
      */
-    function withdraw(
-        address receiver,
-        uint256 amount
-    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
+    function withdraw(address receiver, uint256 amount) external onlyRole(MANAGER_ROLE) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         // Slither raises a "transfer-unchecked" warning for the next line
         // if return value of transfer() is not checked.
@@ -356,7 +350,7 @@ contract VoucherHub is
 
     function _authorizeUpgrade(
         address newImplementation
-    ) internal override onlyRole(UPGRADE_MANAGER_ROLE) {}
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
