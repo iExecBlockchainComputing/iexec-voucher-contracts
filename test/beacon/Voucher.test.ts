@@ -367,8 +367,8 @@ describe('Voucher', function () {
                 .then((tx) => tx.wait());
             // Save initial balances.
             const voucherInitialCreditBalance = await voucherAsOwner.getBalance();
-            const voucherInitialRlcBalance = await getVoucherBalanceOnIexecPoco();
-            const requesterInitialRlcBalance = await getRequesterBalanceOnIexecPoco();
+            const voucherInitialSrlcBalance = await getVoucherBalanceOnIexecPoco();
+            const requesterInitialSrlcBalance = await getRequesterBalanceOnIexecPoco();
 
             expect(
                 await voucherAsOwner.matchOrders.staticCall(
@@ -389,9 +389,9 @@ describe('Voucher', function () {
             expect(await voucherAsOwner.getBalance())
                 .to.be.equal(voucherInitialCreditBalance - dealSponsoredAmount)
                 .to.be.equal(await getVoucherBalanceOnIexecPoco())
-                .to.be.equal(voucherInitialRlcBalance - dealSponsoredAmount);
+                .to.be.equal(voucherInitialSrlcBalance - dealSponsoredAmount);
             expect(await getRequesterBalanceOnIexecPoco()).to.be.equal(
-                requesterInitialRlcBalance - dealNonSponsoredAmount,
+                requesterInitialSrlcBalance - dealNonSponsoredAmount,
             );
         });
 
