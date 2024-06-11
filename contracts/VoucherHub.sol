@@ -240,7 +240,7 @@ contract VoucherHub is
         sponsoredAmount = Math.min(balanceOf(msg.sender), sponsoredAmount * volume);
         // Decrease sponsored amount to make sponsored & non-sponsored amounts
         // divisible by volume in order to refund plain amounts to voucher and
-        // requester (i.e. make sure there is no hidden remainders) in the event
+        // requester (i.e. make sure there are no hidden remainders) in the event
         // that tasks are claimed later.
         sponsoredAmount -= sponsoredAmount % volume;
         if (sponsoredAmount > 0) {
