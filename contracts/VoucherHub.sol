@@ -29,7 +29,7 @@ contract VoucherHub is
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     // Create types required for creating vouchers, add/remove eligible assets, withdraw, [...]
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
-    // Create vouchers & top up vouchers.
+    // Create new vouchers & top up existing vouchers.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
