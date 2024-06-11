@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
+import { loadFixture, time } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { AddressLike, BigNumberish, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
@@ -21,11 +21,11 @@ import { random } from './utils/address-utils';
 const voucherType = 0;
 const description = 'Early Access';
 const duration = 3600;
-const voucherValue = 100;
+const voucherValue = 100n;
 const asset = random();
 const assetPrice = 1n;
 const volume = 3n;
-const initVoucherHubBalance = 10 * voucherValue; // arbitrary value, but should support couple voucher creations
+const initVoucherHubBalance = 10n * voucherValue; // arbitrary value, but should support couple voucher creations
 
 // TODO use global variables (signers, addresses, ...).
 
@@ -35,6 +35,7 @@ describe('VoucherHub', function () {
     let voucherHubWithVoucherManagerSigner: VoucherHub;
     let voucherHubWithAssetEligibilityManagerSigner: VoucherHub;
     let voucherHubWithAnyoneSigner: VoucherHub;
+    let voucherHubAddress: string;
     // We define a fixture to reuse the same setup in every test.
     // We use loadFixture to run this setup once, snapshot that state,
     // and reset Hardhat Network to that snapshot in every test.
@@ -64,6 +65,7 @@ describe('VoucherHub', function () {
         voucherHubWithVoucherManagerSigner = voucherHub.connect(voucherManager);
         voucherHubWithAssetEligibilityManagerSigner = voucherHub.connect(assetEligibilityManager);
         voucherHubWithAnyoneSigner = voucherHub.connect(anyone);
+        voucherHubAddress = await voucherHub.getAddress();
         await iexecPocoInstance
             .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
             .then((tx) => tx.wait());
@@ -108,7 +110,6 @@ describe('VoucherHub', function () {
             expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
             expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
             // Check VoucherProxy code hash
-            const voucherHubAddress = await voucherHub.getAddress();
             const actualCodeHash =
                 await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
             const expectedHashes =
@@ -134,7 +135,6 @@ describe('VoucherHub', function () {
     describe('Upgrade', function () {
         it('Should upgrade', async function () {
             const { voucherHub, admin } = await loadFixture(deployFixture);
-            const voucherHubAddress = await voucherHub.getAddress();
             const VoucherHubV2Factory = await ethers.getContractFactory('VoucherHubV2Mock', admin);
             // Next line should throw if new storage schema is not compatible with previous one
             await voucherHubUtils.upgradeProxy(voucherHubAddress, VoucherHubV2Factory);
@@ -474,7 +474,7 @@ describe('VoucherHub', function () {
             const voucherType1 = 1;
             const duration1 = 7200;
             const description1 = 'Long Term Duration';
-            const voucherValue1 = 200;
+            const voucherValue1 = 200n;
             // Create type1.
             await voucherHubWithAssetEligibilityManagerSigner.createVoucherType(
                 description1,
@@ -989,6 +989,119 @@ describe('VoucherHub', function () {
             const refundAmount = debitedValue / 2n; // any amount < sponsoredValue
             await expect(voucherHub.connect(anyone).refundVoucher(refundAmount)).to.be.revertedWith(
                 'VoucherHub: sender is not voucher',
+            );
+        });
+    });
+
+    describe('Drain voucher', function () {
+        let [voucherOwner1, anyone]: SignerWithAddress[] = [];
+        let voucherHub: VoucherHub;
+        let voucher: Voucher;
+        let voucherAddress: string;
+
+        beforeEach(async function () {
+            ({ voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture));
+            // Create voucher type
+            await voucherHubWithAssetEligibilityManagerSigner
+                .createVoucherType(description, duration)
+                .then((tx) => tx.wait());
+            // Create voucher
+            voucherAddress = await voucherHubWithVoucherManagerSigner
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait())
+                .then(() => voucherHub.getVoucher(voucherOwner1));
+            voucher = Voucher__factory.connect(voucherAddress, anyone);
+        });
+
+        it('Should drain all funds of expired voucher', async function () {
+            const voucherHubRlcBalanceBefore = await iexecPocoInstance.balanceOf(voucherHubAddress);
+            // Expire voucher
+            const expirationDate = await voucher.getExpiration();
+            await time.setNextBlockTimestamp(expirationDate); // after expiration
+            // Drain
+            await expect(voucherHubWithAnyoneSigner.drainVoucher(voucherAddress))
+                .to.emit(iexecPocoInstance, 'Transfer')
+                .withArgs(voucherAddress, voucherHubAddress, voucherValue)
+                .to.emit(voucherHub, 'Transfer')
+                .withArgs(voucherAddress, ethers.ZeroAddress, voucherValue)
+                .to.emit(voucherHub, 'VoucherDrained')
+                .withArgs(voucherAddress, voucherValue);
+            expect(await iexecPocoInstance.balanceOf(voucherAddress))
+                .to.equal(await voucherHub.balanceOf(voucherAddress))
+                .to.equal(await voucher.getBalance())
+                .to.equal(0);
+            // Should send RLCs to VoucherHub contract.
+            expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(
+                voucherHubRlcBalanceBefore + voucherValue,
+            );
+        });
+
+        it('Should not drain if unknown voucher', async function () {
+            await expect(
+                voucherHubWithVoucherManagerSigner.drainVoucher(
+                    ethers.Wallet.createRandom().address,
+                ),
+            ).to.be.revertedWith('VoucherHub: nothing to drain');
+        });
+
+        it('Should not drain if balance is empty', async function () {
+            // Expire voucher
+            const expirationDate = await voucher.getExpiration();
+            await time.setNextBlockTimestamp(expirationDate); // after expiration
+            // Drain to empty the voucher from its balance.
+            await voucherHubWithVoucherManagerSigner
+                .drainVoucher(voucherAddress)
+                .then((tx) => tx.wait());
+            // Drain a second time when balance is empty.
+            await expect(
+                voucherHubWithVoucherManagerSigner.drainVoucher(voucherAddress),
+            ).to.be.revertedWith('VoucherHub: nothing to drain');
+        });
+    });
+
+    describe('Withdraw', function () {
+        let receiver: string = ethers.Wallet.createRandom().address;
+
+        beforeEach(async function () {
+            await loadFixture(deployFixture);
+        });
+
+        it('Should withdraw all funds', async function () {
+            expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(
+                initVoucherHubBalance,
+            );
+            await expect(
+                voucherHubWithAssetEligibilityManagerSigner.withdraw(
+                    receiver,
+                    initVoucherHubBalance,
+                ),
+            )
+                .to.emit(iexecPocoInstance, 'Transfer')
+                .withArgs(voucherHubAddress, receiver, initVoucherHubBalance);
+            expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(0);
+            expect(await iexecPocoInstance.balanceOf(receiver)).to.equal(initVoucherHubBalance);
+        });
+
+        it('Should withdraw some funds', async function () {
+            expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(
+                initVoucherHubBalance,
+            );
+            const amount = initVoucherHubBalance / 2n;
+            await expect(voucherHubWithAssetEligibilityManagerSigner.withdraw(receiver, amount))
+                .to.emit(iexecPocoInstance, 'Transfer')
+                .withArgs(voucherHubAddress, receiver, amount);
+            expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(
+                initVoucherHubBalance - amount,
+            );
+            expect(await iexecPocoInstance.balanceOf(receiver)).to.equal(amount);
+        });
+
+        it('Should not withdraw funds when sender is not authorized', async function () {
+            await expect(
+                voucherHubWithAnyoneSigner.withdraw(receiver, initVoucherHubBalance),
+            ).to.be.revertedWithCustomError(
+                voucherHubWithAnyoneSigner,
+                'AccessControlUnauthorizedAccount',
             );
         });
     });

@@ -22,6 +22,8 @@ import {
 import { random } from '../utils/address-utils';
 import { TaskStatusEnum, createMockOrder } from '../utils/poco-utils';
 
+// TODO use srlc instead of rlc.
+
 const voucherType = 0;
 const duration = 3600;
 const description = 'Early Access';
@@ -60,6 +62,7 @@ describe('Voucher', function () {
         voucherHubAsVoucherCreationManager,
         voucherHubAsAssetEligibilityManager,
     ]: VoucherHub[] = [];
+    let voucherHubAddress: string;
     let [voucherAsOwner, voucherAsAnyone]: Voucher[] = [];
     let voucherAddress: string;
     let voucherCreationTxReceipt: ContractTransactionReceipt;
@@ -97,6 +100,7 @@ describe('Voucher', function () {
         );
         voucherHubAsVoucherCreationManager = voucherHub.connect(voucherManager);
         voucherHubAsAssetEligibilityManager = voucherHub.connect(assetEligibilityManager);
+        voucherHubAddress = await voucherHub.getAddress();
         // Fund VoucherHub with RLCs.
         await iexecPocoInstance
             .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
@@ -1119,6 +1123,33 @@ describe('Voucher', function () {
                     'Voucher: transfer to requester failed',
                 );
             }
+        });
+    });
+
+    describe('Drain', async function () {
+        it('Should drain RLC balance of voucher', async function () {
+            // Expire voucher
+            const expirationDate = await voucherAsAnyone.getExpiration();
+            await time.setNextBlockTimestamp(expirationDate + 100n); // after expiration
+            // Drain
+            const voucherHubSigner = await ethers.getImpersonatedSigner(voucherHubAddress);
+            await expect(voucherAsAnyone.connect(voucherHubSigner).drain(voucherValue))
+                .to.emit(iexecPocoInstance, 'Transfer')
+                .withArgs(voucherAddress, voucherHubAddress, voucherValue);
+            expect(await iexecPocoInstance.balanceOf(voucherAddress)).to.equal(0);
+        });
+
+        it('Should not drain voucher if sender is not authorized', async function () {
+            await expect(voucherAsAnyone.drain(voucherValue)).to.be.revertedWith(
+                'Voucher: sender is not VoucherHub',
+            );
+        });
+
+        it('Should not drain voucher if not expired', async function () {
+            const voucherHubSigner = await ethers.getImpersonatedSigner(voucherHubAddress);
+            await expect(
+                voucherAsAnyone.connect(voucherHubSigner).drain(voucherValue),
+            ).to.be.revertedWith('Voucher: voucher is not expired');
         });
     });
 

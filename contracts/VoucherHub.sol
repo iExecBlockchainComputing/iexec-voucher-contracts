@@ -199,7 +199,7 @@ contract VoucherHub is
     /**
      * Debit voucher balance when used assets are eligible to voucher sponsoring.
      * @notice (1) If this function is called by an account which is not a voucher,
-     * it will have no effect other than consummnig gas since balance would be
+     * it will have no effect other than consuming gas since balance would be
      * empty (tokens are only minted for vouchers).
      * (2) This function should not revert even if the amount debited is zero when
      * no asset is eligible or balance from caller is empty. Thanks to that it is
@@ -253,6 +253,39 @@ contract VoucherHub is
     function refundVoucher(uint256 amount) external onlyVoucher {
         _mint(msg.sender, amount);
         emit VoucherRefunded(msg.sender, amount);
+    }
+
+    /**
+     * Drain funds from voucher if it is expired. Transfer all SRLC balance
+     * on PoCo from voucher to voucherHub and burn all credits.
+     * @param voucher address of the expired voucher to drain
+     */
+    function drainVoucher(address voucher) external {
+        uint256 amount = balanceOf(voucher);
+        require(amount > 0, "VoucherHub: nothing to drain");
+        _burn(voucher, amount);
+        emit VoucherDrained(voucher, amount);
+        Voucher(voucher).drain(amount);
+    }
+
+    /**
+     * Withdraw specified amount from this contract's balance on PoCo and send it
+     * to the specified address.
+     * @param receiver address that will receive withdrawn funds
+     * @param amount amount to withdraw
+     */
+    function withdraw(
+        address receiver,
+        uint256 amount
+    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        // Slither raises a "transfer-unchecked" warning for the next line
+        // if return value of transfer() is not checked.
+        // Although transfer function in PoCo always returns true (or reverts),
+        // a return value check is added here in case its behavior changes.
+        if (!IERC20($._iexecPoco).transfer(receiver, amount)) {
+            revert("VoucherHub: withdraw failed");
+        }
     }
 
     /**

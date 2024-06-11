@@ -19,7 +19,9 @@ import {IVoucher} from "./IVoucher.sol";
 
 /**
  * @title Implementation of the voucher contract.
- * Deployed along the Beacon contract using "Upgrades" plugin of OZ.
+ * Note:
+ *  - This contract and the Beacon are deployed using "Upgrades" plugin of OZ.
+ *  - Vouchers ownership must not be transferable.
  */
 contract Voucher is Initializable, IVoucher {
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
@@ -60,8 +62,12 @@ contract Voucher is Initializable, IVoucher {
     }
 
     modifier onlyNotExpired() {
-        VoucherStorage storage $ = _getVoucherStorage();
-        require(block.timestamp < $._expiration, "Voucher: voucher is expired");
+        require(block.timestamp < getExpiration(), "Voucher: voucher is expired");
+        _;
+    }
+
+    modifier onlyExpired() {
+        require(getExpiration() <= block.timestamp, "Voucher: voucher is not expired");
         _;
     }
 
@@ -262,12 +268,18 @@ contract Voucher is Initializable, IVoucher {
     }
 
     /**
-     * Retrieve the expiration timestamp of the voucher.
-     * @return expirationTimestamp The expiration timestamp.
+     * Drain balance of voucher on PoCo if it is expired.
+     * Funds are sent to the VoucherHub contract.
+     * @param amount amount to be drained
      */
-    function getExpiration() external view returns (uint256) {
-        VoucherStorage storage $ = _getVoucherStorage();
-        return $._expiration;
+    function drain(uint256 amount) external onlyVoucherHub onlyExpired {
+        // Although transfer function in PoCo always returns true (or reverts),
+        // a return value check is added here in case its behavior changes.
+        //
+        // msg.sender is the VoucherHub. No need to read the address from storage.
+        if (!IERC20(IVoucherHub(msg.sender).getIexecPoco()).transfer(msg.sender, amount)) {
+            revert("Voucher: drain failed");
+        }
     }
 
     /**
@@ -320,6 +332,15 @@ contract Voucher is Initializable, IVoucher {
     function getVoucherHub() public view returns (address) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._voucherHub;
+    }
+
+    /**
+     * Retrieve the expiration timestamp of the voucher.
+     * @return expirationTimestamp The expiration timestamp.
+     */
+    function getExpiration() public view returns (uint256) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._expiration;
     }
 
     /**
