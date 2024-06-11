@@ -49,14 +49,14 @@ contract IexecPocoMock is ERC20 {
         deal.dataset.price = datasetOrder.datasetprice;
         deal.workerpool.price = workerpoolOrder.workerpoolprice;
         deal.sponsor = msg.sender;
+        uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
+        deal.botSize = volume;
         for (uint256 i = 0; i < deal.botSize; i++) {
             bytes32 taskId = keccak256(abi.encode(mockDealId, i));
             IexecLibCore_v5.Task storage task = tasks[taskId];
             task.dealid = mockDealId;
             task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
         }
-        uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
-        deal.botSize = volume;
         uint256 dealPrice = (appOrder.appprice +
             datasetOrder.datasetprice +
             workerpoolOrder.workerpoolprice) * volume;
@@ -78,14 +78,14 @@ contract IexecPocoMock is ERC20 {
         dealBoost.datasetPrice = uint96(datasetOrder.datasetprice);
         dealBoost.workerpoolPrice = uint96(workerpoolOrder.workerpoolprice);
         dealBoost.sponsor = msg.sender;
+        uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
+        dealBoost.botSize = uint16(volume);
         for (uint256 i = 0; i < dealBoost.botSize; i++) {
             bytes32 taskId = keccak256(abi.encode(mockDealId, i));
             IexecLibCore_v5.Task storage task = tasks[taskId];
             task.dealid = mockDealId;
             task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
         }
-        uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
-        dealBoost.botSize = uint16(volume);
         uint256 dealPrice = (appOrder.appprice +
             datasetOrder.datasetprice +
             workerpoolOrder.workerpoolprice) * volume;
