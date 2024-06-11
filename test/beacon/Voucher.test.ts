@@ -47,8 +47,8 @@ const initVoucherHubBalance = 1000; // enough to create couple vouchers
 describe('Voucher', function () {
     let [
         admin,
-        assetEligibilityManager,
-        voucherManager,
+        manager,
+        minter,
         voucherOwner1,
         voucherOwner2,
         requester,
@@ -57,11 +57,7 @@ describe('Voucher', function () {
     let beacon: UpgradeableBeacon;
     let iexecPoco: string;
     let iexecPocoInstance: IexecPocoMock;
-    let [
-        voucherHub,
-        voucherHubAsVoucherCreationManager,
-        voucherHubAsAssetEligibilityManager,
-    ]: VoucherHub[] = [];
+    let [voucherHub, voucherHubAsMinter, voucherHubAsManager]: VoucherHub[] = [];
     let voucherHubAddress: string;
     let [voucherAsOwner, voucherAsAnyone]: Voucher[] = [];
     let voucherAddress: string;
@@ -92,15 +88,8 @@ describe('Voucher', function () {
 
     async function deployFixture() {
         // Contracts are deployed using the first signer/account by default
-        [
-            admin,
-            assetEligibilityManager,
-            voucherManager,
-            voucherOwner1,
-            voucherOwner2,
-            requester,
-            anyone,
-        ] = await ethers.getSigners();
+        [admin, manager, minter, voucherOwner1, voucherOwner2, requester, anyone] =
+            await ethers.getSigners();
         // Deploy PoCo mock and VoucherHub.
         iexecPocoInstance = await new IexecPocoMock__factory()
             .connect(admin)
@@ -109,21 +98,21 @@ describe('Voucher', function () {
         iexecPoco = await iexecPocoInstance.getAddress();
         beacon = await voucherUtils.deployBeaconAndImplementation(admin.address);
         voucherHub = await voucherHubUtils.deployHub(
-            assetEligibilityManager.address,
-            voucherManager.address,
+            manager.address,
+            minter.address,
             iexecPoco,
             await beacon.getAddress(),
         );
-        voucherHubAsVoucherCreationManager = voucherHub.connect(voucherManager);
-        voucherHubAsAssetEligibilityManager = voucherHub.connect(assetEligibilityManager);
+        voucherHubAsMinter = voucherHub.connect(minter);
+        voucherHubAsManager = voucherHub.connect(manager);
         voucherHubAddress = await voucherHub.getAddress();
         // Fund VoucherHub with RLCs.
         await iexecPocoInstance
             .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
             .then((tx) => tx.wait());
         // Create one voucher.
-        await voucherHubAsAssetEligibilityManager.createVoucherType(description, duration);
-        voucherAddress = await voucherHubAsVoucherCreationManager
+        await voucherHubAsManager.createVoucherType(description, duration);
+        voucherAddress = await voucherHubAsMinter
             .createVoucher(voucherOwner1, voucherType, voucherValue)
             .then((tx) => tx.wait())
             .then((tx) => (voucherCreationTxReceipt = tx!))
@@ -145,10 +134,10 @@ describe('Voucher', function () {
             const anotherDuration = 7200;
             const anotherVoucherTypeId = 1;
             const anotherVoucherValue = 200;
-            await voucherHubAsAssetEligibilityManager
+            await voucherHubAsManager
                 .createVoucherType('Another description', anotherDuration)
                 .then((tx) => tx.wait());
-            const createVoucherReceipt2 = await voucherHubAsVoucherCreationManager
+            const createVoucherReceipt2 = await voucherHubAsMinter
                 .createVoucher(voucherOwner2, anotherVoucherTypeId, anotherVoucherValue)
                 .then((tx) => tx.wait());
             const expectedExpirationVoucher2 = await commonUtils.getExpectedExpiration(
@@ -1249,9 +1238,7 @@ describe('Voucher', function () {
 
     async function addEligibleAssets(assets: string[]) {
         for (const asset of assets) {
-            await voucherHubAsAssetEligibilityManager
-                .addEligibleAsset(voucherType, asset)
-                .then((tx) => tx.wait());
+            await voucherHubAsManager.addEligibleAsset(voucherType, asset).then((tx) => tx.wait());
         }
     }
 
