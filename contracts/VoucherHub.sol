@@ -358,6 +358,13 @@ contract VoucherHub is
         $._matchOrdersEligibility[voucherTypeId][asset] = isEligible;
     }
 
+    function _transferFundsToVoucherOnPoco(address voucherAddress, uint256 value) private {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        if (!IERC20($._iexecPoco).transfer(voucherAddress, value)) {
+            revert("VoucherHub: SRLC transfer to voucher failed");
+        }
+    }
+
     function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
         //slither-disable-start assembly
         assembly {
@@ -368,12 +375,5 @@ contract VoucherHub is
 
     function _getCreate2Salt(address account) private pure returns (bytes32) {
         return bytes32(uint256(uint160(account)));
-    }
-
-    function _transferFundsToVoucherOnPoco(address voucherAddress, uint256 value) private {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        if (!IERC20($._iexecPoco).transfer(voucherAddress, value)) {
-            revert("VoucherHub: SRLC transfer to voucher failed");
-        }
     }
 }
