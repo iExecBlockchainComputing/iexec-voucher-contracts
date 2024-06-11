@@ -256,7 +256,7 @@ contract VoucherHub is
     }
 
     /**
-     * Drain funds from voucher if it is expired. Transfer all RLC balance
+     * Drain funds from voucher if it is expired. Transfer all SRLC balance
      * on PoCo from voucher to voucherHub and burn all credits.
      * @param voucher address of the expired voucher to drain
      */
