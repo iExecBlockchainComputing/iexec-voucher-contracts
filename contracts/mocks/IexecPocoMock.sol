@@ -25,7 +25,7 @@ contract IexecPocoMock is ERC20 {
 
     IexecLibCore_v5.Deal public deal;
     IexecLibCore_v5.DealBoost public dealBoost;
-    IexecLibCore_v5.Task public task;
+    mapping(bytes32 => IexecLibCore_v5.Task) public tasks;
 
     constructor() ERC20("Staked RLC", "SRLC") {
         _mint(msg.sender, 1000000);
@@ -49,8 +49,12 @@ contract IexecPocoMock is ERC20 {
         deal.dataset.price = datasetOrder.datasetprice;
         deal.workerpool.price = workerpoolOrder.workerpoolprice;
         deal.sponsor = msg.sender;
-        task.dealid = mockDealId;
-        task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
+        for (uint256 i = 0; i < deal.botSize; i++) {
+            bytes32 taskId = keccak256(abi.encode(mockDealId, i));
+            IexecLibCore_v5.Task storage task = tasks[taskId];
+            task.dealid = mockDealId;
+            task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
+        }
         uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
         deal.botSize = volume;
         uint256 dealPrice = (appOrder.appprice +
@@ -74,7 +78,12 @@ contract IexecPocoMock is ERC20 {
         dealBoost.datasetPrice = uint96(datasetOrder.datasetprice);
         dealBoost.workerpoolPrice = uint96(workerpoolOrder.workerpoolprice);
         dealBoost.sponsor = msg.sender;
-        task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
+        for (uint256 i = 0; i < dealBoost.botSize; i++) {
+            bytes32 taskId = keccak256(abi.encode(mockDealId, i));
+            IexecLibCore_v5.Task storage task = tasks[taskId];
+            task.dealid = mockDealId;
+            task.status = IexecLibCore_v5.TaskStatusEnum.UNSET;
+        }
         uint256 volume = computeDealVolume(appOrder, datasetOrder, workerpoolOrder, requestOrder);
         dealBoost.botSize = uint16(volume);
         uint256 dealPrice = (appOrder.appprice +
@@ -109,10 +118,16 @@ contract IexecPocoMock is ERC20 {
             revert("IexecPocoMock: Failed to claim");
         }
         // This simulates non existent task/deal.
-        if (taskId != mockTaskId) {
+        bool knownTask;
+        for (uint256 i = 0; i < deal.botSize; i++) {
+            if (taskId == keccak256(abi.encode(mockDealId, i))) {
+                knownTask = true;
+            }
+        }
+        if (!knownTask) {
             revert(); // no reason, same as PoCo.
         }
-        task.status = IexecLibCore_v5.TaskStatusEnum.FAILED;
+        tasks[taskId].status = IexecLibCore_v5.TaskStatusEnum.FAILED;
         // mint task price.
         _mint(deal.sponsor, deal.app.price + deal.dataset.price + deal.workerpool.price);
     }
@@ -122,10 +137,11 @@ contract IexecPocoMock is ERC20 {
             revert("IexecPocoMock: Failed to claim boost");
         }
         // This simulates non existent task/deal.
-        if (dealId != mockDealId || taskIndex != mockTaskIndex) {
+        if (dealId != mockDealId || taskIndex >= dealBoost.botSize) {
             revert("PocoBoost: Unknown task"); // same as PoCo.
         }
-        task.status = IexecLibCore_v5.TaskStatusEnum.FAILED;
+        bytes32 taskId = keccak256(abi.encode(mockDealId, taskIndex));
+        tasks[taskId].status = IexecLibCore_v5.TaskStatusEnum.FAILED;
         // mint task price.
         _mint(
             dealBoost.sponsor,
@@ -149,8 +165,8 @@ contract IexecPocoMock is ERC20 {
         return dealBoost;
     }
 
-    function viewTask(bytes32) external view returns (IexecLibCore_v5.Task memory) {
-        return task;
+    function viewTask(bytes32 taskId) external view returns (IexecLibCore_v5.Task memory) {
+        return tasks[taskId];
     }
 
     function computeDealVolume(

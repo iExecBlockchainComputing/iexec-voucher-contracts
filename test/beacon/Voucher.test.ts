@@ -20,14 +20,14 @@ import {
     Voucher__factory,
 } from '../../typechain-types';
 import { random } from '../utils/address-utils';
-import { TaskStatusEnum, createMockOrder } from '../utils/poco-utils';
+import { PocoMode, TaskStatusEnum, createMockOrder, getTaskId } from '../utils/poco-utils';
 
 // TODO use srlc instead of rlc.
 
 const voucherType = 0;
 const duration = 3600;
 const description = 'Early Access';
-const voucherValue = 100;
+const voucherValue = 100n;
 const app = random();
 const dataset = random();
 const workerpool = random();
@@ -72,6 +72,22 @@ describe('Voucher', function () {
 
     beforeEach('Deploy', async () => {
         await loadFixture(deployFixture);
+        // Create mock orders.
+        const mockOrder = createMockOrder();
+        appOrder = { ...mockOrder, app: app, appprice: appPrice, volume: volume };
+        datasetOrder = {
+            ...mockOrder,
+            dataset: dataset,
+            datasetprice: datasetPrice,
+            volume: volume,
+        };
+        workerpoolOrder = {
+            ...mockOrder,
+            workerpool: workerpool,
+            workerpoolprice: workerpoolPrice,
+            volume: volume,
+        };
+        requestOrder = { ...mockOrder, requester: requester.address, volume: volume };
     });
 
     async function deployFixture() {
@@ -114,22 +130,6 @@ describe('Voucher', function () {
             .then(() => voucherHub.getVoucher(voucherOwner1));
         voucherAsOwner = Voucher__factory.connect(voucherAddress, voucherOwner1);
         voucherAsAnyone = voucherAsOwner.connect(anyone);
-        // Create mock orders.
-        const mockOrder = createMockOrder();
-        appOrder = { ...mockOrder, app: app, appprice: appPrice, volume: volume };
-        datasetOrder = {
-            ...mockOrder,
-            dataset: dataset,
-            datasetprice: datasetPrice,
-            volume: volume,
-        };
-        workerpoolOrder = {
-            ...mockOrder,
-            workerpool: workerpool,
-            workerpoolprice: workerpoolPrice,
-            volume: volume,
-        };
-        requestOrder = { ...mockOrder, requester: requester.address, volume: volume };
     }
 
     describe('Upgrade', function () {
@@ -854,20 +854,80 @@ describe('Voucher', function () {
             }
         });
 
-        describe('[TODO] Should claim task when deal is partially sponsored and sponsored amount is not divisible by volume', async () => {
-            it.skip('Classic', async () => await runTest(voucherMatchOrders, claim));
-            it.skip('Boost', async () => await runTest(voucherMatchOrdersBoost, claimBoost));
+        describe('Should claim task when deal is partially sponsored and sponsored amount is reduced to make it divisible by volume', async () => {
+            it('Classic', async () => await runTest(PocoMode.CLASSIC));
+            it('Boost', async () => await runTest(PocoMode.BOOST));
 
-            async function runTest(matchOrdersBoostOrClassic: any, claimBoostOrClassic: any) {
-                // Use another voucher with a small amount of credits.
-                const smallVoucherValue = 1n;
-                voucherAsOwner = await voucherHubAsVoucherCreationManager
-                    .createVoucher(voucherOwner2, voucherType, smallVoucherValue)
-                    .then((tx) => tx.wait())
-                    .then(() => voucherHub.getVoucher(voucherOwner2))
-                    .then((voucherAddress) =>
-                        Voucher__factory.connect(voucherAddress, voucherOwner2),
+            async function runTest(pocoMode: PocoMode) {
+                await addEligibleAssets([app, dataset, workerpool]);
+                const volume = 17n;
+                for (const order of [appOrder, datasetOrder, workerpoolOrder, requestOrder]) {
+                    order.volume = volume;
+                }
+                const dealPrice = taskPrice * volume;
+                let dealSponsorableAmount = voucherValue; // dealPrice > voucherValue
+                // Make sure dealSponsorableAmount is not divisible by volume
+                expect(dealSponsorableAmount % volume).greaterThan(0);
+                // Remove remainder to get expected dealSponsoredAmount
+                let dealSponsoredAmount = dealSponsorableAmount - (dealSponsorableAmount % volume);
+                const dealNonSponsoredAmount = dealPrice - dealSponsoredAmount;
+                expect(dealSponsoredAmount % volume).equal(0); // Both amounts should be
+                expect(dealNonSponsoredAmount % volume).equal(0); // divisible by volume
+                // Deposit non-sponsored amount for requester and approve voucher.
+                await iexecPocoInstance
+                    .transfer(requester, dealNonSponsoredAmount)
+                    .then((tx) => tx.wait());
+                await iexecPocoInstance
+                    .connect(requester)
+                    .approve(voucherAddress, dealNonSponsoredAmount)
+                    .then((tx) => tx.wait());
+                const isBoost = pocoMode == PocoMode.BOOST;
+                await (isBoost ? voucherMatchOrdersBoost() : voucherMatchOrders());
+                const {
+                    voucherCreditBalance: voucherCreditBalancePreClaim,
+                    voucherRlcBalance: voucherSrlcBalancePreClaim,
+                    requesterRlcBalance: requesterRlcBalancePreClaim,
+                } = await getVoucherAndRequesterBalances();
+                expect(voucherCreditBalancePreClaim).equal(voucherValue - dealSponsoredAmount);
+                expect(requesterRlcBalancePreClaim).equal(0);
+                let taskSponsoredAmount = dealSponsoredAmount / volume;
+                let taskNonSponsoredAmount = dealNonSponsoredAmount / volume;
+                expect(taskSponsoredAmount).to.be.greaterThan(0); // Make sure both parties
+                expect(taskNonSponsoredAmount).to.be.greaterThan(0); // will expect a refund
+                for (let taskIndex = 0; taskIndex < volume; taskIndex++) {
+                    await expect(
+                        isBoost
+                            ? voucherAsOwner.claimBoost(dealId, taskIndex)
+                            : voucherAsOwner.claim(getTaskId(dealId, taskIndex)),
+                    )
+                        .to.emit(voucherHub, 'VoucherRefunded')
+                        .withArgs(voucherAddress, taskSponsoredAmount)
+                        .to.emit(iexecPocoInstance, 'Transfer')
+                        .withArgs(voucherAddress, requester.address, taskNonSponsoredAmount)
+                        .to.emit(voucherAsOwner, 'TaskClaimedWithVoucher');
+                    const {
+                        voucherCreditBalance,
+                        voucherRlcBalance: voucherSrlcBalance,
+                        requesterRlcBalance,
+                    } = await getVoucherAndRequesterBalances();
+                    const currentVolume = BigInt(taskIndex + 1);
+                    expect(voucherCreditBalance)
+                        .equal(voucherCreditBalancePreClaim + taskSponsoredAmount * currentVolume)
+                        .equal(voucherSrlcBalance);
+                    expect(requesterRlcBalance).equal(
+                        requesterRlcBalancePreClaim + taskNonSponsoredAmount * currentVolume,
                     );
+                }
+                const {
+                    voucherCreditBalance: voucherCreditBalanceAfter,
+                    voucherRlcBalance: voucherSrlcBalanceAfter,
+                    requesterRlcBalance: requesterSrlcBalanceAfter,
+                } = await getVoucherAndRequesterBalances();
+                expect(voucherCreditBalanceAfter)
+                    .equal(voucherCreditBalancePreClaim + dealSponsoredAmount)
+                    .equal(voucherSrlcBalanceAfter)
+                    .equal(voucherSrlcBalancePreClaim + dealSponsoredAmount);
+                expect(requesterSrlcBalanceAfter).equal(dealNonSponsoredAmount);
             }
         });
 
@@ -1097,12 +1157,7 @@ describe('Voucher', function () {
                 expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(dealPrice);
                 // Claim task
                 const badTaskIndex = 99;
-                const badTaskId = ethers.keccak256(
-                    ethers.AbiCoder.defaultAbiCoder().encode(
-                        ['bytes32', 'uint256'],
-                        [dealId, badTaskIndex],
-                    ),
-                );
+                const badTaskId = getTaskId(dealId, badTaskIndex);
                 await expect(voucherAsOwner.claim(badTaskId)).to.be.revertedWithoutReason();
             });
 
