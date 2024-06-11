@@ -763,23 +763,25 @@ describe('Voucher', function () {
             }
         });
 
-        describe('Should claim task when deal is partially sponsored and amounts are not divisible by volume', async () => {
+        describe('Should claim task when deal is partially sponsored and sponsored amount is reduced to make it divisible by volume', async () => {
             it('Classic', async () => await runTest(PocoMode.CLASSIC));
             it('Boost', async () => await runTest(PocoMode.BOOST));
 
             async function runTest(pocoMode: PocoMode) {
                 await addEligibleAssets([app, dataset, workerpool]);
-                const volume = 26n;
+                const volume = 17n;
                 for (const order of [appOrder, datasetOrder, workerpoolOrder, requestOrder]) {
                     order.volume = volume;
                 }
                 const dealPrice = taskPrice * volume;
-                const dealSponsoredAmount = dealPrice > voucherValue ? voucherValue : dealPrice;
+                let dealSponsoredAmount = dealPrice > voucherValue ? voucherValue : dealPrice;
+                // Make sure dealSponsoredAmount will need to be reduced to be divisible by volume
+                expect(dealSponsoredAmount % volume).greaterThan(0);
+                // Remove remainder to get expected dealSponsoredAmount
+                dealSponsoredAmount -= dealSponsoredAmount % volume;
                 const dealNonSponsoredAmount = dealPrice - dealSponsoredAmount;
-                const sponsoredRemainder = dealSponsoredAmount % volume;
-                const nonSponsoredRemainder = dealNonSponsoredAmount % volume;
-                expect(sponsoredRemainder).not.equal(0); // the test wants amounts
-                expect(nonSponsoredRemainder).not.equal(0); // not divisible by volume
+                expect(dealSponsoredAmount % volume).equal(0); // Both amounts should be
+                expect(dealNonSponsoredAmount % volume).equal(0); // divisible by volume
                 // Deposit non-sponsored amount for requester and approve voucher.
                 await iexecPocoInstance
                     .transfer(requester, dealNonSponsoredAmount)
@@ -792,14 +794,15 @@ describe('Voucher', function () {
                 await (isBoost ? voucherMatchOrdersBoost() : voucherMatchOrders());
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
+                    voucherRlcBalance: voucherSrlcBalancePreClaim,
                     requesterRlcBalance: requesterRlcBalancePreClaim,
                 } = await getVoucherAndRequesterBalances();
                 expect(voucherCreditBalancePreClaim).equal(voucherValue - dealSponsoredAmount);
                 expect(requesterRlcBalancePreClaim).equal(0);
                 let taskSponsoredAmount = dealSponsoredAmount / volume;
                 let taskNonSponsoredAmount = dealNonSponsoredAmount / volume;
-                expect(taskSponsoredAmount).to.be.greaterThan(0);
-                expect(taskNonSponsoredAmount).to.be.greaterThan(0);
+                expect(taskSponsoredAmount).to.be.greaterThan(0); // Make sure both parties
+                expect(taskNonSponsoredAmount).to.be.greaterThan(0); // will expect a refund
                 for (let taskIndex = 0; taskIndex < volume; taskIndex++) {
                     await expect(
                         isBoost
@@ -811,22 +814,29 @@ describe('Voucher', function () {
                         .to.emit(iexecPocoInstance, 'Transfer')
                         .withArgs(voucherAddress, requester.address, taskNonSponsoredAmount)
                         .to.emit(voucherAsOwner, 'TaskClaimedWithVoucher');
-                    const { voucherCreditBalance, requesterRlcBalance } =
-                        await getVoucherAndRequesterBalances();
-                    expect(voucherCreditBalance).equal(
-                        voucherCreditBalancePreClaim + taskSponsoredAmount * BigInt(taskIndex + 1),
-                    );
+                    const {
+                        voucherCreditBalance,
+                        voucherRlcBalance: voucherSrlcBalance,
+                        requesterRlcBalance,
+                    } = await getVoucherAndRequesterBalances();
+                    const currentVolume = BigInt(taskIndex + 1);
+                    expect(voucherCreditBalance)
+                        .equal(voucherCreditBalancePreClaim + taskSponsoredAmount * currentVolume)
+                        .equal(voucherSrlcBalance);
                     expect(requesterRlcBalance).equal(
-                        requesterRlcBalancePreClaim +
-                            taskNonSponsoredAmount * BigInt(taskIndex + 1),
+                        requesterRlcBalancePreClaim + taskNonSponsoredAmount * currentVolume,
                     );
                 }
-                const { voucherCreditBalance, voucherRlcBalance } =
-                    await getVoucherAndRequesterBalances();
-                expect(voucherRlcBalance).equal(
-                    // balances diverge on the long run
-                    voucherCreditBalance + sponsoredRemainder + nonSponsoredRemainder,
-                );
+                const {
+                    voucherCreditBalance: voucherCreditBalanceAfter,
+                    voucherRlcBalance: voucherSrlcBalanceAfter,
+                    requesterRlcBalance: requesterSrlcBalanceAfter,
+                } = await getVoucherAndRequesterBalances();
+                expect(voucherCreditBalanceAfter)
+                    .equal(voucherCreditBalancePreClaim + dealSponsoredAmount)
+                    .equal(voucherSrlcBalanceAfter)
+                    .equal(voucherSrlcBalancePreClaim + dealSponsoredAmount);
+                expect(requesterSrlcBalanceAfter).equal(dealNonSponsoredAmount);
             }
         });
 
