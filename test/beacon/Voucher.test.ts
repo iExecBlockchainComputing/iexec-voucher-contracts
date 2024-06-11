@@ -826,11 +826,11 @@ describe('Voucher', function () {
                     order.volume = volume;
                 }
                 const dealPrice = taskPrice * volume;
-                let dealSponsoredAmount = dealPrice > voucherValue ? voucherValue : dealPrice;
-                // Make sure dealSponsoredAmount will need to be reduced to be divisible by volume
-                expect(dealSponsoredAmount % volume).greaterThan(0);
+                let dealSponsorableAmount = voucherValue; // dealPrice > voucherValue
+                // Make sure dealSponsorableAmount is not divisible by volume
+                expect(dealSponsorableAmount % volume).greaterThan(0);
                 // Remove remainder to get expected dealSponsoredAmount
-                dealSponsoredAmount -= dealSponsoredAmount % volume;
+                let dealSponsoredAmount -= dealSponsorableAmount % volume;
                 const dealNonSponsoredAmount = dealPrice - dealSponsoredAmount;
                 expect(dealSponsoredAmount % volume).equal(0); // Both amounts should be
                 expect(dealNonSponsoredAmount % volume).equal(0); // divisible by volume

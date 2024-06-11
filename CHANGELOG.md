@@ -1,7 +1,7 @@
 # Changelog
 
 ## vNEXT
-- Update requester/voucher debits to refund on claims amounts divisible by volume. (#28)
+- Make sponsored & non-sponsored amounts always divisible by deal volume to refund tasks fairly. (#28)
 - Add slither suggestions. (#26)
 - Drain expired vouchers and withdraw funds. (#25)
 - Add slither github action. (#24)

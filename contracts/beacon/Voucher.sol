@@ -379,6 +379,7 @@ contract Voucher is Initializable, IVoucher {
         $._refundedTasks[taskId] = true;
         if (taskPrice != 0) {
             uint256 dealSponsoredAmount = $._sponsoredAmounts[dealId];
+            // The division leaves no remainder. See VoucherHub#debitVoucher().
             uint256 taskSponsoredAmount = dealSponsoredAmount / dealVolume;
             if (taskSponsoredAmount != 0) {
                 // If the voucher did fully/partially sponsor the deal then mint voucher
