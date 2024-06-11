@@ -379,10 +379,7 @@ contract Voucher is Initializable, IVoucher {
         $._refundedTasks[taskId] = true;
         if (taskPrice != 0) {
             uint256 dealSponsoredAmount = $._sponsoredAmounts[dealId];
-            // A positive remainder is possible when the voucher balance is less than
-            // the sponsorable amount. Min(balance, dealSponsoredAmount) is computed
-            // at match orders.
-            // TODO !! do something with the remainder.
+            // The division leaves no remainder. See VoucherHub#debitVoucher().
             uint256 taskSponsoredAmount = dealSponsoredAmount / dealVolume;
             if (taskSponsoredAmount != 0) {
                 // If the voucher did fully/partially sponsor the deal then mint voucher

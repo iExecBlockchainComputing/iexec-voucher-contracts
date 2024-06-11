@@ -3,6 +3,11 @@
 
 import { ethers } from 'hardhat';
 
+export enum PocoMode {
+    CLASSIC,
+    BOOST,
+}
+
 export enum TaskStatusEnum {
     UNSET,
     ACTIVE,
@@ -37,4 +42,8 @@ export function createMockOrder() {
         workerpoolprice: 0n,
         workerpoolrestrict: ethers.ZeroAddress,
     };
+}
+
+export function getTaskId(dealId: string, taskIndex: number): string {
+    return ethers.solidityPackedKeccak256(['bytes32', 'uint256'], [dealId, taskIndex]);
 }
