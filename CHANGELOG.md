@@ -1,0 +1,34 @@
+# Changelog
+
+## vNEXT
+- Rename roles. (#29)
+- Make sponsored & non-sponsored amounts always divisible by deal volume to refund tasks fairly. (#28)
+- Add slither suggestions. (#26)
+- Drain expired vouchers and withdraw funds. (#25)
+- Add slither github action. (#24)
+- Top up voucher. (#23)
+- Claim task part 2 - Add voucher tests. (#21)
+- Claim task part 1 - Solidity with minimal tests. (#20)
+- Compute deal price with proper volume. (#19)
+- Refactor voucher tests file. (#18)
+- Use real poco address if available at deployment. (#17)
+- Match orders boost through voucher. (#16)
+- Use hardhat deploy. (#15)
+- Upload coverage reports to Codecov. (#14)
+- Clean some TODOs. (#13, #22, #27)
+- Match orders through voucher. (#12)
+- Add external-hardhat network configuration. (#11)
+- Add voucher credit and SRLC manipulation. (#10)
+    - SRLC and iExec poco is mocked.
+    - set voucher credit as VoucherHub is ERC20.
+- Upgrade configuration: (#9)
+    - Upgrade dependencies: hardhat, husky, iExec Poco.
+    - Ignore mocks in coverage.
+    - Add solidity optimizer and use Bellecour network config.
+- Add role-based access control to VoucherHub. (#8)
+- Create voucher from VoucherHub with : type, expiration, authorize list. (#6)
+- Create vouchers with create2. (#5)
+- Create upgradeable voucher contract. (#4)
+- Add voucher type structure, duration, description and asset eligible. (#3)
+- Add upgradeable VoucherHub contract. (#2)
+- Init project. (#1)
