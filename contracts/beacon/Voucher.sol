@@ -383,9 +383,9 @@ contract Voucher is Initializable, IVoucher {
             workerpoolOrder,
             requestOrder
         );
-        uint256 dealPrice = datasetOrder.dataset != address(0)
-            ? (appPrice + datasetPrice + workerpoolPrice) * volume
-            : (appPrice + workerpoolPrice) * volume;
+        uint256 dealPrice = (appPrice +
+            workerpoolPrice +
+            (datasetOrder.dataset != address(0) ? datasetPrice : 0)) * volume;
         sponsoredAmount = voucherHub.debitVoucher(
             voucherTypeId,
             appOrder.app,

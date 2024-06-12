@@ -1,7 +1,7 @@
 # Changelog
 
 ## vNEXT
-- Set memory safe on assembly codes. (#33)
+- Set memory safe on assembly codes and compute deal price with ternary. (#33)
 - Harmonize SRLC wording. (#31)
 - Rename roles. (#29)
 - Make sponsored & non-sponsored amounts always divisible by deal volume to refund tasks fairly. (#28)
