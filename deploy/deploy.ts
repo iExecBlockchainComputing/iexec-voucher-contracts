@@ -3,7 +3,7 @@
 
 import { deployments, ethers } from 'hardhat';
 import { defaultHardhatNetworkParams } from 'hardhat/internal/core/config/default-config';
-import deploymentConfig from '../config/config';
+import deploymentConfig from '../config/deployment';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import { UpgradeableBeacon } from '../typechain-types';
