@@ -35,7 +35,7 @@ contract VoucherHubV2Mock is VoucherHub {
     }
 
     function _getVoucherHubStorageV2() private pure returns (VoucherHubStorageV2 storage $) {
-        assembly {
+        assembly ("memory-safe") {
             $.slot := VOUCHER_HUB_STORAGE_LOCATION
         }
     }
