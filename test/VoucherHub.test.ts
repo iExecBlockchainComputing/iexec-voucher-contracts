@@ -272,7 +272,7 @@ describe('VoucherHub', function () {
         it('Should create and initialize voucher', async function () {
             const { beacon, voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
             await voucherHubAsManager.createVoucherType(description, duration);
-            const expectedVoucherHubInitRlcBalance = initVoucherHubBalance;
+            const expectedVoucherHubInitSrlcBalance = initVoucherHubBalance;
             // Create voucher.
             const voucherHubInitialSrlcBalance = await iexecPocoInstance.balanceOf(
                 voucherHub.getAddress(),
@@ -296,7 +296,7 @@ describe('VoucherHub', function () {
                 createVoucherTx,
             );
             // Run assertions.
-            expect(voucherHubInitialSrlcBalance).to.equal(expectedVoucherHubInitRlcBalance);
+            expect(voucherHubInitialSrlcBalance).to.equal(expectedVoucherHubInitSrlcBalance);
             expect(voucherHubPostCreationSrlcBalance).to.equal(
                 voucherHubInitialSrlcBalance - BigInt(voucherValue),
             );
@@ -563,7 +563,7 @@ describe('VoucherHub', function () {
         it('Should top up voucher', async function () {
             const topUpValue = 123n; // arbitrary value
             const voucherCreditBalanceBefore = await voucherHub.balanceOf(voucherAddress);
-            const voucherRlcBalanceBefore = await iexecPocoInstance.balanceOf(voucherAddress);
+            const voucherSrlcBalanceBefore = await iexecPocoInstance.balanceOf(voucherAddress);
             const expirationBefore = await Voucher__factory.connect(
                 voucherAddress,
                 anyone,
@@ -576,11 +576,11 @@ describe('VoucherHub', function () {
                 .to.emit(voucherHub, 'VoucherToppedUp')
                 .withArgs(voucherAddress, expectedExpiration, topUpValue);
             const voucherCreditBalanceAfter = await voucherHub.balanceOf(voucherAddress);
-            const voucherRlcBalanceAfter = await iexecPocoInstance.balanceOf(voucherAddress);
+            const voucherSrlcBalanceAfter = await iexecPocoInstance.balanceOf(voucherAddress);
             expect(voucherCreditBalanceAfter)
                 .equal(voucherCreditBalanceBefore + topUpValue)
-                .equal(voucherRlcBalanceBefore + topUpValue)
-                .equal(voucherRlcBalanceAfter);
+                .equal(voucherSrlcBalanceBefore + topUpValue)
+                .equal(voucherSrlcBalanceAfter);
             expect(await Voucher__factory.connect(voucherAddress, anyone).getExpiration())
                 .to.be.greaterThan(expirationBefore)
                 .to.be.equal(expectedExpiration);
@@ -861,7 +861,8 @@ describe('VoucherHub', function () {
         });
 
         it('Should drain all funds of expired voucher', async function () {
-            const voucherHubRlcBalanceBefore = await iexecPocoInstance.balanceOf(voucherHubAddress);
+            const voucherHubSrlcBalanceBefore =
+                await iexecPocoInstance.balanceOf(voucherHubAddress);
             // Expire voucher
             const expirationDate = await voucher.getExpiration();
             await time.setNextBlockTimestamp(expirationDate); // after expiration
@@ -877,9 +878,9 @@ describe('VoucherHub', function () {
                 .to.equal(await voucherHub.balanceOf(voucherAddress))
                 .to.equal(await voucher.getBalance())
                 .to.equal(0);
-            // Should send RLCs to VoucherHub contract.
+            // Should send SRLCs to VoucherHub contract.
             expect(await iexecPocoInstance.balanceOf(voucherHubAddress)).to.equal(
-                voucherHubRlcBalanceBefore + voucherValue,
+                voucherHubSrlcBalanceBefore + voucherValue,
             );
         });
 

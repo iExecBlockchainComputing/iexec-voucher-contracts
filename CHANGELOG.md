@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Harmonize SRLC wording. (#31)
 - Rename roles. (#29)
 - Make sponsored & non-sponsored amounts always divisible by deal volume to refund tasks fairly. (#28)
 - Add slither suggestions. (#26)
