@@ -22,8 +22,6 @@ import {
 import { random } from '../utils/address-utils';
 import { PocoMode, TaskStatusEnum, createMockOrder, getTaskId } from '../utils/poco-utils';
 
-// TODO use srlc instead of rlc.
-
 const voucherType = 0;
 const duration = 3600;
 const description = 'Early Access';
@@ -106,7 +104,7 @@ describe('Voucher', function () {
         voucherHubAsMinter = voucherHub.connect(minter);
         voucherHubAsManager = voucherHub.connect(manager);
         voucherHubAddress = await voucherHub.getAddress();
-        // Fund VoucherHub with RLCs.
+        // Fund VoucherHub with SRLCs.
         await iexecPocoInstance
             .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
             .then((tx) => tx.wait());
@@ -750,8 +748,8 @@ describe('Voucher', function () {
                 await matchOrdersBoostOrClassic();
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
-                    voucherRlcBalance: voucherRlcBalancePreClaim,
-                    requesterRlcBalance: requesterRlcBalancePreClaim,
+                    voucherSrlcBalance: voucherSrlcBalancePreClaim,
+                    requesterSrlcBalance: requesterSrlcBalancePreClaim,
                 } = await getVoucherAndRequesterBalances();
                 // The voucher should've fully sponsored the deal.
                 const dealSponsoredAmount = await voucherAsOwner.getSponsoredAmount(dealId);
@@ -767,16 +765,16 @@ describe('Voucher', function () {
                     .withArgs(taskId);
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
-                    voucherRlcBalance: voucherRlcBalancePostClaim,
-                    requesterRlcBalance: requesterRlcBalancePostClaim,
+                    voucherSrlcBalance: voucherSrlcBalancePostClaim,
+                    requesterSrlcBalance: requesterSrlcBalancePostClaim,
                 } = await getVoucherAndRequesterBalances();
-                // Voucher credit and RLC balances should increase while staying equal.
+                // Voucher credit and SRLC balances should increase while staying equal.
                 expect(voucherCreditBalancePostClaim)
                     .to.be.equal(voucherCreditBalancePreClaim + taskPrice)
-                    .to.be.equal(voucherRlcBalancePostClaim)
-                    .to.be.equal(voucherRlcBalancePreClaim + taskPrice);
+                    .to.be.equal(voucherSrlcBalancePostClaim)
+                    .to.be.equal(voucherSrlcBalancePreClaim + taskPrice);
                 // Requester balance should stay unchanged.
-                expect(requesterRlcBalancePostClaim).to.be.equal(requesterRlcBalancePreClaim);
+                expect(requesterSrlcBalancePostClaim).to.be.equal(requesterSrlcBalancePreClaim);
                 // Sponsored amount should stay unchanged
                 expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(
                     dealSponsoredAmount,
@@ -808,8 +806,8 @@ describe('Voucher', function () {
                 await matchOrdersBoostOrClassic();
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
-                    voucherRlcBalance: voucherRlcBalancePreClaim,
-                    requesterRlcBalance: requesterRlcBalancePreClaim,
+                    voucherSrlcBalance: voucherSrlcBalancePreClaim,
+                    requesterSrlcBalance: requesterSrlcBalancePreClaim,
                 } = await getVoucherAndRequesterBalances();
                 // The voucher should've partially sponsored the deal.
                 const dealSponsoredAmount = await voucherAsOwner.getSponsoredAmount(dealId);
@@ -824,17 +822,17 @@ describe('Voucher', function () {
                     .to.emit(voucherAsOwner, 'TaskClaimedWithVoucher');
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
-                    voucherRlcBalance: voucherRlcBalancePostClaim,
-                    requesterRlcBalance: requesterRlcBalancePostClaim,
+                    voucherSrlcBalance: voucherSrlcBalancePostClaim,
+                    requesterSrlcBalance: requesterSrlcBalancePostClaim,
                 } = await getVoucherAndRequesterBalances();
-                // Voucher credit and RLC balances should increase while staying equal.
+                // Voucher credit and SRLC balances should increase while staying equal.
                 expect(voucherCreditBalancePostClaim)
                     .to.be.equal(voucherCreditBalancePreClaim + taskSponsoredAmount)
-                    .to.be.equal(voucherRlcBalancePostClaim)
-                    .to.be.equal(voucherRlcBalancePreClaim + taskSponsoredAmount);
+                    .to.be.equal(voucherSrlcBalancePostClaim)
+                    .to.be.equal(voucherSrlcBalancePreClaim + taskSponsoredAmount);
                 // Requester balance should increase.
-                expect(requesterRlcBalancePostClaim).to.be.equal(
-                    requesterRlcBalancePreClaim + taskNonSponsoredAmount,
+                expect(requesterSrlcBalancePostClaim).to.be.equal(
+                    requesterSrlcBalancePreClaim + taskNonSponsoredAmount,
                 );
                 // Sponsored amount should stay unchanged
                 expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(
@@ -874,11 +872,11 @@ describe('Voucher', function () {
                 await (isBoost ? voucherMatchOrdersBoost() : voucherMatchOrders());
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
-                    voucherRlcBalance: voucherSrlcBalancePreClaim,
-                    requesterRlcBalance: requesterRlcBalancePreClaim,
+                    voucherSrlcBalance: voucherSrlcBalancePreClaim,
+                    requesterSrlcBalance: requesterSrlcBalancePreClaim,
                 } = await getVoucherAndRequesterBalances();
                 expect(voucherCreditBalancePreClaim).equal(voucherValue - dealSponsoredAmount);
-                expect(requesterRlcBalancePreClaim).equal(0);
+                expect(requesterSrlcBalancePreClaim).equal(0);
                 let taskSponsoredAmount = dealSponsoredAmount / volume;
                 let taskNonSponsoredAmount = dealNonSponsoredAmount / volume;
                 expect(taskSponsoredAmount).to.be.greaterThan(0); // Make sure both parties
@@ -896,21 +894,21 @@ describe('Voucher', function () {
                         .to.emit(voucherAsOwner, 'TaskClaimedWithVoucher');
                     const {
                         voucherCreditBalance,
-                        voucherRlcBalance: voucherSrlcBalance,
-                        requesterRlcBalance,
+                        voucherSrlcBalance: voucherSrlcBalance,
+                        requesterSrlcBalance,
                     } = await getVoucherAndRequesterBalances();
                     const currentVolume = BigInt(taskIndex + 1);
                     expect(voucherCreditBalance)
                         .equal(voucherCreditBalancePreClaim + taskSponsoredAmount * currentVolume)
                         .equal(voucherSrlcBalance);
-                    expect(requesterRlcBalance).equal(
-                        requesterRlcBalancePreClaim + taskNonSponsoredAmount * currentVolume,
+                    expect(requesterSrlcBalance).equal(
+                        requesterSrlcBalancePreClaim + taskNonSponsoredAmount * currentVolume,
                     );
                 }
                 const {
                     voucherCreditBalance: voucherCreditBalanceAfter,
-                    voucherRlcBalance: voucherSrlcBalanceAfter,
-                    requesterRlcBalance: requesterSrlcBalanceAfter,
+                    voucherSrlcBalance: voucherSrlcBalanceAfter,
+                    requesterSrlcBalance: requesterSrlcBalanceAfter,
                 } = await getVoucherAndRequesterBalances();
                 expect(voucherCreditBalanceAfter)
                     .equal(voucherCreditBalancePreClaim + dealSponsoredAmount)
@@ -938,8 +936,8 @@ describe('Voucher', function () {
                 await matchOrdersBoostOrClassic();
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
-                    voucherRlcBalance: voucherRlcBalancePreClaim,
-                    requesterRlcBalance: requesterRlcBalancePreClaim,
+                    voucherSrlcBalance: voucherSrlcBalancePreClaim,
+                    requesterSrlcBalance: requesterSrlcBalancePreClaim,
                 } = await getVoucherAndRequesterBalances();
                 // The voucher should not sponsor the deal.
                 const dealSponsoredAmount = await voucherAsOwner.getSponsoredAmount(dealId);
@@ -951,17 +949,17 @@ describe('Voucher', function () {
                     .and.to.not.emit(voucherHub, 'VoucherRefunded');
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
-                    voucherRlcBalance: voucherRlcBalancePostClaim,
-                    requesterRlcBalance: requesterRlcBalancePostClaim,
+                    voucherSrlcBalance: voucherSrlcBalancePostClaim,
+                    requesterSrlcBalance: requesterSrlcBalancePostClaim,
                 } = await getVoucherAndRequesterBalances();
-                // Voucher credit and RLC balances should stay unchanged.
+                // Voucher credit and SRLC balances should stay unchanged.
                 expect(voucherCreditBalancePostClaim)
                     .to.be.equal(voucherCreditBalancePreClaim)
-                    .to.be.equal(voucherRlcBalancePostClaim)
-                    .to.be.equal(voucherRlcBalancePreClaim);
+                    .to.be.equal(voucherSrlcBalancePostClaim)
+                    .to.be.equal(voucherSrlcBalancePreClaim);
                 // Requester balance should increase.
-                expect(requesterRlcBalancePostClaim).to.be.equal(
-                    requesterRlcBalancePreClaim + taskPrice,
+                expect(requesterSrlcBalancePostClaim).to.be.equal(
+                    requesterSrlcBalancePreClaim + taskPrice,
                 );
                 // Sponsored amount should stay unchanged.
                 expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(0);
@@ -993,8 +991,8 @@ describe('Voucher', function () {
                 await matchOrdersBoostOrClassic();
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
-                    voucherRlcBalance: voucherRlcBalancePreClaim,
-                    requesterRlcBalance: requesterRlcBalancePreClaim,
+                    voucherSrlcBalance: voucherSrlcBalancePreClaim,
+                    requesterSrlcBalance: requesterSrlcBalancePreClaim,
                 } = await getVoucherAndRequesterBalances();
                 // The voucher should not sponsor the deal.
                 const dealSponsoredAmount = await voucherAsOwner.getSponsoredAmount(dealId);
@@ -1006,17 +1004,17 @@ describe('Voucher', function () {
                     .and.to.not.emit(voucherHub, 'VoucherRefunded');
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
-                    voucherRlcBalance: voucherRlcBalancePostClaim,
-                    requesterRlcBalance: requesterRlcBalancePostClaim,
+                    voucherSrlcBalance: voucherSrlcBalancePostClaim,
+                    requesterSrlcBalance: requesterSrlcBalancePostClaim,
                 } = await getVoucherAndRequesterBalances();
-                // Voucher credit and RLC balances should stay unchanged.
+                // Voucher credit and SRLC balances should stay unchanged.
                 expect(voucherCreditBalancePostClaim)
                     .to.be.equal(voucherCreditBalancePreClaim)
-                    .to.be.equal(voucherRlcBalancePostClaim)
-                    .to.be.equal(voucherRlcBalancePreClaim);
+                    .to.be.equal(voucherSrlcBalancePostClaim)
+                    .to.be.equal(voucherSrlcBalancePreClaim);
                 // Requester balance should increase.
-                expect(requesterRlcBalancePostClaim).to.be.equal(
-                    requesterRlcBalancePreClaim + taskPrice,
+                expect(requesterSrlcBalancePostClaim).to.be.equal(
+                    requesterSrlcBalancePreClaim + taskPrice,
                 );
                 // Sponsored amount should stay unchanged.
                 expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(
@@ -1042,8 +1040,8 @@ describe('Voucher', function () {
                 await matchOrdersBoostOrClassic();
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
-                    voucherRlcBalance: voucherRlcBalancePreClaim,
-                    requesterRlcBalance: requesterRlcBalancePreClaim,
+                    voucherSrlcBalance: voucherSrlcBalancePreClaim,
+                    requesterSrlcBalance: requesterSrlcBalancePreClaim,
                 } = await getVoucherAndRequesterBalances();
                 // The voucher should've fully sponsored the deal.
                 const dealSponsoredAmount = await voucherAsOwner.getSponsoredAmount(dealId);
@@ -1062,16 +1060,16 @@ describe('Voucher', function () {
                     .to.emit(voucherAsOwner, 'TaskClaimedWithVoucher');
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
-                    voucherRlcBalance: voucherRlcBalancePostClaim,
-                    requesterRlcBalance: requesterRlcBalancePostClaim,
+                    voucherSrlcBalance: voucherSrlcBalancePostClaim,
+                    requesterSrlcBalance: requesterSrlcBalancePostClaim,
                 } = await getVoucherAndRequesterBalances();
-                // Voucher credit and RLC balances should increase while staying equal.
+                // Voucher credit and SRLC balances should increase while staying equal.
                 expect(voucherCreditBalancePostClaim)
                     .to.be.equal(voucherCreditBalancePreClaim + taskPrice)
-                    .to.be.equal(voucherRlcBalancePostClaim)
-                    .to.be.equal(voucherRlcBalancePreClaim + taskPrice);
+                    .to.be.equal(voucherSrlcBalancePostClaim)
+                    .to.be.equal(voucherSrlcBalancePreClaim + taskPrice);
                 // Requester balance should stay unchanged.
-                expect(requesterRlcBalancePostClaim).to.be.equal(requesterRlcBalancePreClaim);
+                expect(requesterSrlcBalancePostClaim).to.be.equal(requesterSrlcBalancePreClaim);
                 // Sponsored amount should stay unchanged
                 expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(
                     dealSponsoredAmount,
@@ -1088,8 +1086,8 @@ describe('Voucher', function () {
                 await matchOrdersBoostOrClassic();
                 const {
                     voucherCreditBalance: voucherCreditBalancePreClaim,
-                    voucherRlcBalance: voucherRlcBalancePreClaim,
-                    requesterRlcBalance: requesterRlcBalancePreClaim,
+                    voucherSrlcBalance: voucherSrlcBalancePreClaim,
+                    requesterSrlcBalance: requesterSrlcBalancePreClaim,
                 } = await getVoucherAndRequesterBalances();
                 // The voucher should've fully sponsored the deal.
                 const dealSponsoredAmount = await voucherAsOwner.getSponsoredAmount(dealId);
@@ -1103,16 +1101,16 @@ describe('Voucher', function () {
                     .to.emit(voucherAsOwner, 'TaskClaimedWithVoucher');
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
-                    voucherRlcBalance: voucherRlcBalancePostClaim,
-                    requesterRlcBalance: requesterRlcBalancePostClaim,
+                    voucherSrlcBalance: voucherSrlcBalancePostClaim,
+                    requesterSrlcBalance: requesterSrlcBalancePostClaim,
                 } = await getVoucherAndRequesterBalances();
-                // Voucher credit and RLC balances should increase while staying equal.
+                // Voucher credit and SRLC balances should increase while staying equal.
                 expect(voucherCreditBalancePostClaim)
                     .to.be.equal(voucherCreditBalancePreClaim + taskPrice)
-                    .to.be.equal(voucherRlcBalancePostClaim)
-                    .to.be.equal(voucherRlcBalancePreClaim + taskPrice);
+                    .to.be.equal(voucherSrlcBalancePostClaim)
+                    .to.be.equal(voucherSrlcBalancePreClaim + taskPrice);
                 // Requester balance should stay unchanged.
-                expect(requesterRlcBalancePostClaim).to.be.equal(requesterRlcBalancePreClaim);
+                expect(requesterSrlcBalancePostClaim).to.be.equal(requesterSrlcBalancePreClaim);
                 // Sponsored amount should stay unchanged
                 expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(
                     dealSponsoredAmount,
@@ -1210,7 +1208,7 @@ describe('Voucher', function () {
     });
 
     describe('Drain', async function () {
-        it('Should drain RLC balance of voucher', async function () {
+        it('Should drain SRLC balance of voucher', async function () {
             // Expire voucher
             const expirationDate = await voucherAsAnyone.getExpiration();
             await time.setNextBlockTimestamp(expirationDate + 100n); // after expiration
@@ -1244,12 +1242,12 @@ describe('Voucher', function () {
 
     async function getVoucherAndRequesterBalances() {
         const voucherCreditBalance = await voucherAsOwner.getBalance();
-        const voucherRlcBalance = await iexecPocoInstance.balanceOf(voucherAddress);
-        const requesterRlcBalance = await iexecPocoInstance.balanceOf(requester.address);
+        const voucherSrlcBalance = await iexecPocoInstance.balanceOf(voucherAddress);
+        const requesterSrlcBalance = await iexecPocoInstance.balanceOf(requester.address);
         return {
             voucherCreditBalance,
-            voucherRlcBalance,
-            requesterRlcBalance,
+            voucherSrlcBalance,
+            requesterSrlcBalance,
         };
     }
 });
