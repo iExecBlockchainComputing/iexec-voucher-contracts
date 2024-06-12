@@ -53,7 +53,7 @@ contract VoucherV2Mock is Initializable {
     }
 
     function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
-        assembly {
+        assembly ("memory-safe") {
             $.slot := VOUCHER_STORAGE_LOCATION
         }
     }

@@ -383,9 +383,9 @@ contract Voucher is Initializable, IVoucher {
             workerpoolOrder,
             requestOrder
         );
-        uint256 dealPrice = datasetOrder.dataset != address(0)
-            ? (appPrice + datasetPrice + workerpoolPrice) * volume
-            : (appPrice + workerpoolPrice) * volume;
+        uint256 dealPrice = (appPrice +
+            workerpoolPrice +
+            (datasetOrder.dataset != address(0) ? datasetPrice : 0)) * volume;
         sponsoredAmount = voucherHub.debitVoucher(
             voucherTypeId,
             appOrder.app,
@@ -461,7 +461,7 @@ contract Voucher is Initializable, IVoucher {
 
     function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
         //slither-disable-start assembly
-        assembly {
+        assembly ("memory-safe") {
             $.slot := VOUCHER_STORAGE_LOCATION
         }
         //slither-disable-end assembly
