@@ -164,7 +164,7 @@ contract VoucherHub is
         uint256 voucherType,
         uint256 value
     ) external onlyRole(MINTER_ROLE) returns (address voucherAddress) {
-        require(value > 0, "VoucherHub: no value");
+        require(value > 0, "VoucherHub: mint without value");
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         uint256 expiration = block.timestamp + getVoucherType(voucherType).duration;
         voucherAddress = address(new VoucherProxy{salt: _getCreate2Salt(owner)}($._voucherBeacon));

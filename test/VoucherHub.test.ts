@@ -529,7 +529,7 @@ describe('VoucherHub', function () {
 
             await expect(
                 voucherHubAsMinter.createVoucher(voucherOwner1, voucherType, 0),
-            ).to.be.revertedWith('VoucherHub: no value');
+            ).to.be.revertedWith('VoucherHub: mint without value');
         });
 
         it('Should not create voucher when voucher type ID is out of bounds', async function () {
@@ -705,13 +705,13 @@ describe('VoucherHub', function () {
         });
 
         it('Should debit zero when voucher balance is empty', async function () {
-            const emptyVoucher = await voucherHubAsMinter
+            const voucher = await voucherHubAsMinter
                 .createVoucher(voucherOwner2, voucherType, assetPrice * 3n * volume)
                 .then((tx) => tx.wait())
                 .then(() => voucherHub.getVoucher(voucherOwner2))
                 .then((voucherAddress) => ethers.getImpersonatedSigner(voucherAddress));
-            const voucherHubAsEmptyVoucher = voucherHub.connect(emptyVoucher);
-            await voucherHubAsEmptyVoucher
+            await voucherHub
+                .connect(voucher)
                 .debitVoucher(
                     voucherType,
                     asset,
@@ -723,20 +723,22 @@ describe('VoucherHub', function () {
                     volume,
                 )
                 .then((tx) => tx.wait());
-            // voucher is now empty
+            const emptyVoucher = voucher;
             const initialCreditBalance = await voucherHub.balanceOf(emptyVoucher.address);
 
             await expect(
-                await voucherHubAsEmptyVoucher.debitVoucher(
-                    voucherType,
-                    asset,
-                    assetPrice,
-                    asset,
-                    assetPrice,
-                    asset,
-                    assetPrice,
-                    volume,
-                ),
+                await voucherHub
+                    .connect(emptyVoucher)
+                    .debitVoucher(
+                        voucherType,
+                        asset,
+                        assetPrice,
+                        asset,
+                        assetPrice,
+                        asset,
+                        assetPrice,
+                        volume,
+                    ),
             ).to.not.emit(voucherHub, 'VoucherDebited');
             expect(await voucherHub.balanceOf(emptyVoucher.address))
                 .to.equal(initialCreditBalance)
