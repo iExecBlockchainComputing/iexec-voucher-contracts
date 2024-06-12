@@ -9,25 +9,20 @@ import { UpgradeableBeacon } from '../typechain-types';
 // TODO move this to a config file and determine
 // poco address according to chain id.
 // TODO provide admin wallet addresses to this script
-// (admin, assetEligibilityManager, voucherManager).
+// (admin, manager, minter).
 
 const pocoAddress = process.env.IEXEC_POCO_ADDRESS || '0x123456789a123456789b123456789b123456789d'; // random
 
 export default async function () {
     console.log(`Using PoCo address: ${pocoAddress}`);
-    const [admin, assetEligibilityManager, voucherManager] = await ethers.getSigners();
-    await deployAll(
-        admin.address,
-        assetEligibilityManager.address,
-        voucherManager.address,
-        pocoAddress,
-    );
+    const [admin, manager, minter] = await ethers.getSigners();
+    await deployAll(admin.address, manager.address, minter.address, pocoAddress);
 }
 
 async function deployAll(
     beaconOwner: string,
-    assetEligibilityManager: string,
-    voucherManager: string,
+    manager: string,
+    minter: string,
     iexecPoco: string,
 ): Promise<string> {
     // Deploy Voucher beacon and implementation.
@@ -36,12 +31,7 @@ async function deployAll(
     console.log(`UpgradeableBeacon: ${beaconAddress}`);
     console.log(`Voucher implementation: ${await beacon.implementation()}`);
     // Deploy VoucherHub.
-    const voucherHub = await voucherHubUtils.deployHub(
-        assetEligibilityManager,
-        voucherManager,
-        iexecPoco,
-        beaconAddress,
-    );
+    const voucherHub = await voucherHubUtils.deployHub(manager, minter, iexecPoco, beaconAddress);
     const voucherHubAddress = await voucherHub.getAddress();
     console.log(`VoucherHub: ${voucherHubAddress}`);
     // Check
