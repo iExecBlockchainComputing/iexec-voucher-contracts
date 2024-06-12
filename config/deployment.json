@@ -1,0 +1,10 @@
+{
+    "134": {
+        "pocoAddress": "0x3eca1B216A7DF1C7689aEb259fFB83ADFB894E7f",
+        "roles": {
+            "upgraderAddress": "",
+            "managerAddress": "",
+            "minterAddress": ""
+        }
+    }
+}

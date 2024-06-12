@@ -59,6 +59,16 @@ const config: HardhatUserConfig = {
                 mnemonic: HARDHAT_NETWORK_MNEMONIC,
             },
         },
+        bellecour: {
+            chainId: 134,
+            url: 'https://bellecour.iex.ec',
+            hardfork: 'berlin', // No EIP-1559 before London fork
+            gasPrice: 0,
+            blockGasLimit: 6_700_000,
+            accounts: {
+                mnemonic: process.env.BELLECOUR_MNEMONIC || '',
+            },
+        },
     },
     dependencyCompiler: {
         paths: ['@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol'],
