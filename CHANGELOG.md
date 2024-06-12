@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Define admin addresses for deployment (#34)
 - Harmonize SRLC wording. (#31)
 - Rename roles. (#29)
 - Make sponsored & non-sponsored amounts always divisible by deal volume to refund tasks fairly. (#28)
