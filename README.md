@@ -12,9 +12,8 @@ chain if missing.
 Deployment configuration can also be provided/overridden using env variables:
 
 * `IEXEC_POCO_ADDRESS`
-* `IEXEC_VOUCHER_UPGRADER_ADDRESS`
-* `IEXEC_VOUCHER_MANAGER_ADDRESS`
-* `IEXEC_VOUCHER_MINTER_ADDRESS`
+* `IEXEC_VOUCHER_MANAGER_ADDRESS_OR_INDEX`
+* `IEXEC_VOUCHER_MINTER_ADDRESS_OR_INDEX`
 
 Run:
 ```

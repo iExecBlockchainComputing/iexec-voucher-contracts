@@ -76,12 +76,12 @@ const config: HardhatUserConfig = {
         },
         manager: {
             hardhat: 1,
-            localhost: process.env.IEXEC_VOUCHER_MANAGER_ADDRESS || 1, // Integration tests
+            localhost: process.env.IEXEC_VOUCHER_MANAGER_ADDRESS_OR_INDEX || null, // Integration tests
             bellecour: '',
         },
         minter: {
             hardhat: 2,
-            localhost: process.env.IEXEC_VOUCHER_MINTER_ADDRESS || 2, // Integration tests
+            localhost: process.env.IEXEC_VOUCHER_MINTER_ADDRESS_OR_INDEX || null, // Integration tests
             bellecour: '',
         },
     },
