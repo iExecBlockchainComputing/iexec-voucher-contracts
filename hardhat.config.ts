@@ -66,8 +66,23 @@ const config: HardhatUserConfig = {
             gasPrice: 0,
             blockGasLimit: 6_700_000,
             accounts: {
-                mnemonic: process.env.BELLECOUR_MNEMONIC || '',
+                mnemonic: process.env.IEXEC_VOUCHER_BELLECOUR_MNEMONIC || '',
             },
+        },
+    },
+    namedAccounts: {
+        deployer: {
+            default: 0,
+        },
+        manager: {
+            hardhat: 1,
+            localhost: process.env.IEXEC_VOUCHER_MANAGER_ADDRESS || 1, // Integration tests
+            bellecour: '',
+        },
+        minter: {
+            hardhat: 2,
+            localhost: process.env.IEXEC_VOUCHER_MINTER_ADDRESS || 2, // Integration tests
+            bellecour: '',
         },
     },
     dependencyCompiler: {

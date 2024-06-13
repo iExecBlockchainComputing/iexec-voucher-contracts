@@ -5,14 +5,7 @@ const deploymentConfig = require('./deployment.json') as DeploymentConfig;
 export default deploymentConfig;
 
 export type DeploymentConfig = {
-    [chainId: string]: ChainConfig;
-};
-
-export type ChainConfig = {
-    pocoAddress: string;
-    roles: {
-        upgraderAddress: string;
-        managerAddress: string;
-        minterAddress: string;
+    [chainId: string]: {
+        pocoAddress: string;
     };
 };
