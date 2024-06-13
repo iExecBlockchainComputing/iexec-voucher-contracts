@@ -5,8 +5,7 @@ const deploymentConfig = require('./deployment.json') as DeploymentConfig;
 export default deploymentConfig;
 
 export type DeploymentConfig = {
-    // chainId
-    [key: string]: ChainConfig;
+    [chainId: string]: ChainConfig;
 };
 
 export type ChainConfig = {
