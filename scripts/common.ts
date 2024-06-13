@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
+// SPDX-License-Identifier: Apache-2.0
+
 import { ContractTransactionReceipt } from 'ethers';
 import { ethers } from 'hardhat';
 import { Voucher, VoucherProxy, VoucherV2Mock } from '../typechain-types';

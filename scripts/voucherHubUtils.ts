@@ -7,7 +7,7 @@ import { VoucherHub } from '../typechain-types';
 
 export async function deployHub(
     manager: string,
-    voucherManager: string,
+    minter: string,
     iexecPoco: string,
     beacon: string,
 ): Promise<VoucherHub> {
@@ -17,7 +17,7 @@ export async function deployHub(
     // https://github.com/OpenZeppelin/openzeppelin-upgrades/pull/535
     const contract: unknown = await upgrades.deployProxy(VoucherHubFactory, [
         manager,
-        voucherManager,
+        minter,
         iexecPoco,
         beacon,
     ]);
