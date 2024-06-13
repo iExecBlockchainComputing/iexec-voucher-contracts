@@ -164,6 +164,7 @@ contract VoucherHub is
         uint256 voucherType,
         uint256 value
     ) external onlyRole(MINTER_ROLE) returns (address voucherAddress) {
+        require(value > 0, "VoucherHub: mint without value");
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         uint256 expiration = block.timestamp + getVoucherType(voucherType).duration;
         voucherAddress = address(new VoucherProxy{salt: _getCreate2Salt(owner)}($._voucherBeacon));
@@ -366,7 +367,7 @@ contract VoucherHub is
 
     function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
         //slither-disable-start assembly
-        assembly {
+        assembly ("memory-safe") {
             $.slot := VOUCHER_HUB_STORAGE_LOCATION
         }
         //slither-disable-end assembly

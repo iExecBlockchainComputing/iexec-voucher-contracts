@@ -524,6 +524,14 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
         });
 
+        it('Should not create voucher without value', async function () {
+            const { voucherOwner1 } = await loadFixture(deployFixture);
+
+            await expect(
+                voucherHubAsMinter.createVoucher(voucherOwner1, voucherType, 0),
+            ).to.be.revertedWith('VoucherHub: mint without value');
+        });
+
         it('Should not create voucher when voucher type ID is out of bounds', async function () {
             const { voucherOwner1 } = await loadFixture(deployFixture);
             const outOfBoundsTypeID = 999;
@@ -697,11 +705,25 @@ describe('VoucherHub', function () {
         });
 
         it('Should debit zero when voucher balance is empty', async function () {
-            const emptyVoucher = await voucherHubAsMinter
-                .createVoucher(voucherOwner2, voucherType, 0)
+            const voucher = await voucherHubAsMinter
+                .createVoucher(voucherOwner2, voucherType, assetPrice * 3n * volume)
                 .then((tx) => tx.wait())
                 .then(() => voucherHub.getVoucher(voucherOwner2))
                 .then((voucherAddress) => ethers.getImpersonatedSigner(voucherAddress));
+            await voucherHub
+                .connect(voucher)
+                .debitVoucher(
+                    voucherType,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    asset,
+                    assetPrice,
+                    volume,
+                )
+                .then((tx) => tx.wait());
+            const emptyVoucher = voucher;
             const initialCreditBalance = await voucherHub.balanceOf(emptyVoucher.address);
 
             await expect(
