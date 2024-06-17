@@ -12,6 +12,15 @@ import {
     defaultLocalhostNetworkParams,
 } from 'hardhat/internal/core/config/default-config';
 
+const managerAccount =
+    Number(process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) ||
+    process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_ADDRESS ||
+    null;
+const minterAccount =
+    Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) ||
+    process.env.IEXEC_VOUCHER_MINTER_ADDRESS ||
+    null;
+
 const config: HardhatUserConfig = {
     solidity: {
         compilers: [
@@ -76,12 +85,12 @@ const config: HardhatUserConfig = {
         },
         manager: {
             hardhat: 1,
-            localhost: process.env.IEXEC_VOUCHER_MANAGER_ADDRESS_OR_INDEX || null, // Integration tests
+            localhost: managerAccount,
             bellecour: '',
         },
         minter: {
             hardhat: 2,
-            localhost: process.env.IEXEC_VOUCHER_MINTER_ADDRESS_OR_INDEX || null, // Integration tests
+            localhost: minterAccount,
             bellecour: '',
         },
     },
