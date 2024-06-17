@@ -12,6 +12,9 @@ import {
     defaultLocalhostNetworkParams,
 } from 'hardhat/internal/core/config/default-config';
 
+const managerAccount = Number(process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
+const minterAccount = Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
+
 const config: HardhatUserConfig = {
     solidity: {
         compilers: [
@@ -58,6 +61,19 @@ const config: HardhatUserConfig = {
             accounts: {
                 mnemonic: HARDHAT_NETWORK_MNEMONIC,
             },
+        },
+    },
+    namedAccounts: {
+        deployer: {
+            default: 0,
+        },
+        manager: {
+            hardhat: 1,
+            localhost: managerAccount,
+        },
+        minter: {
+            hardhat: 2,
+            localhost: minterAccount,
         },
     },
     dependencyCompiler: {

@@ -2,48 +2,36 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { deployments, ethers } from 'hardhat';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import deploymentConfig from '../config/deployment';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import { UpgradeableBeacon } from '../typechain-types';
 
-// TODO move this to a config file and determine
-// poco address according to chain id.
-// TODO provide admin wallet addresses to this script
-// (admin, assetEligibilityManager, voucherManager).
-
-const pocoAddress = process.env.IEXEC_POCO_ADDRESS || '0x123456789a123456789b123456789b123456789d'; // random
-
-export default async function () {
+export default async function (hre: HardhatRuntimeEnvironment) {
+    const chainId = (await ethers.provider.getNetwork()).chainId;
+    console.log('ChainId:', chainId);
+    const { deployer, manager, minter } = await hre.getNamedAccounts();
+    const { pocoAddress } = await getDeploymentConfig(Number(chainId));
     console.log(`Using PoCo address: ${pocoAddress}`);
-    const [admin, assetEligibilityManager, voucherManager] = await ethers.getSigners();
-    await deployAll(
-        admin.address,
-        assetEligibilityManager.address,
-        voucherManager.address,
-        pocoAddress,
-    );
+    console.log(`Using upgrader address: ${deployer}`);
+    console.log(`Using manager address: ${manager}`);
+    console.log(`Using minter address: ${minter}`);
+    await deployAll(deployer, manager, minter, pocoAddress);
 }
 
 async function deployAll(
-    beaconOwner: string,
-    assetEligibilityManager: string,
-    voucherManager: string,
+    upgrader: string,
+    manager: string,
+    minter: string,
     iexecPoco: string,
 ): Promise<string> {
     // Deploy Voucher beacon and implementation.
-    const beacon: UpgradeableBeacon = await voucherUtils.deployBeaconAndImplementation(beaconOwner);
+    const beacon: UpgradeableBeacon = await voucherUtils.deployBeaconAndImplementation(upgrader);
     const beaconAddress = await beacon.getAddress();
-    console.log(`UpgradeableBeacon: ${beaconAddress}`);
-    console.log(`Voucher implementation: ${await beacon.implementation()}`);
     // Deploy VoucherHub.
-    const voucherHub = await voucherHubUtils.deployHub(
-        assetEligibilityManager,
-        voucherManager,
-        iexecPoco,
-        beaconAddress,
-    );
+    const voucherHub = await voucherHubUtils.deployHub(manager, minter, iexecPoco, beaconAddress);
     const voucherHubAddress = await voucherHub.getAddress();
-    console.log(`VoucherHub: ${voucherHubAddress}`);
     // Check
     if ((await voucherHub.getVoucherBeacon()) !== beaconAddress) {
         throw new Error('Deployment error');
@@ -55,5 +43,27 @@ async function deployAll(
         abi: [],
         address: voucherHubAddress,
     });
+    console.log(`UpgradeableBeacon: ${beaconAddress}`);
+    console.log(`Voucher implementation: ${await beacon.implementation()}`);
+    console.log(`VoucherHub: ${voucherHubAddress}`);
     return voucherHubAddress;
+}
+
+/**
+ * Get deployment config according to chain.
+ */
+async function getDeploymentConfig(chainId: number) {
+    // Read default config of the target chain.
+    let pocoAddress: string = deploymentConfig[chainId]?.pocoAddress;
+    // Override config if required.
+    if (process.env.IEXEC_POCO_ADDRESS) {
+        pocoAddress = process.env.IEXEC_POCO_ADDRESS;
+    }
+    // Check final config.
+    if (!ethers.isAddress(pocoAddress)) {
+        throw new Error('Valid PoCo address must be provided');
+    }
+    return {
+        pocoAddress,
+    };
 }

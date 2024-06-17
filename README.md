@@ -2,9 +2,20 @@
 
 [![codecov](https://codecov.io/github/iExecBlockchainComputing/iexec-voucher-contracts/graph/badge.svg)](https://codecov.io/github/iExecBlockchainComputing/iexec-voucher-contracts)
 
-Contracts related to iExec Voucher
+Contracts of iExec Voucher project.
 
 ### How to deploy?
+
+Edit `config/deployment.json` file to provide deployment configuration of the target
+chain if missing.
+
+Deployment configuration can also be provided/overridden using env variables:
+
+* `IEXEC_POCO_ADDRESS`
+* `IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX`
+* `IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX`
+
+Run:
 ```
-IEXEC_POCO_ADDRESS=<0xProxyAddress> npx hardhat deploy --network <name>
+npx hardhat deploy --network <name>
 ```
