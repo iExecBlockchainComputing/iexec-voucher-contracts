@@ -12,14 +12,8 @@ import {
     defaultLocalhostNetworkParams,
 } from 'hardhat/internal/core/config/default-config';
 
-const managerAccount =
-    Number(process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) ||
-    process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_ADDRESS ||
-    null;
-const minterAccount =
-    Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) ||
-    process.env.IEXEC_VOUCHER_MINTER_ADDRESS ||
-    null;
+const managerAccount = Number(process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
+const minterAccount = Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -68,16 +62,6 @@ const config: HardhatUserConfig = {
                 mnemonic: HARDHAT_NETWORK_MNEMONIC,
             },
         },
-        bellecour: {
-            chainId: 134,
-            url: 'https://bellecour.iex.ec',
-            hardfork: 'berlin', // No EIP-1559 before London fork
-            gasPrice: 0,
-            blockGasLimit: 6_700_000,
-            accounts: {
-                mnemonic: process.env.IEXEC_VOUCHER_BELLECOUR_MNEMONIC || '',
-            },
-        },
     },
     namedAccounts: {
         deployer: {
@@ -86,12 +70,10 @@ const config: HardhatUserConfig = {
         manager: {
             hardhat: 1,
             localhost: managerAccount,
-            bellecour: '',
         },
         minter: {
             hardhat: 2,
             localhost: minterAccount,
-            bellecour: '',
         },
     },
     dependencyCompiler: {
