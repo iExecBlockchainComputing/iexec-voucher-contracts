@@ -66,14 +66,15 @@ contract VoucherHub is
     }
 
     function initialize(
+        address admin,
         address manager,
         address minter,
         address iexecPoco,
         address voucherBeacon
     ) external initializer {
-        // DEFAULT_ADMIN_ROLE is granted to msg.sender.
-        __AccessControlDefaultAdminRules_init(0, msg.sender);
-        _grantRole(UPGRADER_ROLE, msg.sender);
+        require(admin != address(0), "VoucherHub: init without admin");
+        __AccessControlDefaultAdminRules_init(0, admin);
+        _grantRole(UPGRADER_ROLE, admin); // admin is by default upgrader
         _grantRole(MANAGER_ROLE, manager);
         _grantRole(MINTER_ROLE, minter);
         // This ERC20 is used solely to keep track of the SRLC's accounting in circulation for all emitted vouchers.

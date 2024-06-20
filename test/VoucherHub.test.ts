@@ -6,13 +6,15 @@ import { loadFixture, time } from '@nomicfoundation/hardhat-toolbox/network-help
 import { expect } from 'chai';
 import { AddressLike, BigNumberish, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
+import { deployAll } from '../deploy/deploy';
 import * as commonUtils from '../scripts/common';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
-import * as voucherUtils from '../scripts/voucherUtils';
 import {
     IexecPocoMock,
     IexecPocoMock__factory,
     Voucher,
+    VoucherHub__factory,
+    VoucherProxy__factory,
     Voucher__factory,
 } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
@@ -43,23 +45,23 @@ describe('VoucherHub', function () {
         // Contracts are deployed using the first signer/account by default
         const [admin, manager, minter, voucherOwner1, voucherOwner2, anyone] =
             await ethers.getSigners();
-        const beacon = await voucherUtils.deployBeaconAndImplementation(admin.address);
-
         iexecPocoInstance = await new IexecPocoMock__factory()
             .connect(admin)
             .deploy()
             .then((x) => x.waitForDeployment());
         iexecPoco = await iexecPocoInstance.getAddress();
-        const voucherHub = await voucherHubUtils.deployHub(
+        let voucherBeaconAddress;
+        ({ voucherHubAddress, voucherBeaconAddress } = await deployAll(
+            admin.address,
             manager.address,
             minter.address,
             iexecPoco,
-            await beacon.getAddress(),
-        );
+        ));
+        const voucherHub = VoucherHub__factory.connect(voucherHubAddress, anyone);
+        const beacon = VoucherProxy__factory.connect(voucherBeaconAddress, anyone);
         voucherHubAsMinter = voucherHub.connect(minter);
         voucherHubAsManager = voucherHub.connect(manager);
         voucherHubAsAnyone = voucherHub.connect(anyone);
-        voucherHubAddress = await voucherHub.getAddress();
         await iexecPocoInstance
             .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
             .then((tx) => tx.wait());
@@ -84,9 +86,12 @@ describe('VoucherHub', function () {
                 .to.equal(await voucherHub.defaultAdmin())
                 .to.equal(admin);
             expect(await voucherHub.defaultAdminDelay()).to.equal(0);
-            expect(await voucherHub.hasRole(await voucherHub.UPGRADER_ROLE.staticCall(), admin));
-            expect(await voucherHub.hasRole(await voucherHub.MANAGER_ROLE.staticCall(), manager));
-            expect(await voucherHub.hasRole(await voucherHub.MINTER_ROLE.staticCall(), minter));
+            expect(await voucherHub.hasRole(await voucherHub.UPGRADER_ROLE.staticCall(), admin)).to
+                .be.true;
+            expect(await voucherHub.hasRole(await voucherHub.MANAGER_ROLE.staticCall(), manager)).to
+                .be.true;
+            expect(await voucherHub.hasRole(await voucherHub.MINTER_ROLE.staticCall(), minter)).to
+                .be.true;
             // Check config.
             expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
             expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
@@ -98,11 +103,19 @@ describe('VoucherHub', function () {
             expect(expectedHashes).to.include(actualCodeHash);
         });
 
-        it('Should not initialize twice', async function () {
-            const { beacon, voucherHub, manager, minter } = await loadFixture(deployFixture);
+        it('Should not initialize without admin', async function () {
+            const address = ethers.Wallet.createRandom().address;
 
             await expect(
-                voucherHub.initialize(manager, minter, iexecPoco, await beacon.getAddress()),
+                voucherHubUtils.deployHub(ethers.ZeroAddress, address, address, address, address),
+            ).to.be.revertedWith('VoucherHub: init without admin');
+        });
+
+        it('Should not initialize twice', async function () {
+            const { beacon, voucherHub, admin, manager, minter } = await loadFixture(deployFixture);
+
+            await expect(
+                voucherHub.initialize(admin, manager, minter, iexecPoco, await beacon.getAddress()),
             ).to.be.revertedWithCustomError(voucherHub, 'InvalidInitialization');
         });
     });

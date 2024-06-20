@@ -6,16 +6,18 @@ import { loadFixture, time } from '@nomicfoundation/hardhat-toolbox/network-help
 import { expect } from 'chai';
 import { ContractTransactionReceipt } from 'ethers';
 import { ethers } from 'hardhat';
+import { deployAll } from '../../deploy/deploy';
 import * as commonUtils from '../../scripts/common';
-import * as voucherHubUtils from '../../scripts/voucherHubUtils';
 import * as voucherUtils from '../../scripts/voucherUtils';
 import {
     IexecLibOrders_v5,
     IexecPocoMock,
     IexecPocoMock__factory,
     UpgradeableBeacon,
+    UpgradeableBeacon__factory,
     Voucher,
     VoucherHub,
+    VoucherHub__factory,
     VoucherProxy__factory,
     Voucher__factory,
 } from '../../typechain-types';
@@ -94,13 +96,15 @@ describe('Voucher', function () {
             .deploy()
             .then((x) => x.waitForDeployment());
         iexecPoco = await iexecPocoInstance.getAddress();
-        beacon = await voucherUtils.deployBeaconAndImplementation(admin.address);
-        voucherHub = await voucherHubUtils.deployHub(
+        let voucherBeaconAddress;
+        ({ voucherHubAddress, voucherBeaconAddress } = await deployAll(
+            admin.address,
             manager.address,
             minter.address,
             iexecPoco,
-            await beacon.getAddress(),
-        );
+        ));
+        voucherHub = VoucherHub__factory.connect(voucherHubAddress, anyone);
+        beacon = UpgradeableBeacon__factory.connect(voucherBeaconAddress, anyone);
         voucherHubAsMinter = voucherHub.connect(minter);
         voucherHubAsManager = voucherHub.connect(manager);
         voucherHubAddress = await voucherHub.getAddress();

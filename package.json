@@ -17,6 +17,7 @@
     "prepare": "husky",
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
+    "test-ci": "npm run test && FACTORY=false npm run test",
     "coverage": "npx hardhat coverage",
     "format": "npx prettier --write"
   },
@@ -26,6 +27,7 @@
     ]
   },
   "devDependencies": {
+    "@amxx/factory": "^1.0.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/hardhat-upgrades": "^3.0.5",
     "ethers": "^6.11.1",

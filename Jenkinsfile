@@ -12,7 +12,7 @@ node {
             sh 'npm ci'
         }
         stage('Test') {
-            sh 'npm run coverage'
+            sh 'npm run test-ci'
         }
     }
 }
