@@ -18,9 +18,9 @@ import {
 export default async function (hre: HardhatRuntimeEnvironment) {
     const chainId = (await ethers.provider.getNetwork()).chainId;
     console.log('ChainId:', chainId);
-    const { admin, manager, minter } = await hre.getNamedAccounts();
+    const { deployer, manager, minter } = await hre.getNamedAccounts();
     const { pocoAddress } = await getDeploymentConfig(Number(chainId));
-    await deployAll(admin, manager, minter, pocoAddress);
+    await deployAll(deployer, manager, minter, pocoAddress);
 }
 
 export async function deployAll(admin: string, manager: string, minter: string, iexecPoco: string) {
