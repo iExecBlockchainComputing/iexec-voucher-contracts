@@ -16,25 +16,33 @@ import {
 } from '../typechain-types';
 
 export default async function (hre: HardhatRuntimeEnvironment) {
-    const chainId = (await ethers.provider.getNetwork()).chainId;
-    console.log('ChainId:', chainId);
     const { deployer, manager, minter } = await hre.getNamedAccounts();
-    const { pocoAddress } = await getDeploymentConfig(Number(chainId));
-    await deployAll(deployer, manager, minter, pocoAddress);
+    await deployAll(deployer, manager, minter);
 }
 
-export async function deployAll(admin: string, manager: string, minter: string, iexecPoco: string) {
+export async function deployAll(
+    admin: string,
+    manager: string,
+    minter: string,
+    iexecPoco?: string,
+) {
     console.log(`Deploying all contracts related to voucher..`);
+    const chainId = (await ethers.provider.getNetwork()).chainId.toString();
+    console.log('ChainId:', chainId);
     console.log(`Using admin address: ${admin}`);
     console.log(`Using manager address: ${manager}`);
     console.log(`Using minter address: ${minter}`);
-    console.log(`Using PoCo address: ${iexecPoco}`);
-    const chainId = (await ethers.provider.getNetwork()).chainId.toString();
     const config = await getDeploymentConfig(Number(chainId));
-    const salt =
-        config.salt || '0x0000000000000000000000000000000000000000000000000000000000000000';
+    iexecPoco = iexecPoco || config.pocoAddress;
+    console.log(`Using PoCo address: ${iexecPoco}`);
     return await (config.factory
-        ? deployAllWithFactory(admin, manager, minter, iexecPoco, salt)
+        ? deployAllWithFactory(
+              admin,
+              manager,
+              minter,
+              iexecPoco,
+              config.salt || '0x0000000000000000000000000000000000000000000000000000000000000000',
+          )
         : deployAllWithEOA(admin, manager, minter, iexecPoco));
 }
 
