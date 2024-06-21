@@ -6,6 +6,8 @@ export default deploymentConfig;
 
 export type DeploymentConfig = {
     [chainId: string]: {
+        factory: boolean;
+        salt: string;
         pocoAddress: string;
     };
 };
