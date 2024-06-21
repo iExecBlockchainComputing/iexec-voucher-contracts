@@ -36,13 +36,7 @@ export async function deployAll(
     iexecPoco = iexecPoco || config.pocoAddress;
     console.log(`Using PoCo address: ${iexecPoco}`);
     return await (config.factory
-        ? deployAllWithFactory(
-              admin,
-              manager,
-              minter,
-              iexecPoco,
-              config.salt || '0x0000000000000000000000000000000000000000000000000000000000000000',
-          )
+        ? deployAllWithFactory(admin, manager, minter, iexecPoco, config.salt || ethers.ZeroHash)
         : deployAllWithEOA(admin, manager, minter, iexecPoco));
 }
 
@@ -165,13 +159,12 @@ async function deployAllWithEOA(admin: string, manager: string, minter: string, 
 async function getDeploymentConfig(chainId: number) {
     // Read default config of the target chain.
     const config = deploymentConfig[chainId];
-    let pocoAddress: string = config?.pocoAddress;
     // Override config if required.
     if (process.env.IEXEC_POCO_ADDRESS) {
         config.pocoAddress = process.env.IEXEC_POCO_ADDRESS;
     }
     // Check final config.
-    if (!ethers.isAddress(pocoAddress)) {
+    if (!ethers.isAddress(config.pocoAddress)) {
         throw new Error('Valid PoCo address must be provided');
     }
     if (process.env.FACTORY) {
