@@ -1,7 +1,7 @@
 # Changelog
 
 ## vNEXT
-- Verify voucher type exists when adding and removing eligible asset. (#36)
+- Verify that voucher type exists when adding or removing eligible asset. (#36)
 - Deploy contracts through generic factory. (#35)
 - Define admin addresses for deployment (#34)
 - Mark assembly blocks as memory-safe and update deal price calculation syntax. (#33)
