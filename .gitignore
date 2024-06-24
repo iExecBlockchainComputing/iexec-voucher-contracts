@@ -16,3 +16,8 @@ node_modules
 # solidity-coverage files
 /coverage
 /coverage.json
+
+/deployments/hardhat
+/deployments/localhost
+
+/contracts/hardhat-dependency-compiler

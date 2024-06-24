@@ -19,6 +19,7 @@
     "build:forge": "forge build",
     "test": "npx hardhat test",
     "test:forge": "forge test",
+    "test-ci": "npm run test && FACTORY=false npm run test",
     "coverage": "npx hardhat coverage",
     "format": "npx prettier --write"
   },
@@ -29,11 +30,13 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.1.1",
+    "@amxx/factory": "^1.0.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/hardhat-upgrades": "^3.0.5",
     "ethers": "^6.11.1",
     "hardhat": "^2.22.2",
     "hardhat-dependency-compiler": "^1.1.4",
+    "hardhat-deploy": "^0.12.4",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
     "prettier": "^3.2.5",

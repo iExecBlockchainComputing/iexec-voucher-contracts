@@ -1,8 +1,9 @@
+// SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
+// SPDX-License-Identifier: Apache-2.0
+
 import { ContractTransactionReceipt } from 'ethers';
 import { ethers } from 'hardhat';
-import { Voucher, VoucherProxy } from '../../typechain-types';
-import { VoucherV2Mock } from '../../typechain-types/contracts/mocks';
-
+import { Voucher, VoucherProxy, VoucherV2Mock } from '../typechain-types';
 
 export async function getVoucher(voucherAddress: string): Promise<Voucher> {
     return await ethers.getContractAt('Voucher', voucherAddress);
@@ -20,14 +21,9 @@ export async function getExpectedExpiration(
     voucherDuration: number,
     txReceipt: ContractTransactionReceipt | null,
 ): Promise<number> {
-    if (txReceipt != null) {
-        const block = await ethers.provider.getBlock(txReceipt.blockNumber);
-        if (block) {
-            return block.timestamp + voucherDuration;
-        } else {
-            return 0;
-        }
-    } else {
+    if (!txReceipt) {
         return 0;
     }
+    const block = await ethers.provider.getBlock(txReceipt.blockNumber);
+    return block ? block.timestamp + voucherDuration : 0;
 }

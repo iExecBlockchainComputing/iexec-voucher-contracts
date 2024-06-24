@@ -7,7 +7,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {AccessControlDefaultAdminRulesUpgradeable} from "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {Voucher} from "./beacon/Voucher.sol";
@@ -27,13 +26,15 @@ contract VoucherHub is
     // DEFAULT_ADMIN_ROLE
 
     // Upgrade VoucherHub and Vouchers contracts.
-    // Granted to msg.sender
-    bytes32 public constant UPGRADE_MANAGER_ROLE = keccak256("UPGRADE_MANAGER_ROLE");
-    // Add/remove eligible assets.
-    bytes32 public constant ASSET_ELIGIBILITY_MANAGER_ROLE =
-        keccak256("ASSET_ELIGIBILITY_MANAGER_ROLE");
-    // Create & top up Vouchers.
-    bytes32 public constant VOUCHER_MANAGER_ROLE = keccak256("VOUCHER_MANAGER_ROLE");
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+    // Create types required for creating vouchers, add/remove eligible assets, withdraw, [...]
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    // Create new vouchers & top up existing vouchers.
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
+    // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 private constant VOUCHER_HUB_STORAGE_LOCATION =
+        0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800;
 
     /// @custom:storage-location erc7201:iexec.voucher.storage.VoucherHub
     struct VoucherHubStorage {
@@ -41,24 +42,22 @@ contract VoucherHub is
         address _voucherBeacon;
         /// @dev This hash should be updated when `VoucherProxy` is updated.
         bytes32 _voucherCreationCodeHash;
-        VoucherType[] voucherTypes;
-        mapping(uint256 voucherTypeId => mapping(address asset => bool)) matchOrdersEligibility;
+        VoucherType[] _voucherTypes;
+        mapping(uint256 voucherTypeId => mapping(address asset => bool)) _matchOrdersEligibility;
+        // Track created vouchers to avoid replay in certain operations such as refund.
+        mapping(address voucherAddress => bool) _isVoucher;
     }
-
-    // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.VoucherHub")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 private constant VOUCHER_HUB_STORAGE_LOCATION =
-        0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800;
 
     modifier whenVoucherTypeExists(uint256 id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        require(id < $.voucherTypes.length, "VoucherHub: type index out of bounds");
+        require(id < $._voucherTypes.length, "VoucherHub: type index out of bounds");
         _;
     }
 
-    function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
-        assembly {
-            $.slot := VOUCHER_HUB_STORAGE_LOCATION
-        }
+    modifier onlyVoucher() {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        require($._isVoucher[msg.sender], "VoucherHub: sender is not voucher");
+        _;
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -67,74 +66,59 @@ contract VoucherHub is
     }
 
     function initialize(
-        address assetEligibilityManager,
-        address voucherManager,
+        address admin,
+        address manager,
+        address minter,
         address iexecPoco,
         address voucherBeacon
     ) external initializer {
-        // DEFAULT_ADMIN_ROLE is granted to msg.sender.
-        __AccessControlDefaultAdminRules_init(0, msg.sender);
-        _grantRole(UPGRADE_MANAGER_ROLE, msg.sender);
-        _grantRole(ASSET_ELIGIBILITY_MANAGER_ROLE, assetEligibilityManager);
-        _grantRole(VOUCHER_MANAGER_ROLE, voucherManager);
+        require(admin != address(0), "VoucherHub: init without admin");
+        __AccessControlDefaultAdminRules_init(0, admin);
+        _grantRole(UPGRADER_ROLE, admin); // admin is by default upgrader
+        _grantRole(MANAGER_ROLE, manager);
+        _grantRole(MINTER_ROLE, minter);
         // This ERC20 is used solely to keep track of the SRLC's accounting in circulation for all emitted vouchers.
         __ERC20_init("iExec Voucher token", "VCHR");
         __UUPSUpgradeable_init();
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         $._iexecPoco = iexecPoco;
         $._voucherBeacon = voucherBeacon;
+        //slither-disable-start too-many-digits
+        // See : https://github.com/crytic/slither/issues/1223
         $._voucherCreationCodeHash = keccak256(
             abi.encodePacked(
                 type(VoucherProxy).creationCode, // bytecode
                 abi.encode($._voucherBeacon) // constructor args
             )
         );
+        //slither-disable-end too-many-digits
     }
 
     function createVoucherType(
         string memory description,
         uint256 duration
-    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
+    ) external onlyRole(MANAGER_ROLE) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.voucherTypes.push(VoucherType(description, duration));
-        emit VoucherTypeCreated($.voucherTypes.length - 1, description, duration);
+        $._voucherTypes.push(VoucherType(description, duration));
+        emit VoucherTypeCreated($._voucherTypes.length - 1, description, duration);
     }
 
     function updateVoucherTypeDescription(
         uint256 id,
         string memory description
-    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) whenVoucherTypeExists(id) {
+    ) external onlyRole(MANAGER_ROLE) whenVoucherTypeExists(id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.voucherTypes[id].description = description;
+        $._voucherTypes[id].description = description;
         emit VoucherTypeDescriptionUpdated(id, description);
     }
 
     function updateVoucherTypeDuration(
         uint256 id,
         uint256 duration
-    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) whenVoucherTypeExists(id) {
+    ) external onlyRole(MANAGER_ROLE) whenVoucherTypeExists(id) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.voucherTypes[id].duration = duration;
+        $._voucherTypes[id].duration = duration;
         emit VoucherTypeDurationUpdated(id, duration);
-    }
-
-    // TODO: Move bellow view methods to bottom
-    /**
-     * Get the voucher type details by ID.
-     */
-    function getVoucherType(
-        uint256 id
-    ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.voucherTypes[id];
-    }
-
-    /**
-     * Get voucher types count.
-     */
-    function getVoucherTypeCount() public view returns (uint256) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.voucherTypes.length;
     }
 
     /**
@@ -145,7 +129,7 @@ contract VoucherHub is
     function addEligibleAsset(
         uint256 voucherTypeId,
         address asset
-    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
+    ) external onlyRole(MANAGER_ROLE) {
         _setAssetEligibility(voucherTypeId, asset, true);
         emit EligibleAssetAdded(voucherTypeId, asset);
     }
@@ -158,42 +142,12 @@ contract VoucherHub is
     function removeEligibleAsset(
         uint256 voucherTypeId,
         address asset
-    ) external onlyRole(ASSET_ELIGIBILITY_MANAGER_ROLE) {
+    ) external onlyRole(MANAGER_ROLE) {
         _setAssetEligibility(voucherTypeId, asset, false);
         emit EligibleAssetRemoved(voucherTypeId, asset);
     }
 
     /**
-     * Check if an asset is eligible to match orders sponsoring.
-     * @param voucherTypeId The ID of the voucher type.
-     * @param asset The address of the asset to check.
-     */
-    function isAssetEligibleToMatchOrdersSponsoring(
-        uint256 voucherTypeId,
-        address asset
-    ) public view returns (bool) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $.matchOrdersEligibility[voucherTypeId][asset];
-    }
-
-    /**
-     * Get iExec Poco address used by vouchers.
-     */
-    function getIexecPoco() public view returns (address) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $._iexecPoco;
-    }
-
-    /**
-     * Get voucher beacon address.
-     */
-    function getVoucherBeacon() public view returns (address) {
-        VoucherHubStorage storage $ = _getVoucherHubStorage();
-        return $._voucherBeacon;
-    }
-
-    /**
-     * TODO add checks.
      *
      * Create new voucher for the specified account and call initialize function.
      * Only 1 voucher is allowed by account. This is guaranteed by "create2" mechanism
@@ -210,28 +164,49 @@ contract VoucherHub is
         address owner,
         uint256 voucherType,
         uint256 value
-    ) external onlyRole(VOUCHER_MANAGER_ROLE) returns (address voucherAddress) {
+    ) external onlyRole(MINTER_ROLE) returns (address voucherAddress) {
+        require(value > 0, "VoucherHub: mint without value");
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        uint256 voucherExpiration = block.timestamp + getVoucherType(voucherType).duration;
+        uint256 expiration = block.timestamp + getVoucherType(voucherType).duration;
         voucherAddress = address(new VoucherProxy{salt: _getCreate2Salt(owner)}($._voucherBeacon));
         // Initialize the created proxy contract.
         // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
-        Voucher(voucherAddress).initialize(owner, address(this), voucherExpiration, voucherType);
-        IERC20($._iexecPoco).transfer(voucherAddress, value); // SRLC
+        Voucher(voucherAddress).initialize(owner, address(this), expiration, voucherType);
         _mint(voucherAddress, value); // VCHR
-        emit VoucherCreated(voucherAddress, owner, voucherExpiration, voucherType, value);
+        $._isVoucher[voucherAddress] = true;
+        emit VoucherCreated(voucherAddress, owner, voucherType, expiration, value);
+        _transferFundsToVoucherOnPoco(voucherAddress, value); // SRLC
+    }
+
+    /**
+     * Top up a voucher by increasing its balance and pushing its expiration date.
+     * @param voucher The address of the voucher.
+     * @param value The amount of credits to top up.
+     */
+    function topUpVoucher(address voucher, uint256 value) external onlyRole(MINTER_ROLE) {
+        require(value > 0, "VoucherHub: no value");
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        require($._isVoucher[voucher], "VoucherHub: unknown voucher");
+        _mint(voucher, value); // VCHR
+        _transferFundsToVoucherOnPoco(voucher, value); // SRLC
+        uint256 expiration = block.timestamp + $._voucherTypes[Voucher(voucher).getType()].duration;
+        Voucher(voucher).setExpiration(expiration);
+        emit VoucherToppedUp(voucher, expiration, value);
     }
 
     /**
      * Debit voucher balance when used assets are eligible to voucher sponsoring.
      * @notice (1) If this function is called by an account which is not a voucher,
-     * it will have no effect other than consummnig gas since balance would be
+     * it will have no effect other than consuming gas since balance would be
      * empty (tokens are only minted for vouchers).
      * (2) This function should not revert even if the amount debited is zero when
      * no asset is eligible or balance from caller is empty. Thanks to that it is
      * possible to try to debit the voucher in best effort mode (In short: "use
      * voucher if possible"), before trying other payment methods.
+     *
+     * Note: no need for "onlyVoucher" modifier because if the sender is not a voucher,
+     * its balance would be null, then "_burn()" would revert.
      *
      * @param voucherTypeId The type ID of the voucher to debit.
      * @param app The app address.
@@ -240,6 +215,7 @@ contract VoucherHub is
      * @param datasetPrice The dataset price.
      * @param workerpool The workerpool address.
      * @param workerpoolPrice The workerpool price.
+     * @param volume Volume of the deal.
      */
     function debitVoucher(
         uint256 voucherTypeId,
@@ -248,10 +224,11 @@ contract VoucherHub is
         address dataset,
         uint256 datasetPrice,
         address workerpool,
-        uint256 workerpoolPrice
+        uint256 workerpoolPrice,
+        uint256 volume
     ) external returns (uint256 sponsoredAmount) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        mapping(address asset => bool) storage eligible = $.matchOrdersEligibility[voucherTypeId];
+        mapping(address asset => bool) storage eligible = $._matchOrdersEligibility[voucherTypeId];
         if (eligible[app]) {
             sponsoredAmount += appPrice;
         }
@@ -261,7 +238,12 @@ contract VoucherHub is
         if (eligible[workerpool]) {
             sponsoredAmount += workerpoolPrice;
         }
-        sponsoredAmount = Math.min(balanceOf(msg.sender), sponsoredAmount);
+        sponsoredAmount = Math.min(balanceOf(msg.sender), sponsoredAmount * volume);
+        // Decrease sponsored amount to make sponsored & non-sponsored amounts
+        // are divisible by volume in order to refund plain amounts to voucher and
+        // requester (i.e. make sure there are no hidden remainders) in the event
+        // that tasks are claimed later.
+        sponsoredAmount -= sponsoredAmount % volume;
         if (sponsoredAmount > 0) {
             _burn(msg.sender, sponsoredAmount);
             emit VoucherDebited(msg.sender, sponsoredAmount);
@@ -269,13 +251,87 @@ contract VoucherHub is
     }
 
     /**
-     * TODO return Voucher structure.
-     *
+     * Refund sender if it is a voucher.
+     * @param amount value to be refunded
+     */
+    function refundVoucher(uint256 amount) external onlyVoucher {
+        _mint(msg.sender, amount);
+        emit VoucherRefunded(msg.sender, amount);
+    }
+
+    /**
+     * Drain funds from voucher if it is expired. Transfer all SRLC balance
+     * on PoCo from voucher to voucherHub and burn all credits.
+     * @param voucher address of the expired voucher to drain
+     */
+    function drainVoucher(address voucher) external {
+        uint256 amount = balanceOf(voucher);
+        require(amount > 0, "VoucherHub: nothing to drain");
+        _burn(voucher, amount);
+        emit VoucherDrained(voucher, amount);
+        Voucher(voucher).drain(amount);
+    }
+
+    /**
+     * Withdraw specified amount from this contract's balance on PoCo and send it
+     * to the specified address.
+     * @param receiver address that will receive withdrawn funds
+     * @param amount amount to withdraw
+     */
+    function withdraw(address receiver, uint256 amount) external onlyRole(MANAGER_ROLE) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        // Slither raises a "transfer-unchecked" warning for the next line
+        // if return value of transfer() is not checked.
+        // Although transfer function in PoCo always returns true (or reverts),
+        // a return value check is added here in case its behavior changes.
+        if (!IERC20($._iexecPoco).transfer(receiver, amount)) {
+            revert("VoucherHub: withdraw failed");
+        }
+    }
+
+    /**
+     * Get iExec Poco address used by vouchers.
+     */
+    function getIexecPoco() external view returns (address) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $._iexecPoco;
+    }
+
+    /**
+     * Get voucher beacon address.
+     */
+    function getVoucherBeacon() external view returns (address) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $._voucherBeacon;
+    }
+
+    /**
+     * Get voucher types count.
+     */
+    function getVoucherTypeCount() external view returns (uint256) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $._voucherTypes.length;
+    }
+
+    /**
+     * Check if an asset is eligible to match orders sponsoring.
+     * @param voucherTypeId The ID of the voucher type.
+     * @param asset The address of the asset to check.
+     */
+    function isAssetEligibleToMatchOrdersSponsoring(
+        uint256 voucherTypeId,
+        address asset
+    ) external view returns (bool) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $._matchOrdersEligibility[voucherTypeId][asset];
+    }
+
+    /**
      * Get voucher address of a given account.
      * Returns address(0) if voucher is not found.
      * @param account voucher's owner address.
      */
-    function getVoucher(address account) public view returns (address voucherAddress) {
+    function getVoucher(address account) external view returns (address voucherAddress) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         voucherAddress = Create2.computeAddress(
             _getCreate2Salt(account), // salt
@@ -284,13 +340,38 @@ contract VoucherHub is
         return voucherAddress.code.length > 0 ? voucherAddress : address(0);
     }
 
+    /**
+     * Get the voucher type details by ID.
+     */
+    function getVoucherType(
+        uint256 id
+    ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $._voucherTypes[id];
+    }
+
     function _authorizeUpgrade(
         address newImplementation
-    ) internal override onlyRole(UPGRADE_MANAGER_ROLE) {}
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     function _setAssetEligibility(uint256 voucherTypeId, address asset, bool isEligible) private {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        $.matchOrdersEligibility[voucherTypeId][asset] = isEligible;
+        $._matchOrdersEligibility[voucherTypeId][asset] = isEligible;
+    }
+
+    function _transferFundsToVoucherOnPoco(address voucherAddress, uint256 value) private {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        if (!IERC20($._iexecPoco).transfer(voucherAddress, value)) {
+            revert("VoucherHub: SRLC transfer to voucher failed");
+        }
+    }
+
+    function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {
+        //slither-disable-start assembly
+        assembly ("memory-safe") {
+            $.slot := VOUCHER_HUB_STORAGE_LOCATION
+        }
+        //slither-disable-end assembly
     }
 
     function _getCreate2Salt(address account) private pure returns (bytes32) {

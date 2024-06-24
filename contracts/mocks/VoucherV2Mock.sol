@@ -3,16 +3,18 @@
 
 pragma solidity ^0.8.20;
 
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract VoucherV2Mock is OwnableUpgradeable {
+contract VoucherV2Mock is Initializable {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
+        address _owner;
         address _voucherHub;
         uint256 _expiration;
         uint256 _type;
         mapping(address => bool) _authorizedAccounts;
         mapping(bytes32 dealId => uint256) _sponsoredAmounts;
+        mapping(bytes32 taskId => bool) _refundedTasks;
         uint256 _newStateVariable;
     }
 
@@ -45,8 +47,13 @@ contract VoucherV2Mock is OwnableUpgradeable {
         return $._newStateVariable;
     }
 
+    function owner() public view returns (address) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._owner;
+    }
+
     function _getVoucherStorage() private pure returns (VoucherStorage storage $) {
-        assembly {
+        assembly ("memory-safe") {
             $.slot := VOUCHER_STORAGE_LOCATION
         }
     }
