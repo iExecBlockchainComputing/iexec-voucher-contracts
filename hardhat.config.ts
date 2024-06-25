@@ -62,6 +62,14 @@ const config: HardhatUserConfig = {
                 mnemonic: HARDHAT_NETWORK_MNEMONIC,
             },
         },
+        'dev-native': {
+            chainId: 65535,
+            url: 'http://localhost:8545',
+            accounts: {
+                mnemonic: process.env.MNEMONIC || '',
+            },
+            gasPrice: 0, // Get closer to Bellecour network
+        },
     },
     namedAccounts: {
         deployer: {
