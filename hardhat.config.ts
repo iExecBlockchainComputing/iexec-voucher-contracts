@@ -78,14 +78,14 @@ const config: HardhatUserConfig = {
         manager: {
             hardhat: 1,
             'external-hardhat': 1,
-            localhost: managerAccount,
             'dev-native': 1,
+            localhost: managerAccount,
         },
         minter: {
             hardhat: 2,
             'external-hardhat': 2,
-            localhost: minterAccount,
             'dev-native': 2,
+            localhost: minterAccount,
         },
     },
     dependencyCompiler: {
