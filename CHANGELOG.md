@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Add configuration for deployments on custom test networks. (#37)
 - Verify that voucher type exists when adding or removing eligible asset. (#36)
 - Deploy contracts through generic factory. (#35)
 - Define admin addresses for deployment (#34)
