@@ -129,7 +129,7 @@ contract VoucherHub is
     function addEligibleAsset(
         uint256 voucherTypeId,
         address asset
-    ) external onlyRole(MANAGER_ROLE) {
+    ) external onlyRole(MANAGER_ROLE) whenVoucherTypeExists(voucherTypeId) {
         _setAssetEligibility(voucherTypeId, asset, true);
         emit EligibleAssetAdded(voucherTypeId, asset);
     }
@@ -142,7 +142,7 @@ contract VoucherHub is
     function removeEligibleAsset(
         uint256 voucherTypeId,
         address asset
-    ) external onlyRole(MANAGER_ROLE) {
+    ) external onlyRole(MANAGER_ROLE) whenVoucherTypeExists(voucherTypeId) {
         _setAssetEligibility(voucherTypeId, asset, false);
         emit EligibleAssetRemoved(voucherTypeId, asset);
     }

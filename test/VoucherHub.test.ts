@@ -267,6 +267,13 @@ describe('VoucherHub', function () {
             ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
         });
 
+        it('Should not add eligible asset when invalid voucher type', async function () {
+            await loadFixture(deployFixture);
+            await expect(voucherHubAsManager.addEligibleAsset(99, asset)).to.be.revertedWith(
+                'VoucherHub: type index out of bounds',
+            );
+        });
+
         it('Should not unset asset eligibility when the caller is not authorized', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             await voucherHubAsManager.createVoucherType(description, duration);
@@ -278,6 +285,13 @@ describe('VoucherHub', function () {
             await expect(
                 voucherHubAsAnyone.removeEligibleAsset(0, asset),
             ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
+        });
+
+        it('Should not remove eligible asset when invalid voucher type', async function () {
+            await loadFixture(deployFixture);
+            await expect(voucherHubAsManager.removeEligibleAsset(99, asset)).to.be.revertedWith(
+                'VoucherHub: type index out of bounds',
+            );
         });
     });
 
