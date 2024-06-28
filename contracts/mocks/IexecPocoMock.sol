@@ -12,12 +12,18 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
  * @notice Testing purposes only.
  */
 contract IexecPocoMock is ERC20 {
+    enum FailType {
+        NO_FAILURE,
+        RETURN_FALSE,
+        REVERT
+    }
+
     bool public shouldRevertOnSponsorMatchOrders = false;
     bool public shouldRevertOnSponsorMatchOrdersBoost = false;
     bool public shouldRevertOnClaim = false;
     bool public shouldReturnTaskWithFailedStatus = false;
-    bool public shouldFailOnTransfer = false;
-    bool public shouldFailOnTransferFrom = false;
+    FailType public shouldFailOnTransfer = FailType.NO_FAILURE;
+    FailType public shouldFailOnTransferFrom = FailType.NO_FAILURE;
 
     bytes32 public mockDealId = keccak256("deal");
     uint256 public mockTaskIndex = 0;
@@ -101,12 +107,12 @@ contract IexecPocoMock is ERC20 {
         shouldRevertOnSponsorMatchOrdersBoost = true;
     }
 
-    function willFailOnTransfer() external {
-        shouldFailOnTransfer = true;
+    function willFailOnTransfer(FailType failType) external {
+        shouldFailOnTransfer = failType;
     }
 
-    function willFailOnTransferFrom() external {
-        shouldFailOnTransferFrom = true;
+    function willFailOnTransferFrom(FailType failType) external {
+        shouldFailOnTransferFrom = failType;
     }
 
     /**
@@ -186,8 +192,11 @@ contract IexecPocoMock is ERC20 {
      * Override transfer and transferFrom to mock revert case
      */
     function transfer(address recipient, uint256 amount) public override returns (bool) {
-        if (shouldFailOnTransfer) {
+        if (shouldFailOnTransfer == FailType.RETURN_FALSE) {
             return false;
+        }
+        if (shouldFailOnTransfer == FailType.REVERT) {
+            revert();
         }
         return super.transfer(recipient, amount);
     }
@@ -197,8 +206,11 @@ contract IexecPocoMock is ERC20 {
         address recipient,
         uint256 amount
     ) public override returns (bool) {
-        if (shouldFailOnTransferFrom) {
+        if (shouldFailOnTransferFrom == FailType.RETURN_FALSE) {
             return false;
+        }
+        if (shouldFailOnTransferFrom == FailType.REVERT) {
+            revert();
         }
         return super.transferFrom(sender, recipient, amount);
     }

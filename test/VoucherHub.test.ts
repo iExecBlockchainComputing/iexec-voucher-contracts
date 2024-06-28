@@ -19,6 +19,7 @@ import {
 } from '../typechain-types';
 import { VoucherHub } from '../typechain-types/contracts';
 import { random } from './utils/address-utils';
+import { FAIL_TYPES } from './utils/test-utils';
 
 const voucherType = 0;
 const description = 'Early Access';
@@ -571,11 +572,13 @@ describe('VoucherHub', function () {
         it('Should not create voucher when SLRC transfer fails', async function () {
             const { voucherOwner1 } = await loadFixture(deployFixture);
             await voucherHubAsManager.createVoucherType(description, duration);
-            await iexecPocoInstance.willFailOnTransfer().then((tx) => tx.wait());
-            // Create voucher.
-            await expect(
-                voucherHubAsMinter.createVoucher(voucherOwner1, voucherType, voucherValue),
-            ).to.be.revertedWith('VoucherHub: SRLC transfer to voucher failed');
+            for (let failType of FAIL_TYPES) {
+                await iexecPocoInstance.willFailOnTransfer(failType).then((tx) => tx.wait());
+                // Create voucher.
+                await expect(
+                    voucherHubAsMinter.createVoucher(voucherOwner1, voucherType, voucherValue),
+                ).to.be.revertedWith('VoucherHub: SRLC transfer to voucher failed');
+            }
         });
     });
 
@@ -642,11 +645,13 @@ describe('VoucherHub', function () {
         });
         it('Should not top up when SLRC transfer fails', async function () {
             const topUpValue = 123n; // arbitrary value
-            await iexecPocoInstance.willFailOnTransfer().then((tx) => tx.wait());
-            // Create voucher.
-            await expect(
-                voucherHubAsMinter.topUpVoucher(voucherAddress, topUpValue),
-            ).to.be.revertedWith('VoucherHub: SRLC transfer to voucher failed');
+            for (let failType of FAIL_TYPES) {
+                await iexecPocoInstance.willFailOnTransfer(failType).then((tx) => tx.wait());
+                // Create voucher.
+                await expect(
+                    voucherHubAsMinter.topUpVoucher(voucherAddress, topUpValue),
+                ).to.be.revertedWith('VoucherHub: SRLC transfer to voucher failed');
+            }
         });
     });
 
