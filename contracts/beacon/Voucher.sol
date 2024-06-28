@@ -403,15 +403,18 @@ contract Voucher is Initializable, IVoucher {
             // Note: We can disable this check since the requester signed the request order and agreed to pay for the deal.
             // & caller is only authorized.
             // SRLC
-            if (
-                !IERC20(iexecPoco).transferFrom(
+            try
+                IERC20(iexecPoco).transferFrom(
                     requestOrder.requester,
                     address(this),
                     dealPrice - sponsoredAmount
                 )
-            ) {
-                revert("Voucher: Transfer of non-sponsored amount failed");
-            }
+            returns (bool success) {
+                if (success) {
+                    return sponsoredAmount;
+                }
+            } catch {}
+            revert("Voucher: Transfer of non-sponsored amount failed");
             //slither-disable-end arbitrary-send-erc20
         }
     }
@@ -452,9 +455,14 @@ contract Voucher is Initializable, IVoucher {
                 // If the deal was not sponsored or partially sponsored
                 // by the voucher then send the non-sponsored part back
                 // to the requester.
-                if (!IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount)) {
-                    revert("Voucher: transfer to requester failed");
-                }
+                try IERC20(iexecPoco).transfer(requester, taskPrice - taskSponsoredAmount) returns (
+                    bool success
+                ) {
+                    if (success) {
+                        return;
+                    }
+                } catch {}
+                revert("Voucher: transfer to requester failed");
             }
         }
     }

@@ -23,6 +23,7 @@ import {
 } from '../../typechain-types';
 import { random } from '../utils/address-utils';
 import { PocoMode, TaskStatusEnum, createMockOrder, getTaskId } from '../utils/poco-utils';
+import { FAIL_TYPES } from '../utils/test-utils';
 
 const voucherType = 0;
 const duration = 3600;
@@ -483,9 +484,7 @@ describe('Voucher', function () {
         it('Should not match orders when non-sponsored amount is not transferable', async () => {
             await expect(
                 voucherAsOwner.matchOrders(appOrder, datasetOrder, workerpoolOrder, requestOrder),
-            )
-                .to.be.revertedWithCustomError(iexecPocoInstance, 'ERC20InsufficientAllowance')
-                .withArgs(await voucherAsOwner.getAddress(), 0, dealPrice);
+            ).to.be.revertedWith('Voucher: Transfer of non-sponsored amount failed');
         });
 
         it('Should not match orders when iExec Poco matching fails', async () => {
@@ -680,9 +679,7 @@ describe('Voucher', function () {
                         workerpoolOrder,
                         requestOrder,
                     ),
-                )
-                    .to.be.revertedWithCustomError(iexecPocoInstance, 'ERC20InsufficientAllowance')
-                    .withArgs(await voucherAsOwner.getAddress(), 0, dealPrice);
+                ).to.be.revertedWith('Voucher: Transfer of non-sponsored amount failed');
             });
 
             it('Should not match orders boost when iExec Poco matching fails', async () => {
@@ -715,15 +712,19 @@ describe('Voucher', function () {
                         .connect(requester)
                         .approve(voucherAddress, noSponsoredValue)
                         .then((tx) => tx.wait());
-                    await iexecPocoInstance.willFailOnTransferFrom().then((tx) => tx.wait());
-                    await expect(
-                        matchOrdersBoostOrClassic(
-                            appOrder,
-                            datasetOrder,
-                            workerpoolOrder,
-                            requestOrder,
-                        ),
-                    ).to.be.revertedWith('Voucher: Transfer of non-sponsored amount failed');
+                    for (const failType of FAIL_TYPES) {
+                        await iexecPocoInstance
+                            .willFailOnTransferFrom(failType)
+                            .then((tx) => tx.wait());
+                        await expect(
+                            matchOrdersBoostOrClassic(
+                                appOrder,
+                                datasetOrder,
+                                workerpoolOrder,
+                                requestOrder,
+                            ),
+                        ).to.be.revertedWith('Voucher: Transfer of non-sponsored amount failed');
+                    }
                 }
             });
         });
@@ -1203,10 +1204,12 @@ describe('Voucher', function () {
                     .approve(voucherAddress, dealNonSponsoredAmount)
                     .then((tx) => tx.wait());
                 await matchOrdersBoostOrClassic();
-                await iexecPocoInstance.willFailOnTransfer().then((tx) => tx.wait());
-                await expect(claimBoostOrClassic()).to.be.revertedWith(
-                    'Voucher: transfer to requester failed',
-                );
+                for (const failType of FAIL_TYPES) {
+                    await iexecPocoInstance.willFailOnTransfer(failType).then((tx) => tx.wait());
+                    await expect(claimBoostOrClassic()).to.be.revertedWith(
+                        'Voucher: transfer to requester failed',
+                    );
+                }
             }
         });
     });
