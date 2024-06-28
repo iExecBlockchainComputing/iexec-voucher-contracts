@@ -712,7 +712,7 @@ describe('Voucher', function () {
                         .connect(requester)
                         .approve(voucherAddress, noSponsoredValue)
                         .then((tx) => tx.wait());
-                    for (let failType of FAIL_TYPES) {
+                    for (const failType of FAIL_TYPES) {
                         await iexecPocoInstance
                             .willFailOnTransferFrom(failType)
                             .then((tx) => tx.wait());
@@ -1204,7 +1204,7 @@ describe('Voucher', function () {
                     .approve(voucherAddress, dealNonSponsoredAmount)
                     .then((tx) => tx.wait());
                 await matchOrdersBoostOrClassic();
-                for (let failType of FAIL_TYPES) {
+                for (const failType of FAIL_TYPES) {
                     await iexecPocoInstance.willFailOnTransfer(failType).then((tx) => tx.wait());
                     await expect(claimBoostOrClassic()).to.be.revertedWith(
                         'Voucher: transfer to requester failed',

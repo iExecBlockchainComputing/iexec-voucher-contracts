@@ -572,7 +572,7 @@ describe('VoucherHub', function () {
         it('Should not create voucher when SLRC transfer fails', async function () {
             const { voucherOwner1 } = await loadFixture(deployFixture);
             await voucherHubAsManager.createVoucherType(description, duration);
-            for (let failType of FAIL_TYPES) {
+            for (const failType of FAIL_TYPES) {
                 await iexecPocoInstance.willFailOnTransfer(failType).then((tx) => tx.wait());
                 // Create voucher.
                 await expect(
@@ -645,7 +645,7 @@ describe('VoucherHub', function () {
         });
         it('Should not top up when SLRC transfer fails', async function () {
             const topUpValue = 123n; // arbitrary value
-            for (let failType of FAIL_TYPES) {
+            for (const failType of FAIL_TYPES) {
                 await iexecPocoInstance.willFailOnTransfer(failType).then((tx) => tx.wait());
                 // Create voucher.
                 await expect(
