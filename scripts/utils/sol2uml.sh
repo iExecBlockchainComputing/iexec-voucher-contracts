@@ -12,6 +12,6 @@ npx hardhat flatten > build/flatten.sol 2> /dev/null # Flatten contracts & hide 
 npx sol2uml class build/flatten.sol \
     --hideFilename \
     --baseContractNames VoucherHub \
-    --outputFileName  docs/class-diagram  \
+    --outputFileName  docs/class-diagram.svg  \
     --hideLibraries \
     --hideInterfaces # Hide libraries and interfaces to get a decent output diagram

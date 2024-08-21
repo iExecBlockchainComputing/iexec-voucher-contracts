@@ -10,7 +10,7 @@ The API documentation can be found in [docs/](./docs/index.md).
 
 ### UML diagram
 
-UML class diagram for voucher contracts can be found [here](./docs/class-diagram).
+UML class diagram for voucher contracts can be found [here](./docs/class-diagram.svg).
 
 ### How to deploy?
 
