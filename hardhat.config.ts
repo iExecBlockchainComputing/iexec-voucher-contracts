@@ -11,6 +11,7 @@ import {
     defaultHardhatNetworkParams,
     defaultLocalhostNetworkParams,
 } from 'hardhat/internal/core/config/default-config';
+import 'solidity-docgen';
 
 const managerAccount = Number(process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
 const minterAccount = Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
@@ -95,6 +96,11 @@ const config: HardhatUserConfig = {
             '@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol',
         ],
         keep: true, // Keep it for slither
+    },
+    docgen: {
+        templates: 'docs/templates',
+        pages: 'items',
+        exclude: ['mocks', 'NonTransferableERC20Upgradeable.sol', 'beacon/VoucherProxy.sol'],
     },
 };
 
