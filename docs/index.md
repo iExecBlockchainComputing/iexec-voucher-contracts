@@ -1,5 +1,9 @@
 # Voucher API documentation
 
+<!---
+Note: Do not edit other .md files manually, they are automatically generated.
+-->
+
 API documentation can be found here:
 - [VoucherHub](./VoucherHub.md)
 - [Voucher](./Voucher.md)
