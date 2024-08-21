@@ -4,6 +4,10 @@
 
 Contracts of iExec Voucher project.
 
+### API Documentation
+
+The the API documentation can be found in [docs/](./docs/index.md).
+
 ### How to deploy?
 
 Edit `config/deployment.json` file to provide deployment configuration of the target
