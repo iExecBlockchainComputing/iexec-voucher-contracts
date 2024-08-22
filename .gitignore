@@ -17,3 +17,4 @@ node_modules
 /deployments/localhost
 
 /contracts/hardhat-dependency-compiler
+build/flatten.sol
