@@ -15,3 +15,5 @@ npx sol2uml class build/flatten.sol \
     --outputFileName  docs/class-diagram.svg  \
     --hideLibraries \
     --hideInterfaces # Hide libraries and interfaces to get a decent output diagram
+
+rm build/flatten.sol
