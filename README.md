@@ -33,6 +33,8 @@ npx hardhat deploy --network <name>
 
 - Add network configuration to Hardhat config file.
 - Specify the correct evm version in the compiler config ('berlin', 'paris', ...).
+- Clean and re-compile contracts.
+- Use the following commands:
 
 ```
 $ npx hardhat verify --network <name> <voucherImplAddress>
