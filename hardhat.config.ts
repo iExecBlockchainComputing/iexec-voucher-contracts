@@ -28,6 +28,7 @@ const config: HardhatUserConfig = {
                      * https://hardhat.org/hardhat-runner/docs/reference/solidity-support#support-for-ir-based-codegen
                      */
                     viaIR: true,
+                    evmVersion: 'berlin',
                     optimizer: {
                         enabled: true,
                         runs: 200,
@@ -71,6 +72,14 @@ const config: HardhatUserConfig = {
             },
             gasPrice: 0, // Get closer to Bellecour network
         },
+        '<network>': {
+            chainId: 65535,
+            url: '<url>',
+            accounts: {
+                mnemonic: HARDHAT_NETWORK_MNEMONIC,
+            },
+            gasPrice: 0,
+        },
     },
     namedAccounts: {
         deployer: {
@@ -101,6 +110,24 @@ const config: HardhatUserConfig = {
         templates: 'docs/templates',
         pages: 'items',
         exclude: ['mocks', 'NonTransferableERC20Upgradeable.sol', 'beacon/VoucherProxy.sol'],
+    },
+    etherscan: {
+        apiKey: {
+            '<network>': 'nothing', // hardhat-verify required a non-empty string.
+        },
+        customChains: [
+            {
+                network: '<network>',
+                chainId: 65535,
+                urls: {
+                    apiURL: '<url>',
+                    browserURL: '<url>',
+                },
+            },
+        ],
+    },
+    sourcify: {
+        enabled: false,
     },
 };
 
