@@ -1,6 +1,10 @@
 # Changelog
 
 ## vNEXT
+- Generate UML class diagram for contracts. (#41)
+- Generate Solidity documentation. (#40)
+- Add Bellecour poco address to config and harmonize deployment artifacts. (#39)
+- Revert always explicit message on failed transfers. (#38)
 - Add configuration for deployments on custom test networks. (#37)
 - Verify that voucher type exists when adding or removing eligible asset. (#36)
 - Deploy contracts through generic factory. (#35)

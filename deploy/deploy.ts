@@ -142,14 +142,14 @@ async function deployAllWithEOA(admin: string, manager: string, minter: string, 
     }
     // Save VoucherHub in deployments folder because
     // hardhat-deploy#deploy() is not used.
-    await deployments.save('VoucherHub', {
+    await deployments.save('VoucherHubERC1967Proxy', {
         // TODO save abi.
         abi: [],
         address: voucherHubAddress,
     });
-    console.log(`UpgradeableBeacon: ${beaconAddress}`);
-    console.log(`Voucher implementation: ${await beacon.implementation()}`);
-    console.log(`VoucherHub: ${voucherHubAddress}`);
+    console.log(`VoucherUpgradeableBeacon: ${beaconAddress}`);
+    console.log(`VoucherImpl: ${await beacon.implementation()}`);
+    console.log(`VoucherHubERC1967Proxy: ${voucherHubAddress}`);
     return { voucherHubAddress, voucherBeaconAddress: beaconAddress };
 }
 

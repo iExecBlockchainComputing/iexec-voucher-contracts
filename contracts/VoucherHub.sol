@@ -361,9 +361,12 @@ contract VoucherHub is
 
     function _transferFundsToVoucherOnPoco(address voucherAddress, uint256 value) private {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        if (!IERC20($._iexecPoco).transfer(voucherAddress, value)) {
-            revert("VoucherHub: SRLC transfer to voucher failed");
-        }
+        try IERC20($._iexecPoco).transfer(voucherAddress, value) returns (bool success) {
+            if (success) {
+                return;
+            }
+        } catch {}
+        revert("VoucherHub: SRLC transfer to voucher failed");
     }
 
     function _getVoucherHubStorage() private pure returns (VoucherHubStorage storage $) {

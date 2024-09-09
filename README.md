@@ -4,6 +4,15 @@
 
 Contracts of iExec Voucher project.
 
+### API Documentation
+
+The API documentation can be found in [docs/](./docs/index.md).
+
+### UML diagram
+
+UML class diagram for voucher contracts can be found [here](./docs/class-diagram.svg).
+Raw version is available [here](./docs/class-diagram.svg?raw=true) for better readability.
+
 ### How to deploy?
 
 Edit `config/deployment.json` file to provide deployment configuration of the target
