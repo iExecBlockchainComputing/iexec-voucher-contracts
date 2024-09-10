@@ -336,17 +336,26 @@ contract VoucherHub is
     }
 
     /**
-     * Get voucher address of a given account.
-     * Returns address(0) if voucher is not found.
-     * @param account voucher's owner address.
+     * Predict the address of the (created or not) voucher for a given owner.
+     * @param owner The owner of the voucher.
      */
-    function getVoucher(address account) external view returns (address voucherAddress) {
+    function predictVoucher(address owner) public view returns (address) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
-        voucherAddress = Create2.computeAddress(
-            _getCreate2Salt(account), // salt
-            $._voucherCreationCodeHash // bytecode hash
-        );
-        return $._isVoucher[voucherAddress] ? voucherAddress : address(0);
+        return
+            Create2.computeAddress(
+                _getCreate2Salt(owner), // salt
+                $._voucherCreationCodeHash // bytecode hash
+            );
+    }
+
+    /**
+     * Get the address of the voucher belonging to a given owner.
+     * Returns address(0) if voucher is not found.
+     * @param owner The owner of the voucher.
+     */
+    function getVoucher(address owner) external view returns (address voucherAddress) {
+        voucherAddress = predictVoucher(owner);
+        return voucherAddress.code.length > 0 ? voucherAddress : address(0);
     }
 
     /**

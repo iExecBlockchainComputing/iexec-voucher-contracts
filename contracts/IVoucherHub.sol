@@ -59,5 +59,7 @@ interface IVoucherHub {
         uint256 voucherTypeId,
         address asset
     ) external view returns (bool);
-    function getVoucher(address account) external view returns (address);
+    function isVoucher(address account) external view returns (bool);
+    function predictVoucher(address owner) external view returns (address);
+    function getVoucher(address owner) external view returns (address);
 }

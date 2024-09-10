@@ -8,7 +8,9 @@ import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol"
 /**
  * @title Beacon proxy contract instance that is deployed per user.
  * @notice Deployed by the VoucherHub contract.
- *
+ * @dev /!\ Important notice:
+ *  When updating this `VoucherProxy` contract (when bumping open-zeppelin version
+ *  for instance), do not forget to update `VoucherHub#_voucherCreationCodeHash.`
  */
 contract VoucherProxy is BeaconProxy {
     /**

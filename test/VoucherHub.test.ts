@@ -997,7 +997,7 @@ describe('VoucherHub', function () {
     });
 
     describe('Is voucher', function () {
-        it('Should return true when account is a voucher', async function () {
+        it('Should be true when account is a voucher', async function () {
             const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
             await voucherHubAsManager
                 .createVoucherType(description, duration)
@@ -1009,16 +1009,30 @@ describe('VoucherHub', function () {
             expect(await voucherHub.isVoucher(voucherAddress)).to.be.true;
         });
 
-        it('Should return false when account is not a voucher', async function () {
+        it('Should be false when account is not a voucher', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
             expect(await voucherHub.isVoucher(random())).to.be.false;
         });
     });
 
     describe('Get voucher', function () {
-        it('Should return address 0 when voucher is not created', async function () {
-            const { voucherHub, admin } = await loadFixture(deployFixture);
-            expect(await voucherHub.getVoucher(admin)).to.be.equal(ethers.ZeroAddress);
+        it('Should not get voucher when voucher is not created', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            expect(await voucherHub.getVoucher(random())).to.be.equal(ethers.ZeroAddress);
+        });
+    });
+
+    describe('Predict voucher', function () {
+        it('Should predict voucher', async function () {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            const predictedVoucherAddress = await voucherHub.predictVoucher(voucherOwner1);
+            await voucherHubAsManager
+                .createVoucherType(description, duration)
+                .then((tx) => tx.wait());
+            await voucherHubAsMinter
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait());
+            expect(await voucherHub.getVoucher(voucherOwner1)).to.be.equal(predictedVoucherAddress);
         });
     });
 
