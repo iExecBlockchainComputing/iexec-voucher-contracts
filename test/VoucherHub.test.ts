@@ -1032,7 +1032,17 @@ describe('VoucherHub', function () {
             await voucherHubAsMinter
                 .createVoucher(voucherOwner1, voucherType, voucherValue)
                 .then((tx) => tx.wait());
-            expect(await voucherHub.getVoucher(voucherOwner1)).to.be.equal(predictedVoucherAddress);
+            expect(predictedVoucherAddress)
+                .to.be.equal(
+                    ethers.getCreate2Address(
+                        await voucherHub.getAddress(),
+                        ethers.zeroPadValue(voucherOwner1.address, 32), // salt
+                        await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(
+                            voucherHubAddress,
+                        ),
+                    ),
+                )
+                .to.be.equal(await voucherHub.getVoucher(voucherOwner1));
         });
     });
 
