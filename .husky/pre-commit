@@ -2,3 +2,6 @@
 
 npx lint-staged
 npm run doc
+# TODO: Move generated solidity docs to a subfolder and only `git add`` this 
+# subfolder to the current commit
+git add docs/

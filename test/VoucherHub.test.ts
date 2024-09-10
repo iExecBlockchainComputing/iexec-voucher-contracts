@@ -996,10 +996,29 @@ describe('VoucherHub', function () {
         });
     });
 
+    describe('Is voucher', function () {
+        it('Should return true when account is a voucher', async function () {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            await voucherHubAsManager
+                .createVoucherType(description, duration)
+                .then((tx) => tx.wait());
+            await voucherHubAsMinter
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait());
+            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
+            expect(await voucherHub.isVoucher(voucherAddress)).to.be.true;
+        });
+
+        it('Should return false when account is not a voucher', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            expect(await voucherHub.isVoucher(random())).to.be.false;
+        });
+    });
+
     describe('Get voucher', function () {
         it('Should return address 0 when voucher is not created', async function () {
             const { voucherHub, admin } = await loadFixture(deployFixture);
-            await expect(await voucherHub.getVoucher(admin)).to.be.equal(ethers.ZeroAddress);
+            expect(await voucherHub.getVoucher(admin)).to.be.equal(ethers.ZeroAddress);
         });
     });
 

@@ -327,6 +327,15 @@ contract VoucherHub is
     }
 
     /**
+     * Check if a voucher exists at a given address.
+     * @param account The address to be checked.
+     */
+    function isVoucher(address account) external view returns (bool) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $._isVoucher[account];
+    }
+
+    /**
      * Get voucher address of a given account.
      * Returns address(0) if voucher is not found.
      * @param account voucher's owner address.
@@ -337,7 +346,7 @@ contract VoucherHub is
             _getCreate2Salt(account), // salt
             $._voucherCreationCodeHash // bytecode hash
         );
-        return voucherAddress.code.length > 0 ? voucherAddress : address(0);
+        return $._isVoucher[voucherAddress] ? voucherAddress : address(0);
     }
 
     /**
