@@ -60,6 +60,6 @@ interface IVoucherHub {
         address asset
     ) external view returns (bool);
     function isVoucher(address account) external view returns (bool);
-    function predictVoucher(address owner) external view returns (address);
     function getVoucher(address owner) external view returns (address);
+    function predictVoucher(address owner) external view returns (address);
 }

@@ -173,15 +173,15 @@ function isAssetEligibleToMatchOrdersSponsoring(uint256 voucherTypeId, address a
 function isVoucher(address account) external view returns (bool)
 ```
 
-### predictVoucher
-
-```solidity
-function predictVoucher(address owner) external view returns (address)
-```
-
 ### getVoucher
 
 ```solidity
 function getVoucher(address owner) external view returns (address)
+```
+
+### predictVoucher
+
+```solidity
+function predictVoucher(address owner) external view returns (address)
 ```
 
