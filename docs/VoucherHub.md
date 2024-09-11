@@ -251,20 +251,48 @@ Check if an asset is eligible to match orders sponsoring.
 | voucherTypeId | uint256 | The ID of the voucher type. |
 | asset | address | The address of the asset to check. |
 
+### isVoucher
+
+```solidity
+function isVoucher(address account) external view returns (bool)
+```
+
+Check if a voucher exists at a given address.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| account | address | The address to be checked. |
+
 ### getVoucher
 
 ```solidity
-function getVoucher(address account) external view returns (address voucherAddress)
+function getVoucher(address owner) external view returns (address voucherAddress)
 ```
 
-Get voucher address of a given account.
+Get the address of the voucher belonging to a given owner.
 Returns address(0) if voucher is not found.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| account | address | voucher's owner address. |
+| owner | address | The owner of the voucher. |
+
+### predictVoucher
+
+```solidity
+function predictVoucher(address owner) public view returns (address)
+```
+
+Predict the address of the (created or not) voucher for a given owner.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| owner | address | The owner of the voucher. |
 
 ### getVoucherType
 

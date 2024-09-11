@@ -167,9 +167,21 @@ function getVoucherTypeCount() external view returns (uint256)
 function isAssetEligibleToMatchOrdersSponsoring(uint256 voucherTypeId, address asset) external view returns (bool)
 ```
 
+### isVoucher
+
+```solidity
+function isVoucher(address account) external view returns (bool)
+```
+
 ### getVoucher
 
 ```solidity
-function getVoucher(address account) external view returns (address)
+function getVoucher(address owner) external view returns (address)
+```
+
+### predictVoucher
+
+```solidity
+function predictVoucher(address owner) external view returns (address)
 ```
 

@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Add `predictVoucher(..)` & `isVoucher(..)` functions. (#42)
 - Generate UML class diagram for contracts. (#41)
 - Generate Solidity documentation. (#40)
 - Add Bellecour poco address to config and harmonize deployment artifacts. (#39)
