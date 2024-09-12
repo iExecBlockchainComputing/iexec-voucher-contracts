@@ -156,7 +156,7 @@ async function deployAllWithEOA(admin: string, manager: string, minter: string, 
 /**
  * Get deployment config according to chain.
  */
-async function getDeploymentConfig(chainId: number) {
+export async function getDeploymentConfig(chainId: number) {
     // Read default config of the target chain.
     const config = deploymentConfig[chainId];
     // Override config if required.

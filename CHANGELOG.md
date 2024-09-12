@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Add `getVoucherProxyCodeHash(..)` & `isRefundedTask(..)` view functions. (#43)
 - Add `predictVoucher(..)` & `isVoucher(..)` functions. (#42)
 - Generate UML class diagram for contracts. (#41)
 - Generate Solidity documentation. (#40)

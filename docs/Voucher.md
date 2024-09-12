@@ -219,6 +219,20 @@ Get amount sponsored in a deal.
 | ---- | ---- | ----------- |
 | dealId | bytes32 | The ID of the deal. |
 
+### isRefundedTask
+
+```solidity
+function isRefundedTask(bytes32 taskId) external view returns (bool)
+```
+
+Check if a task has been refunded.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| taskId | bytes32 | The task to be checked. |
+
 ### owner
 
 ```solidity

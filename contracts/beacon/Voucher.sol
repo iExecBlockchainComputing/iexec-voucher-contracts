@@ -316,6 +316,15 @@ contract Voucher is Initializable, IVoucher {
     }
 
     /**
+     * Check if a task has been refunded.
+     * @param taskId The task to be checked.
+     */
+    function isRefundedTask(bytes32 taskId) external view returns (bool) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._refundedTasks[taskId];
+    }
+
+    /**
      * @dev Returns the address of the current owner.
      */
     function owner() public view returns (address) {

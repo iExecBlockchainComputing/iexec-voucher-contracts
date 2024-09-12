@@ -228,6 +228,14 @@ function getVoucherBeacon() external view returns (address)
 
 Get voucher beacon address.
 
+### getVoucherProxyCodeHash
+
+```solidity
+function getVoucherProxyCodeHash() external view returns (bytes32)
+```
+
+Get voucher proxy code hash.
+
 ### getVoucherTypeCount
 
 ```solidity

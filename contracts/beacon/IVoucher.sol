@@ -38,4 +38,5 @@ interface IVoucher {
     function getBalance() external view returns (uint256);
     function isAccountAuthorized(address account) external view returns (bool);
     function getSponsoredAmount(bytes32 dealId) external view returns (uint256);
+    function isRefundedTask(bytes32 taskId) external view returns (bool);
 }

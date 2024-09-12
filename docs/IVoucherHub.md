@@ -149,6 +149,12 @@ function getIexecPoco() external view returns (address)
 function getVoucherBeacon() external view returns (address)
 ```
 
+### getVoucherProxyCodeHash
+
+```solidity
+function getVoucherProxyCodeHash() external view returns (bytes32)
+```
+
 ### getVoucherType
 
 ```solidity

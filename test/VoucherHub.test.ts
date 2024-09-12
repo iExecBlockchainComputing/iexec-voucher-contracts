@@ -97,11 +97,10 @@ describe('VoucherHub', function () {
             expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
             expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
             // Check VoucherProxy code hash
-            const actualCodeHash =
-                await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
-            const expectedHashes =
-                await voucherHubUtils.getVoucherProxyCreationCodeHash(voucherBeaconAddress);
-            expect(expectedHashes).to.include(actualCodeHash);
+            const actualCodeHash = await voucherHub.getVoucherProxyCodeHash();
+            const expectedCodeHash =
+                await voucherHubUtils.getExpectedVoucherProxyCodeHash(voucherBeaconAddress);
+            expect(actualCodeHash).to.equal(expectedCodeHash);
         });
 
         it('Should not initialize without admin', async function () {
@@ -1035,11 +1034,9 @@ describe('VoucherHub', function () {
             expect(predictedVoucherAddress)
                 .to.be.equal(
                     ethers.getCreate2Address(
-                        await voucherHub.getAddress(),
+                        await voucherHub.getAddress(), // deployer
                         ethers.zeroPadValue(voucherOwner1.address, 32), // salt
-                        await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(
-                            voucherHubAddress,
-                        ),
+                        await voucherHub.getVoucherProxyCodeHash(), // bytecode hash
                     ),
                 )
                 .to.be.equal(await voucherHub.getVoucher(voucherOwner1));
