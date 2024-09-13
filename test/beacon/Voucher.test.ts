@@ -761,6 +761,8 @@ describe('Voucher', function () {
                 const taskSponsoredAmount = dealSponsoredAmount / volume;
                 expect(dealSponsoredAmount).to.be.equal(dealPrice);
                 expect(taskSponsoredAmount).to.be.equal(taskPrice);
+                // Task should not be marked as refunded before claim
+                expect(await voucherAsOwner.isRefundedTask(taskId)).to.be.false;
 
                 // Claim task
                 await expect(claimBoostOrClassic())
@@ -784,6 +786,8 @@ describe('Voucher', function () {
                 expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(
                     dealSponsoredAmount,
                 );
+                // Task should be marked as refunded after claim
+                expect(await voucherAsOwner.isRefundedTask(taskId)).to.be.true;
                 // Check task status.
                 expect((await iexecPocoInstance.viewTask(taskId)).status).to.equal(
                     TaskStatusEnum.FAILED,

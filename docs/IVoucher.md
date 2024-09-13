@@ -122,3 +122,9 @@ function isAccountAuthorized(address account) external view returns (bool)
 function getSponsoredAmount(bytes32 dealId) external view returns (uint256)
 ```
 
+### isRefundedTask
+
+```solidity
+function isRefundedTask(bytes32 taskId) external view returns (bool)
+```
+

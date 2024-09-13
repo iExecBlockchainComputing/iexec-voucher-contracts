@@ -306,6 +306,14 @@ contract VoucherHub is
     }
 
     /**
+     * Get voucher proxy code hash.
+     */
+    function getVoucherProxyCodeHash() external view returns (bytes32) {
+        VoucherHubStorage storage $ = _getVoucherHubStorage();
+        return $._voucherCreationCodeHash;
+    }
+
+    /**
      * Get voucher types count.
      */
     function getVoucherTypeCount() external view returns (uint256) {
