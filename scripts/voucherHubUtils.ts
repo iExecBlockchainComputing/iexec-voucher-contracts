@@ -42,7 +42,7 @@ export async function upgradeProxy(
     const voucherBeaconAddress = await voucherHubUpgrade.getVoucherBeacon();
     const expectedHash = await getExpectedVoucherProxyCodeHash(voucherBeaconAddress);
     const actualHash = await voucherHubUpgrade.getVoucherProxyCodeHash();
-    if (actualHash != expectedHash) {
+    if (actualHash !== expectedHash) {
         throw new Error(
             'Voucher proxy code hash in the new VoucherHub implementation does not match the real hash ' +
                 `[actual: ${actualHash}, expected:${expectedHash}]`,
@@ -63,8 +63,12 @@ export async function getExpectedVoucherProxyCodeHash(voucherBeaconAddress: stri
          * @dev Voucher proxy code hash is different from the production one:
          * - when running "test" without generic factory since voucher beacon address
          *   becomes not-deterministic (the EOA deployer nonce is involved).
-         * - when running "coverage" since the later compiles contracts with altered
-         *   solc options.
+         * - when running "coverage" since the later re-compiles contracts already
+         *   compiled with standard "compile", which  might come from Solidity-coverage:
+         *      - injecting statements into our Solidity code [1]
+         *      - or eventually tampering our solc options (optimizer, ..) [2]
+         * [1]: https://github.com/sc-forks/solidity-coverage/blob/v0.8.10/docs/faq.md#notes-on-gas-distortion
+         * [2]: https://github.com/sc-forks/solidity-coverage/blob/v0.8.10/docs/faq.md#running-out-of-stack
          *
          * The expected returned value below mimics the following Solidity piece of code:
          * ```
