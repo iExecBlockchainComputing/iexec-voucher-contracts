@@ -29,7 +29,7 @@ contract IexecPocoMock is ERC20 {
     uint256 public mockTaskIndex = 0;
     bytes32 public mockTaskId = keccak256(abi.encode(mockDealId, mockTaskIndex));
 
-    IexecLibCore_v5.Deal public deal;
+    IexecLibCore_v5.Deal deal;
     IexecLibCore_v5.DealBoost public dealBoost;
     mapping(bytes32 => IexecLibCore_v5.Task) public tasks;
 
