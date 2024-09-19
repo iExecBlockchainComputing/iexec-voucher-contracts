@@ -97,11 +97,10 @@ describe('VoucherHub', function () {
             expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
             expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
             // Check VoucherProxy code hash
-            const actualCodeHash =
-                await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
-            const expectedHashes =
-                await voucherHubUtils.getVoucherProxyCreationCodeHash(voucherBeaconAddress);
-            expect(expectedHashes).to.include(actualCodeHash);
+            const actualCodeHash = await voucherHub.getVoucherProxyCodeHash();
+            const expectedCodeHash =
+                await voucherHubUtils.getExpectedVoucherProxyCodeHash(voucherBeaconAddress);
+            expect(actualCodeHash).to.equal(expectedCodeHash);
         });
 
         it('Should not initialize without admin', async function () {
@@ -996,10 +995,51 @@ describe('VoucherHub', function () {
         });
     });
 
+    describe('Is voucher', function () {
+        it('Should be true when account is a voucher', async function () {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            await voucherHubAsManager
+                .createVoucherType(description, duration)
+                .then((tx) => tx.wait());
+            await voucherHubAsMinter
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait());
+            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
+            expect(await voucherHub.isVoucher(voucherAddress)).to.be.true;
+        });
+
+        it('Should be false when account is not a voucher', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            expect(await voucherHub.isVoucher(random())).to.be.false;
+        });
+    });
+
     describe('Get voucher', function () {
-        it('Should return address 0 when voucher is not created', async function () {
-            const { voucherHub, admin } = await loadFixture(deployFixture);
-            await expect(await voucherHub.getVoucher(admin)).to.be.equal(ethers.ZeroAddress);
+        it('Should not get voucher when voucher is not created', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            expect(await voucherHub.getVoucher(random())).to.be.equal(ethers.ZeroAddress);
+        });
+    });
+
+    describe('Predict voucher', function () {
+        it('Should predict voucher', async function () {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            const predictedVoucherAddress = await voucherHub.predictVoucher(voucherOwner1);
+            await voucherHubAsManager
+                .createVoucherType(description, duration)
+                .then((tx) => tx.wait());
+            await voucherHubAsMinter
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait());
+            expect(predictedVoucherAddress)
+                .to.be.equal(
+                    ethers.getCreate2Address(
+                        await voucherHub.getAddress(), // deployer
+                        ethers.zeroPadValue(voucherOwner1.address, 32), // salt
+                        await voucherHub.getVoucherProxyCodeHash(), // bytecode hash
+                    ),
+                )
+                .to.be.equal(await voucherHub.getVoucher(voucherOwner1));
         });
     });
 

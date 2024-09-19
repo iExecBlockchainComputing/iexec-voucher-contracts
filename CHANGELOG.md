@@ -1,6 +1,12 @@
 # Changelog
 
 ## vNEXT
+- Upgrade Solidity Compiler to `v0.8.27`. (#45)
+- Bump dependencies: (#44)
+    - `@openzeppelin/hardhat-upgrades`, `hardhat`, `ethers`, `prettier`, and others [minor version bump]
+    - `prettier-plugin-organize-imports@4`
+- Add `getVoucherProxyCodeHash(..)` & `isRefundedTask(..)` view functions. (#43)
+- Add `predictVoucher(..)` & `isVoucher(..)` functions. (#42)
 - Generate UML class diagram for contracts. (#41)
 - Generate Solidity documentation. (#40)
 - Add Bellecour poco address to config and harmonize deployment artifacts. (#39)

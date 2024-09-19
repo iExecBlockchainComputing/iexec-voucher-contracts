@@ -20,7 +20,7 @@ const config: HardhatUserConfig = {
     solidity: {
         compilers: [
             {
-                version: '0.8.24',
+                version: '0.8.27',
                 settings: {
                     evmVersion: 'berlin',
                     /**
@@ -35,15 +35,7 @@ const config: HardhatUserConfig = {
                         details: {
                             yul: true,
                             yulDetails: {
-                                /**
-                                 * Disable temporarily.
-                                 * Causes:
-                                 * YulException: Cannot swap Slot RET with Variable value10: too deep in the stack
-                                 * by 1 slots in [ RET value15 value14 value13 value12 value11 headStart value9
-                                 * value8 value7 value6 value5 value4 value3 value2 value1 value0 value10 ]
-                                 * memoryguard was present.
-                                 */
-                                // optimizerSteps: 'u',
+                                optimizerSteps: 'u',
                             },
                         },
                     },
