@@ -22,13 +22,13 @@ const config: HardhatUserConfig = {
             {
                 version: '0.8.24',
                 settings: {
+                    evmVersion: 'berlin',
                     /**
                      * Enable Intermediate Representation (IR) to reduce `Stack too deep` occurrences
                      * at compile time (e.g.: too many local variables in `matchOrdersBoost`).
                      * https://hardhat.org/hardhat-runner/docs/reference/solidity-support#support-for-ir-based-codegen
                      */
                     viaIR: true,
-                    evmVersion: 'berlin',
                     optimizer: {
                         enabled: true,
                         runs: 200,
@@ -72,14 +72,6 @@ const config: HardhatUserConfig = {
             },
             gasPrice: 0, // Get closer to Bellecour network
         },
-        '<network>': {
-            chainId: 65535,
-            url: '<url>',
-            accounts: {
-                mnemonic: HARDHAT_NETWORK_MNEMONIC,
-            },
-            gasPrice: 0,
-        },
     },
     namedAccounts: {
         deployer: {
@@ -113,7 +105,7 @@ const config: HardhatUserConfig = {
     },
     etherscan: {
         apiKey: {
-            '<network>': 'nothing', // hardhat-verify required a non-empty string.
+            '<network>': 'nothing', // hardhat-verify requires a non-empty string.
         },
         customChains: [
             {
