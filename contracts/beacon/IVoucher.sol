@@ -11,7 +11,7 @@ interface IVoucher {
     event AccountUnauthorized(address indexed account);
     event OrdersMatchedWithVoucher(bytes32 dealId);
     event OrdersBoostMatchedWithVoucher(bytes32 dealId);
-    event TaskClaimedWithVoucher(bytes32 taskId);
+    event TaskClaimedWithVoucher(bytes32 taskId, bytes32 dealId);
 
     function setExpiration(uint256 expiration) external;
     function authorizeAccount(address account) external;

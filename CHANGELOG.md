@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Add `dealId` to `TaskClaimedWithVoucher` event. (#46)
 - Upgrade Solidity Compiler to `v0.8.27`. (#45)
 - Bump dependencies: (#44)
     - `@openzeppelin/hardhat-upgrades`, `hardhat`, `ethers`, `prettier`, and others [minor version bump]
