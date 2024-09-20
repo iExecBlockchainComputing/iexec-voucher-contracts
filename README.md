@@ -31,25 +31,9 @@ npx hardhat deploy --network <name>
 
 ### Verify contracts
 
-- Add network configuration to Hardhat config file.
-- Specify the correct evm version in the compiler config ('berlin', 'paris', ...).
-- Clean and re-compile contracts.
-- Use the following commands:
-
 ```
-$ npx hardhat verify --network <name> <voucherImplAddress>
-$ npx hardhat verify --network <name> <voucherUpgradeableBeaconAddress> \
-    <voucherImplAddress> <adminAddress> # constructor args
-$ npx hardhat verify --network <name> <voucherHubImplAddress>
-
-# initializeFunctionData = VoucherHub__factory.createInterface().encodeFunctionData('initialize', [
-#     <adminAddress>,
-#     <managerAddress>,
-#     <minterAddress>,
-#     <iexecPocoAddress>,
-#     <voucherUpgradeableBeaconAddress>,
-# ])
-
-$ npx hardhat verify --network <name> <voucherHubERC1967ProxyAddress> \
-    <voucherHubImplAddress> <initializeFunctionData> # constructor args
+VOUCHER_UPGRADER_ADDRESS=<address> \
+VOUCHER_MANAGER_ADDRESS=<address> \
+VOUCHER_MINTER_ADDRESS=<address> \
+    npx hardhat run scripts/verify.ts --network <name>
 ```
