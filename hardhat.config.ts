@@ -22,6 +22,7 @@ const config: HardhatUserConfig = {
             {
                 version: '0.8.27',
                 settings: {
+                    evmVersion: 'berlin',
                     /**
                      * Enable Intermediate Representation (IR) to reduce `Stack too deep` occurrences
                      * at compile time (e.g.: too many local variables in `matchOrdersBoost`).
@@ -93,6 +94,24 @@ const config: HardhatUserConfig = {
         templates: 'docs/templates',
         pages: 'items',
         exclude: ['mocks', 'NonTransferableERC20Upgradeable.sol', 'beacon/VoucherProxy.sol'],
+    },
+    etherscan: {
+        apiKey: {
+            '<network>': 'nothing', // hardhat-verify requires a non-empty string.
+        },
+        customChains: [
+            {
+                network: '<network>',
+                chainId: 0,
+                urls: {
+                    apiURL: '<url>',
+                    browserURL: '<url>',
+                },
+            },
+        ],
+    },
+    sourcify: {
+        enabled: false,
     },
 };
 

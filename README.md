@@ -28,3 +28,12 @@ Run:
 ```
 npx hardhat deploy --network <name>
 ```
+
+### Verify contracts
+
+```
+VOUCHER_UPGRADER_ADDRESS=<address> \
+VOUCHER_MANAGER_ADDRESS=<address> \
+VOUCHER_MINTER_ADDRESS=<address> \
+    npx hardhat run scripts/verify.ts --network <name>
+```
