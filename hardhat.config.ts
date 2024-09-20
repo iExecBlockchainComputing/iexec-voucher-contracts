@@ -102,7 +102,7 @@ const config: HardhatUserConfig = {
         customChains: [
             {
                 network: '<network>',
-                chainId: 65535,
+                chainId: 0,
                 urls: {
                     apiURL: '<url>',
                     browserURL: '<url>',

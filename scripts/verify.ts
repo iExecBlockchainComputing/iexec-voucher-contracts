@@ -28,36 +28,43 @@ import { UpgradeableBeacon__factory, VoucherHub__factory } from '../typechain-ty
     const voucherHub = VoucherHub__factory.connect(voucherHubERC1967ProxyAddress, ethers.provider);
     const iexecPocoAddress = await voucherHub.getIexecPoco();
 
-    console.log('Verifying Voucher implementation');
-    await hre.run('verify:verify', {
-        address: voucherImplAddress,
-        constructorArguments: [],
-    });
+    const contracts = [
+        {
+            name: 'VoucherImpl',
+            address: voucherImplAddress,
+            args: [],
+        },
+        {
+            name: 'VoucherUpgradeableBeacon',
+            address: voucherUpgradableBeaconAddress,
+            args: [[voucherImplAddress, beaconInitialOwnerAddress]],
+        },
+        {
+            name: 'VoucherHubImpl',
+            address: voucherHubImplAddress,
+            args: [],
+        },
+        {
+            name: 'VoucherHubERC1967Proxy',
+            address: voucherHubERC1967ProxyAddress,
+            args: [
+                voucherHubImplAddress,
+                VoucherHub__factory.createInterface().encodeFunctionData('initialize', [
+                    upgraderAddress,
+                    managerAddress,
+                    minterAddress,
+                    iexecPocoAddress,
+                    voucherUpgradableBeaconAddress,
+                ]),
+            ],
+        },
+    ];
 
-    console.log('Verifying Beacon proxy');
-    await hre.run('verify:verify', {
-        address: voucherUpgradableBeaconAddress,
-        constructorArguments: [voucherImplAddress, beaconInitialOwnerAddress],
-    });
-
-    console.log('Verifying VoucherHub implementation');
-    await hre.run('verify:verify', {
-        address: voucherHubImplAddress,
-        constructorArguments: [],
-    });
-
-    console.log('Verifying VoucherHub ERC1967 proxy');
-    await hre.run('verify:verify', {
-        address: voucherHubERC1967ProxyAddress,
-        constructorArguments: [
-            voucherHubImplAddress,
-            VoucherHub__factory.createInterface().encodeFunctionData('initialize', [
-                upgraderAddress,
-                managerAddress,
-                minterAddress,
-                iexecPocoAddress,
-                voucherUpgradableBeaconAddress,
-            ]),
-        ],
-    });
+    for (const contract of contracts) {
+        console.log(`<> Verifying ${contract.name}`);
+        await hre.run('verify:verify', {
+            address: contract.address,
+            constructorArguments: contract.args,
+        });
+    }
 })().catch((error) => console.log(error));
