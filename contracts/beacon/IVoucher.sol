@@ -9,9 +9,9 @@ interface IVoucher {
     event ExpirationUpdated(uint256 expiration);
     event AccountAuthorized(address indexed account);
     event AccountUnauthorized(address indexed account);
-    event OrdersMatchedWithVoucher(bytes32 dealId);
-    event OrdersBoostMatchedWithVoucher(bytes32 dealId);
-    event TaskClaimedWithVoucher(bytes32 taskId, bytes32 dealId);
+    event OrdersMatchedWithVoucher(bytes32 indexed dealId);
+    event OrdersBoostMatchedWithVoucher(bytes32 indexed dealId);
+    event TaskClaimedWithVoucher(bytes32 indexed taskId, bytes32 indexed dealId);
 
     function setExpiration(uint256 expiration) external;
     function authorizeAccount(address account) external;
