@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
+import { ContractFactory } from 'ethers';
 import { deployments, ethers, upgrades } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import deploymentConfig from '../config/deployment';
@@ -63,34 +64,34 @@ async function deployAllWithFactory(
     const genericFactory = GenericFactory_shanghai__factory.connect(factoryAddress, adminSigner);
     console.log(`Factory: ${factoryAddress}`);
     console.log(`Salt: ${salt}`);
-    const voucherImplAddress = await deployWithFactory('VoucherImpl', Voucher__factory.bytecode);
+    const voucherImplAddress = await deployWithFactory('VoucherImpl', new Voucher__factory(), []);
     const voucherUpgradableBeaconAddress = await deployWithFactory(
         'VoucherUpgradeableBeacon',
-        await new UpgradeableBeacon__factory()
-            .getDeployTransaction(voucherImplAddress, admin)
-            .then((tx) => tx.data),
+        new UpgradeableBeacon__factory(),
+        [voucherImplAddress, admin],
     );
+
     // Proxy needs to be registered in case an upgrade is performed later
     await upgrades.forceImport(voucherUpgradableBeaconAddress, new Voucher__factory());
     // Deploy VoucherHub implementation and proxy
     const voucherHubImplAddress = await deployWithFactory(
         'VoucherHubImpl',
-        VoucherHub__factory.bytecode,
+        new VoucherHub__factory(),
+        [],
     );
     const voucherHubERC1967ProxyAddress = await deployWithFactory(
         'VoucherHubERC1967Proxy',
-        await new ERC1967Proxy__factory()
-            .getDeployTransaction(
-                voucherHubImplAddress,
-                VoucherHub__factory.createInterface().encodeFunctionData('initialize', [
-                    admin,
-                    manager,
-                    minter,
-                    iexecPoco,
-                    voucherUpgradableBeaconAddress,
-                ]),
-            )
-            .then((tx) => tx.data),
+        new ERC1967Proxy__factory(),
+        [
+            voucherHubImplAddress,
+            VoucherHub__factory.createInterface().encodeFunctionData('initialize', [
+                admin,
+                manager,
+                minter,
+                iexecPoco,
+                voucherUpgradableBeaconAddress,
+            ]),
+        ],
     );
     await upgrades.forceImport(voucherHubERC1967ProxyAddress, new VoucherHub__factory());
     return {
@@ -104,7 +105,12 @@ async function deployAllWithFactory(
      * @param bytecode Contract bytecode
      * @returns instance address
      */
-    async function deployWithFactory(name: string, bytecode: string) {
+    async function deployWithFactory(
+        name: string,
+        contractFactory: ContractFactory,
+        constructorArgs: any[],
+    ) {
+        let bytecode = (await contractFactory.getDeployTransaction(...constructorArgs)).data;
         const contractAddress = await genericFactory.predictAddress(bytecode, salt);
         let justDeployed = false;
         if ((await ethers.provider.getCode(contractAddress)) == '0x') {
@@ -113,8 +119,9 @@ async function deployAllWithFactory(
         }
         console.log(`${name}: ${contractAddress} ${justDeployed ? '' : '(previously deployed)'}`);
         await deployments.save(name, {
-            abi: [],
+            abi: (contractFactory as any).constructor.abi,
             address: contractAddress,
+            args: constructorArgs,
         });
         return contractAddress;
     }

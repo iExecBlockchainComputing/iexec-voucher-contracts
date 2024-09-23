@@ -63,6 +63,23 @@ const config: HardhatUserConfig = {
             },
             gasPrice: 0, // Get closer to Bellecour network
         },
+        bellecour: {
+            chainId: 134,
+            url: 'https://bellecour.iex.ec',
+            accounts: {
+                mnemonic: process.env.PROD_MNEMONIC || '',
+            },
+            gasPrice: 0,
+            gas: 6700000,
+            // npx hardhat --network bellecour etherscan-verify
+            // See: https://github.com/wighawag/hardhat-deploy?tab=readme-ov-file#4-hardhat-etherscan-verify
+            verify: {
+                etherscan: {
+                    apiUrl: 'https://blockscout.bellecour.iex.ec/api',
+                    apiKey: 'https://blockscout.bellecour.iex.ec/',
+                },
+            },
+        },
     },
     namedAccounts: {
         deployer: {
