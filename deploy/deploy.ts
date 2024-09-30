@@ -1,10 +1,12 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
+import * as helpers from '@nomicfoundation/hardhat-network-helpers';
 import { ContractFactory } from 'ethers';
 import { deployments, ethers, upgrades } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import deploymentConfig from '../config/deployment';
+import { isLocalFork } from '../hardhat.config';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import {
@@ -17,12 +19,20 @@ import {
 } from '../typechain-types';
 
 export default async function (hre: HardhatRuntimeEnvironment) {
+    if (isLocalFork) {
+        /**
+         * This fixes following issue when deploying to a local Bellecour fork:
+         * `ProviderError: No known hardfork for execution on historical block [...] in chain with id 134.`
+         * See: https://github.com/NomicFoundation/hardhat/issues/5511#issuecomment-2288072104
+         */
+        await helpers.mine();
+    }
     const { deployer, manager, minter } = await hre.getNamedAccounts();
     await deployAll(deployer, manager, minter);
 }
 
 export async function deployAll(
-    admin: string,
+    upgrader: string,
     manager: string,
     minter: string,
     iexecPoco?: string,
@@ -30,45 +40,45 @@ export async function deployAll(
     console.log(`Deploying all contracts related to voucher..`);
     const chainId = (await ethers.provider.getNetwork()).chainId.toString();
     console.log('ChainId:', chainId);
-    console.log(`Using admin address: ${admin}`);
+    console.log(`Using upgrader address: ${upgrader}`);
     console.log(`Using manager address: ${manager}`);
     console.log(`Using minter address: ${minter}`);
     const config = await getDeploymentConfig(Number(chainId));
     iexecPoco = iexecPoco || config.pocoAddress;
     console.log(`Using PoCo address: ${iexecPoco}`);
     return await (config.factory
-        ? deployAllWithFactory(admin, manager, minter, iexecPoco, config.salt || ethers.ZeroHash)
-        : deployAllWithEOA(admin, manager, minter, iexecPoco));
+        ? deployAllWithFactory(upgrader, manager, minter, iexecPoco, config.salt || ethers.ZeroHash)
+        : deployAllWithEOA(upgrader, manager, minter, iexecPoco));
 }
 
 /**
  * Deploy all contracts related to voucher through a generic factory.
  */
 async function deployAllWithFactory(
-    admin: string,
+    upgrader: string,
     manager: string,
     minter: string,
     iexecPoco: string,
     salt: string,
 ) {
-    const adminSigner = await ethers.getSigner(admin);
+    const upgraderSigner = await ethers.getSigner(upgrader);
     const factoryConfig = require('@amxx/factory/deployments/GenericFactory.json');
     const factoryAddress = factoryConfig.address;
     if ((await ethers.provider.getCode(factoryAddress)) == '0x') {
         console.log('Deploying factory on this network..');
-        await adminSigner
+        await upgraderSigner
             .sendTransaction({ to: factoryConfig.deployer, value: factoryConfig.cost })
             .then((tx) => tx.wait());
         await ethers.provider.broadcastTransaction(factoryConfig.tx).then((tx) => tx.wait());
     }
-    const genericFactory = GenericFactory_shanghai__factory.connect(factoryAddress, adminSigner);
+    const genericFactory = GenericFactory_shanghai__factory.connect(factoryAddress, upgraderSigner);
     console.log(`Factory: ${factoryAddress}`);
     console.log(`Salt: ${salt}`);
     const voucherImplAddress = await deployWithFactory('VoucherImpl', new Voucher__factory(), []);
     const voucherUpgradableBeaconAddress = await deployWithFactory(
         'VoucherUpgradeableBeacon',
         new UpgradeableBeacon__factory(),
-        [voucherImplAddress, admin],
+        [voucherImplAddress, upgrader],
     );
 
     // Proxy needs to be registered in case an upgrade is performed later
@@ -85,7 +95,7 @@ async function deployAllWithFactory(
         [
             voucherHubImplAddress,
             VoucherHub__factory.createInterface().encodeFunctionData('initialize', [
-                admin,
+                upgrader,
                 manager,
                 minter,
                 iexecPoco,

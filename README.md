@@ -28,3 +28,16 @@ Run:
 ```
 npx hardhat deploy --network <name>
 ```
+
+## Local Bellecour fork
+
+```
+LOCAL_FORK=true MNEMONIC=<mnemonic> npx hardhat deploy --network hardhat
+```
+
+## Bellecour
+
+With appropriate deployer key:
+```
+npx hardhat deploy --network bellecour
+```

@@ -9,11 +9,13 @@ import { HardhatUserConfig } from 'hardhat/config';
 import {
     defaultHardhatNetworkParams,
     defaultLocalhostNetworkParams,
+    HARDHAT_NETWORK_MNEMONIC,
 } from 'hardhat/internal/core/config/default-config';
 import 'solidity-docgen';
 
 const managerAccount = Number(process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
 const minterAccount = Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
+export const isLocalFork = process.env.LOCAL_FORK == 'true';
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -45,13 +47,25 @@ const config: HardhatUserConfig = {
     networks: {
         hardhat: {
             hardfork: 'berlin', // No EIP-1559 before London fork
+            accounts: {
+                mnemonic: process.env.MNEMONIC || HARDHAT_NETWORK_MNEMONIC,
+            },
+            ...(isLocalFork && {
+                forking: {
+                    url: 'https://bellecour.iex.ec',
+                },
+                chainId: 134,
+            }),
             gasPrice: 0,
             blockGasLimit: 6_700_000,
         },
         'external-hardhat': {
             ...defaultHardhatNetworkParams,
             ...defaultLocalhostNetworkParams,
-            accounts: 'remote',
+            accounts: 'remote', // will use accounts set in hardhat network config
+            ...(isLocalFork && {
+                chainId: 134,
+            }),
             gasPrice: 0,
         },
         'dev-native': {
@@ -65,9 +79,10 @@ const config: HardhatUserConfig = {
         bellecour: {
             chainId: 134,
             url: 'https://bellecour.iex.ec',
-            accounts: {
-                mnemonic: process.env.PROD_MNEMONIC || '',
-            },
+            accounts: [
+                process.env.PROD_PRIVATE_KEY ||
+                    '0x0000000000000000000000000000000000000000000000000000000000000000',
+            ],
             gasPrice: 0,
             gas: 6700000,
         },
@@ -75,18 +90,19 @@ const config: HardhatUserConfig = {
     namedAccounts: {
         deployer: {
             default: 0,
+            134: '0xA0C07ad0257522211c6359EC8A4EB5d21A4A1A14', // Bellecour & local fork
         },
         manager: {
-            hardhat: 1,
-            'external-hardhat': 1,
+            31337: 1, // hardhat & external-hardhat without local fork
             'dev-native': 1,
             localhost: managerAccount,
+            134: '0xA0C1939182b454911b78f9b087D5444d7d0E82E3', // Bellecour & local fork
         },
         minter: {
-            hardhat: 2,
-            'external-hardhat': 2,
+            31337: 2, // hardhat & external-hardhat without local fork
             'dev-native': 2,
             localhost: minterAccount,
+            134: '0xA0C26578F762a06c14A8153F87D0EAA2fBd036af', // Bellecour & local fork
         },
     },
     dependencyCompiler: {
