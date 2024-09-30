@@ -7,7 +7,6 @@ import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
 import { HardhatUserConfig } from 'hardhat/config';
 import {
-    HARDHAT_NETWORK_MNEMONIC,
     defaultHardhatNetworkParams,
     defaultLocalhostNetworkParams,
 } from 'hardhat/internal/core/config/default-config';
@@ -22,6 +21,7 @@ const config: HardhatUserConfig = {
             {
                 version: '0.8.27',
                 settings: {
+                    evmVersion: 'berlin',
                     /**
                      * Enable Intermediate Representation (IR) to reduce `Stack too deep` occurrences
                      * at compile time (e.g.: too many local variables in `matchOrdersBoost`).
@@ -51,9 +51,8 @@ const config: HardhatUserConfig = {
         'external-hardhat': {
             ...defaultHardhatNetworkParams,
             ...defaultLocalhostNetworkParams,
-            accounts: {
-                mnemonic: HARDHAT_NETWORK_MNEMONIC,
-            },
+            accounts: 'remote',
+            gasPrice: 0,
         },
         'dev-native': {
             chainId: 65535,
@@ -62,6 +61,15 @@ const config: HardhatUserConfig = {
                 mnemonic: process.env.MNEMONIC || '',
             },
             gasPrice: 0, // Get closer to Bellecour network
+        },
+        bellecour: {
+            chainId: 134,
+            url: 'https://bellecour.iex.ec',
+            accounts: {
+                mnemonic: process.env.PROD_MNEMONIC || '',
+            },
+            gasPrice: 0,
+            gas: 6700000,
         },
     },
     namedAccounts: {
