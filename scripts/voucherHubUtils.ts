@@ -94,6 +94,6 @@ export async function getExpectedVoucherProxyCodeHash(voucherBeaconAddress: stri
          * Note: Look very carefully before updating this value to avoid messing with
          * existing vouchers already deployed in production.
          */
-        return '0xba1aec6240a4c35e4711b8ed9013b7204c7d65e1caa6f364b3793946146e8aaf';
+        return '0x1891638e9af48f5f31af8ab5c97eaccc41dcb99bf8bdd8909759f674e4a0a9a6';
     }
 }
