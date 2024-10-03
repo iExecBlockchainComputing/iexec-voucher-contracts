@@ -16,6 +16,10 @@ import 'solidity-docgen';
 const managerAccount = Number(process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
 const minterAccount = Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
 export const isLocalFork = process.env.LOCAL_FORK == 'true';
+const bellecourBlockscoutUrl =
+    process.env.BLOCKSCOUT_VERSION == 'v5'
+        ? 'https://blockscout.bellecour.iex.ec'
+        : 'https://blockscout-v6.bellecour.iex.ec'; // Use Blockscout v6 by default
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -86,6 +90,21 @@ const config: HardhatUserConfig = {
             gasPrice: 0,
             gas: 6700000,
         },
+    },
+    etherscan: {
+        apiKey: {
+            bellecour: '<>', // a non-empty string is needed by the plugin.
+        },
+        customChains: [
+            {
+                network: 'bellecour',
+                chainId: 134,
+                urls: {
+                    apiURL: `${bellecourBlockscoutUrl}/api`,
+                    browserURL: bellecourBlockscoutUrl,
+                },
+            },
+        ],
     },
     namedAccounts: {
         deployer: {

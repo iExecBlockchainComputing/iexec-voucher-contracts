@@ -29,19 +29,19 @@ Run:
 npx hardhat deploy --network <name>
 ```
 
-## Local Bellecour fork
+#### Local Bellecour fork
 
 ```
 LOCAL_FORK=true MNEMONIC=<mnemonic> npx hardhat deploy --network hardhat
 ```
 
-## Bellecour
+#### Bellecour
 
 With appropriate deployer key:
 ```
 npx hardhat deploy --network bellecour
 ```
-
+- Logs
 ```
 Deploying all contracts related to voucher..
 ChainId: 134
@@ -55,4 +55,18 @@ VoucherImpl: 0xf59b25A6149f1DA76470A6300aEc420540127E62
 VoucherUpgradeableBeacon: 0xFC43930c7bFb6499A692fcFC7199Ea5E68a3d9F8 
 VoucherHubImpl: 0x7b5947B5e49eB2F17f35f55cB48C2a3637F7c80F 
 VoucherHubERC1967Proxy: 0x3137B6DF4f36D338b82260eDBB2E7bab034AFEda
+```
+
+### Verify contracts
+
+- Blockscout v5
+
+```
+BLOCKSCOUT_VERSION=v5 npx hardhat run ./scripts/verify.ts --network bellecour
+```
+
+- Blockscout v6
+
+```
+npx hardhat run ./scripts/verify.ts --network bellecour
 ```
