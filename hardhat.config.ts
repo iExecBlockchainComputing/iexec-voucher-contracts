@@ -5,13 +5,14 @@ import '@nomicfoundation/hardhat-toolbox';
 import '@openzeppelin/hardhat-upgrades';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
-import { HardhatUserConfig } from 'hardhat/config';
+import { HardhatUserConfig, task } from 'hardhat/config';
 import {
+    HARDHAT_NETWORK_MNEMONIC,
     defaultHardhatNetworkParams,
     defaultLocalhostNetworkParams,
-    HARDHAT_NETWORK_MNEMONIC,
 } from 'hardhat/internal/core/config/default-config';
 import 'solidity-docgen';
+import { forceZeroGasPriceWithSolidityCoverage } from './scripts/utils/modify-solidity-coverage-lib-api-js';
 
 const managerAccount = Number(process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
 const minterAccount = Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
@@ -138,5 +139,10 @@ const config: HardhatUserConfig = {
         exclude: ['mocks', 'NonTransferableERC20Upgradeable.sol', 'beacon/VoucherProxy.sol'],
     },
 };
+
+task('coverage').setAction((_, {}, runSuper) => {
+    forceZeroGasPriceWithSolidityCoverage();
+    return runSuper();
+});
 
 export default config;
