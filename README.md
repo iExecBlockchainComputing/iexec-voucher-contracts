@@ -1,4 +1,4 @@
-iExec Voucher contracts
+# iExec Voucher contracts
 
 [![codecov](https://codecov.io/github/iExecBlockchainComputing/iexec-voucher-contracts/graph/badge.svg)](https://codecov.io/github/iExecBlockchainComputing/iexec-voucher-contracts)
 
