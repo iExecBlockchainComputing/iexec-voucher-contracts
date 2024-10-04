@@ -1,5 +1,5 @@
 {
-  "name": "iexec-voucher-contracts",
+  "name": "@iexec/voucher-contracts",
   "version": "1.0.0-alpha.0",
   "description": "Contracts related to iExec Voucher",
   "repository": {
