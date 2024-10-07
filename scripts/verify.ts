@@ -1,0 +1,20 @@
+import fs from 'fs';
+import hre, { deployments } from 'hardhat';
+import path from 'path';
+
+(async () => {
+    const jsonExtension = '.json';
+    const contractNames = fs
+        .readdirSync(path.resolve(__dirname, `../deployments/${hre.network.name}`))
+        .filter((file) => file.endsWith(jsonExtension))
+        .map((filePath) => filePath.replace(jsonExtension, ''));
+    console.log(`Contracts to verify: ${contractNames}`);
+    for (const contractName of contractNames) {
+        console.log(`Verifying ${contractName}..`);
+        const { address, args } = await deployments.get(contractName);
+        await hre.run('verify:verify', {
+            address,
+            constructorArguments: args,
+        });
+    }
+})();

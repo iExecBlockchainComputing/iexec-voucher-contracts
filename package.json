@@ -1,0 +1,61 @@
+{
+  "name": "@iexec/voucher-contracts",
+  "version": "1.0.0",
+  "description": "Contracts related to iExec Voucher",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iExecBlockchainComputing/iexec-voucher-contracts.git"
+  },
+  "author": "iExec",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/iExecBlockchainComputing/iexec-voucher-contracts/issues"
+  },
+  "files": [
+    "/contracts",
+    "!/contracts/mocks/**/*",
+    "/artifacts/contracts",
+    "!/artifacts/contracts/**/*.dbg.json",
+    "!/artifacts/contracts/mocks/**/*",
+    "/deployments"
+  ],
+  "homepage": "https://github.com/iExecBlockchainComputing/iexec-voucher-contracts#readme",
+  "scripts": {
+    "prepare": "husky",
+    "build": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "test-ci": "npm run test && FACTORY=false npm run test",
+    "coverage": "npx hardhat coverage",
+    "format": "npx prettier --write",
+    "doc": "npx hardhat docgen",
+    "uml": "./scripts/utils/sol2uml.sh"
+  },
+  "lint-staged": {
+    "*.{js,ts,sol}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@amxx/factory": "^1.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/hardhat-upgrades": "^3.2.1",
+    "ethers": "^6.13.2",
+    "hardhat": "^2.22.10",
+    "hardhat-dependency-compiler": "^1.2.1",
+    "hardhat-deploy": "^0.12.4",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "prettier-plugin-organize-imports": "^4.0.0",
+    "prettier-plugin-solidity": "^1.4.1",
+    "sol2uml": "^2.5.19",
+    "solidity-docgen": "^0.6.0-beta.36"
+  },
+  "devDependencies_comment": {
+    "@sol2uml": "UML generation does not work properly after v2.5.19. Try before bump."
+  },
+  "dependencies": {
+    "@iexec/poco": "^5.5.0",
+    "@openzeppelin/contracts-upgradeable": "^5.0.2"
+  }
+}
