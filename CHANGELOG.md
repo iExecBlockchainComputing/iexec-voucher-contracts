@@ -1,6 +1,14 @@
 # Changelog
 
 ## vNEXT
+- 
+
+## v1.0.0
+
+### What's new?
+- Allow users to access resources of the iExec network via a sponsorship voucher.
+
+### More details
 - Upgrade Solidity Compiler to `v0.8.27`. (#45)
 - Bump dependencies: (#44)
     - `@openzeppelin/hardhat-upgrades`, `hardhat`, `ethers`, `prettier`, and others [minor version bump]

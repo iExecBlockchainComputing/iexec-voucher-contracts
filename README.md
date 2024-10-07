@@ -1,4 +1,4 @@
-# iexec-voucher-contracts
+# iExec Voucher contracts
 
 [![codecov](https://codecov.io/github/iExecBlockchainComputing/iexec-voucher-contracts/graph/badge.svg)](https://codecov.io/github/iExecBlockchainComputing/iexec-voucher-contracts)
 
@@ -27,4 +27,31 @@ Deployment configuration can also be provided/overridden using env variables:
 Run:
 ```
 npx hardhat deploy --network <name>
+```
+
+#### Local Bellecour fork
+
+```
+LOCAL_FORK=true MNEMONIC=<mnemonic> npx hardhat deploy --network hardhat
+```
+
+#### Bellecour
+
+With appropriate deployer key:
+```
+npx hardhat deploy --network bellecour
+```
+
+### Verify contracts
+
+- Blockscout v5
+
+```
+BLOCKSCOUT_VERSION=v5 npx hardhat run ./scripts/verify.ts --network bellecour
+```
+
+- Blockscout v6
+
+```
+npx hardhat run ./scripts/verify.ts --network bellecour
 ```

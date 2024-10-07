@@ -1,6 +1,6 @@
 {
-  "name": "iexec-voucher-contracts",
-  "version": "0.1.0",
+  "name": "@iexec/voucher-contracts",
+  "version": "1.0.0",
   "description": "Contracts related to iExec Voucher",
   "repository": {
     "type": "git",
@@ -11,9 +11,16 @@
   "bugs": {
     "url": "https://github.com/iExecBlockchainComputing/iexec-voucher-contracts/issues"
   },
+  "files": [
+    "/contracts",
+    "!/contracts/mocks/**/*",
+    "/artifacts/contracts",
+    "!/artifacts/contracts/**/*.dbg.json",
+    "!/artifacts/contracts/mocks/**/*",
+    "/deployments"
+  ],
   "homepage": "https://github.com/iExecBlockchainComputing/iexec-voucher-contracts#readme",
   "scripts": {
-    "postinstall": "ts-node scripts/utils/modify-solidity-coverage-lib-api-js.ts",
     "prepare": "husky",
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
@@ -48,10 +55,7 @@
     "@sol2uml": "UML generation does not work properly after v2.5.19. Try before bump."
   },
   "dependencies": {
-    "@iexec/poco": "github:iExecBlockchainComputing/PoCo#develop",
+    "@iexec/poco": "^5.5.0",
     "@openzeppelin/contracts-upgradeable": "^5.0.2"
-  },
-  "dependencies_comment": {
-    "@iexec/poco": "TODO: Use npm dependency when next version is released"
   }
 }
