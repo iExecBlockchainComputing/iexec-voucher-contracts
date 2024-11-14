@@ -19,8 +19,8 @@ const minterAccount = Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || 
 export const isLocalFork = process.env.LOCAL_FORK == 'true';
 const bellecourBlockscoutUrl =
     process.env.BLOCKSCOUT_VERSION == 'v5'
-        ? 'https://blockscout.bellecour.iex.ec'
-        : 'https://blockscout-v6.bellecour.iex.ec'; // Use Blockscout v6 by default
+        ? 'https://blockscout-v5.bellecour.iex.ec' // to be removed in 3 months
+        : 'https://blockscout.bellecour.iex.ec'; // Use Blockscout v6 by default
 
 const config: HardhatUserConfig = {
     solidity: {
