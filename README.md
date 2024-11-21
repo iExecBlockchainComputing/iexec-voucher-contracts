@@ -44,14 +44,6 @@ npx hardhat deploy --network bellecour
 
 ### Verify contracts
 
-- Blockscout v5
-
-```
-BLOCKSCOUT_VERSION=v5 npx hardhat run ./scripts/verify.ts --network bellecour
-```
-
-- Blockscout v6
-
 ```
 npx hardhat run ./scripts/verify.ts --network bellecour
 ```
