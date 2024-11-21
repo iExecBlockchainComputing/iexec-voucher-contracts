@@ -1,7 +1,7 @@
 # Changelog
 
 ## vNEXT
-- 
+- Remove references to blockscout v5. (#49)
 
 ## v1.0.0
 
