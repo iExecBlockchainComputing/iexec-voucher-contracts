@@ -17,10 +17,7 @@ import { forceZeroGasPriceWithSolidityCoverage } from './scripts/utils/modify-so
 const managerAccount = Number(process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
 const minterAccount = Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
 export const isLocalFork = process.env.LOCAL_FORK == 'true';
-const bellecourBlockscoutUrl =
-    process.env.BLOCKSCOUT_VERSION == 'v5'
-        ? 'https://blockscout.bellecour.iex.ec'
-        : 'https://blockscout-v6.bellecour.iex.ec'; // Use Blockscout v6 by default
+const bellecourBlockscoutUrl = 'https://blockscout.bellecour.iex.ec';
 
 const config: HardhatUserConfig = {
     solidity: {
