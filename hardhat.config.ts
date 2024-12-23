@@ -133,7 +133,14 @@ const config: HardhatUserConfig = {
     docgen: {
         templates: 'docs/templates',
         pages: 'items',
-        exclude: ['mocks', 'NonTransferableERC20Upgradeable.sol', 'beacon/VoucherProxy.sol'],
+        exclude: [
+            'mocks',
+            'NonTransferableERC20Upgradeable.sol',
+            'beacon/VoucherProxy.sol',
+            'contracts/beacon/IVoucherV1.sol',
+            'contracts/beacon/VoucherV1.sol',
+            'contracts/VoucherHubV1.sol',
+        ],
     },
 };
 
