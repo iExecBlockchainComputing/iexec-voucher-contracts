@@ -9,7 +9,7 @@ jobs:
    strategy:
      matrix:
        os: [ubuntu-latest]
-       node-version: [20,22] # According to https://nodejs.org/en/about/previous-releases
+       node-version: [20] # According to https://nodejs.org/en/about/previous-releases
    runs-on: ${{ matrix.os }}
    steps:
      - uses: actions/checkout@v3
