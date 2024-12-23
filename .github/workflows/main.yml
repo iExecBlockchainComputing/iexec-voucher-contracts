@@ -2,14 +2,14 @@ name: Voucher Smart Contract CI
 
 on:
  push:
-   branches: [main, "**"]
+   branches: ["**"]
 
 jobs:
  default:
    strategy:
      matrix:
        os: [ubuntu-latest, macos-latest]
-       node-version: [18, 20]
+       node-version: [20]
    runs-on: ${{ matrix.os }}
    steps:
      - uses: actions/checkout@v3
@@ -36,28 +36,24 @@ jobs:
            --chain-id 134 --gas-limit 6700000 --gas-price 0
 
      - name: Wait for Fork
-       if: matrix.os == 'ubuntu-latest'
+       timeout-minutes: 2
        run: |
          while ! nc -z 127.0.0.1 8545; do sleep 1; done
          echo "Bellecour fork ready"
          
      - name: Run Tests
-       if: matrix.os == 'ubuntu-latest'
        run: npm run test-ci
        
      - name: Coverage
-       if: matrix.os == 'ubuntu-latest'
        run: npm run coverage
 
      - name: Upload Coverage
-       if: matrix.os == 'ubuntu-latest'
        uses: codecov/codecov-action@v4.0.1
        with:
          token: ${{ secrets.CODECOV_TOKEN }}
          slug: iExecBlockchainComputing/iexec-voucher-contracts
 
      - name: Slither Analysis
-       if: matrix.os == 'ubuntu-latest'
        uses: crytic/slither-action@v0.4.0
        with:
          target: "contracts/"
@@ -67,7 +63,6 @@ jobs:
          sarif: results.sarif
 
      - name: Upload SARIF
-       if: matrix.os == 'ubuntu-latest'
        uses: github/codeql-action/upload-sarif@v3
        with:
          sarif_file: results.sarif
