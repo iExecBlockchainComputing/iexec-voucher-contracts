@@ -9,12 +9,12 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {AccessControlDefaultAdminRulesUpgradeable} from "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import {Voucher} from "./beacon/Voucher.sol";
+import {VoucherV1} from "./beacon/VoucherV1.sol";
 import {VoucherProxy} from "./beacon/VoucherProxy.sol";
 import {NonTransferableERC20Upgradeable} from "./NonTransferableERC20Upgradeable.sol";
 import {IVoucherHub} from "./IVoucherHub.sol";
 
-contract VoucherHub is
+contract VoucherHubV1 is
     AccessControlDefaultAdminRulesUpgradeable,
     UUPSUpgradeable,
     IVoucherHub,
@@ -172,7 +172,7 @@ contract VoucherHub is
         // Initialize the created proxy contract.
         // The proxy contract does a delegatecall to its implementation.
         // Re-Entrancy safe because the target contract is controlled.
-        Voucher(voucherAddress).initialize(owner, address(this), expiration, voucherType);
+        VoucherV1(voucherAddress).initialize(owner, address(this), expiration, voucherType);
         _mint(voucherAddress, value); // VCHR
         $._isVoucher[voucherAddress] = true;
         emit VoucherCreated(voucherAddress, owner, voucherType, expiration, value);
@@ -190,8 +190,9 @@ contract VoucherHub is
         require($._isVoucher[voucher], "VoucherHub: unknown voucher");
         _mint(voucher, value); // VCHR
         _transferFundsToVoucherOnPoco(voucher, value); // SRLC
-        uint256 expiration = block.timestamp + $._voucherTypes[Voucher(voucher).getType()].duration;
-        Voucher(voucher).setExpiration(expiration);
+        uint256 expiration = block.timestamp +
+            $._voucherTypes[VoucherV1(voucher).getType()].duration;
+        VoucherV1(voucher).setExpiration(expiration);
         emit VoucherToppedUp(voucher, expiration, value);
     }
 
@@ -269,7 +270,7 @@ contract VoucherHub is
         require(amount > 0, "VoucherHub: nothing to drain");
         _burn(voucher, amount);
         emit VoucherDrained(voucher, amount);
-        Voucher(voucher).drain(amount);
+        VoucherV1(voucher).drain(amount);
     }
 
     /**

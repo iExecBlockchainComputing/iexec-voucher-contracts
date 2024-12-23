@@ -13,7 +13,7 @@ import {IexecPocoBoostAccessors} from "@iexec/poco/contracts/modules/interfaces/
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IVoucherHub} from "../IVoucherHub.sol";
-import {IVoucher} from "./IVoucher.sol";
+import {IVoucherV1} from "./IVoucherV1.sol";
 
 /**
  * @title Implementation of the voucher contract.
@@ -21,7 +21,7 @@ import {IVoucher} from "./IVoucher.sol";
  *  - This contract and the Beacon are deployed using "Upgrades" plugin of OZ.
  *  - Vouchers ownership must not be transferable.
  */
-contract Voucher is Initializable, IVoucher {
+contract VoucherV1 is Initializable, IVoucherV1 {
     // keccak256(abi.encode(uint256(keccak256("iexec.voucher.storage.Voucher")) - 1))
     // & ~bytes32(uint256(0xff));
     bytes32 private constant VOUCHER_STORAGE_LOCATION =
@@ -214,8 +214,7 @@ contract Voucher is Initializable, IVoucher {
         if (task.status != IexecLibCore_v5.TaskStatusEnum.FAILED) {
             IexecPoco2(iexecPoco).claim(taskId);
         }
-        bytes32 dealId = task.dealid;
-        IexecLibCore_v5.Deal memory deal = IexecPocoAccessors(iexecPoco).viewDeal(dealId);
+        IexecLibCore_v5.Deal memory deal = IexecPocoAccessors(iexecPoco).viewDeal(task.dealid);
         // If the deal was matched by the voucher, then the voucher should be refunded.
         // If the deal was partially or not sponsored by the voucher, then the requester
         // should be refunded.
@@ -230,7 +229,7 @@ contract Voucher is Initializable, IVoucher {
                 deal.requester
             );
         }
-        emit TaskClaimedWithVoucher(taskId, dealId);
+        emit TaskClaimedWithVoucher(taskId);
     }
 
     /**
@@ -263,7 +262,7 @@ contract Voucher is Initializable, IVoucher {
                 deal.requester
             );
         }
-        emit TaskClaimedWithVoucher(taskId, dealId);
+        emit TaskClaimedWithVoucher(taskId);
     }
 
     /**

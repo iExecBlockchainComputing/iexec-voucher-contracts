@@ -5,7 +5,7 @@ import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.so
 
 pragma solidity ^0.8.20;
 
-interface IVoucher {
+interface IVoucherV2 {
     event ExpirationUpdated(uint256 expiration);
     event AccountAuthorized(address indexed account);
     event AccountUnauthorized(address indexed account);

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-import { loadFixture, time } from '@nomicfoundation/hardhat-toolbox/network-helpers';
+import { loadFixture, setStorageAt, time } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { AddressLike, BigNumberish, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
@@ -12,12 +12,12 @@ import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import {
     IexecPocoMock,
     IexecPocoMock__factory,
-    Voucher,
-    VoucherHub__factory,
+    VoucherHubV1,
+    VoucherHubV1__factory,
     VoucherProxy__factory,
-    Voucher__factory,
+    VoucherV1,
+    VoucherV1__factory,
 } from '../typechain-types';
-import { VoucherHub } from '../typechain-types/contracts';
 import { random } from './utils/address-utils';
 import { FAIL_TYPES } from './utils/test-utils';
 
@@ -35,9 +35,9 @@ const initVoucherHubBalance = 10n * voucherValue; // arbitrary value, but should
 describe('VoucherHub', function () {
     let iexecPoco: string;
     let iexecPocoInstance: IexecPocoMock;
-    let voucherHubAsMinter: VoucherHub;
-    let voucherHubAsManager: VoucherHub;
-    let voucherHubAsAnyone: VoucherHub;
+    let voucherHubAsMinter: VoucherHubV1;
+    let voucherHubAsManager: VoucherHubV1;
+    let voucherHubAsAnyone: VoucherHubV1;
     let voucherHubAddress: string;
     // We define a fixture to reuse the same setup in every test.
     // We use loadFixture to run this setup once, snapshot that state,
@@ -58,7 +58,7 @@ describe('VoucherHub', function () {
             minter.address,
             iexecPoco,
         ));
-        const voucherHub = VoucherHub__factory.connect(voucherHubAddress, anyone);
+        const voucherHub = VoucherHubV1__factory.connect(voucherHubAddress, anyone);
         const beacon = VoucherProxy__factory.connect(voucherBeaconAddress, anyone);
         voucherHubAsMinter = voucherHub.connect(minter);
         voucherHubAsManager = voucherHub.connect(manager);
@@ -66,6 +66,12 @@ describe('VoucherHub', function () {
         await iexecPocoInstance
             .transfer(await voucherHub.getAddress(), initVoucherHubBalance)
             .then((tx) => tx.wait());
+        // Set poco
+        await setStorageAt(
+            await voucherHub.getAddress(),
+            '0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800',
+            iexecPoco,
+        );
         return {
             beacon,
             voucherHub,
@@ -123,15 +129,15 @@ describe('VoucherHub', function () {
     describe('Upgrade', function () {
         it('Should upgrade', async function () {
             const { voucherHub, admin } = await loadFixture(deployFixture);
-            const VoucherHubV2Factory = await ethers.getContractFactory('VoucherHubV2Mock', admin);
+            const VoucherHubV3Factory = await ethers.getContractFactory('VoucherHubV3Mock', admin);
             // Next line should throw if new storage schema is not compatible with previous one
-            await voucherHubUtils.upgradeProxy(voucherHubAddress, VoucherHubV2Factory);
-            const voucherHubV2 = await ethers.getContractAt('VoucherHubV2Mock', voucherHubAddress);
-            await voucherHubV2.initializeV2('bar');
+            await voucherHubUtils.upgradeProxy(voucherHubAddress, VoucherHubV3Factory);
+            const voucherHubV3 = await ethers.getContractAt('VoucherHubV3Mock', voucherHubAddress);
+            await voucherHubV3.initializeV3('bar');
 
-            expect(await voucherHubV2.getAddress()).to.equal(voucherHubAddress);
-            expect(await voucherHubV2.getIexecPoco()).to.equal(iexecPoco); // V1
-            expect(await voucherHubV2.foo()).to.equal('bar'); // V2
+            expect(await voucherHubV3.getAddress()).to.equal(voucherHubAddress);
+            expect(await voucherHubV3.getIexecPoco()).to.equal(iexecPoco); // V2
+            expect(await voucherHubV3.foo()).to.equal('bar'); // V3
         });
 
         it('Should not upgrade when account is unauthorized', async function () {
@@ -312,7 +318,7 @@ describe('VoucherHub', function () {
                 voucherHub.getAddress(),
             );
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
+            const voucher: VoucherV1 = await commonUtils.getVoucher(voucherAddress);
             const voucherInitialCreditBalance = await voucherHub.balanceOf(voucher.getAddress());
             const voucherInitialSrlBalance = await iexecPocoInstance.balanceOf(
                 voucher.getAddress(),
@@ -372,7 +378,7 @@ describe('VoucherHub', function () {
             );
 
             const voucherAddress1 = await voucherHub.getVoucher(voucherOwner1);
-            const voucher1: Voucher = await commonUtils.getVoucher(voucherAddress1);
+            const voucher1: VoucherV1 = await commonUtils.getVoucher(voucherAddress1);
             // Create voucher2.
             await expect(
                 voucherHubAsMinter.createVoucher(voucherOwner2, voucherType, voucherValue),
@@ -382,7 +388,7 @@ describe('VoucherHub', function () {
             );
 
             const voucherAddress2 = await voucherHub.getVoucher(voucherOwner2);
-            const voucher2: Voucher = await commonUtils.getVoucher(voucherAddress2);
+            const voucher2: VoucherV1 = await commonUtils.getVoucher(voucherAddress2);
             expect(voucherHubFirstCreationSrlcBalance).to.equal(
                 voucherHubInitialSrlBalance - BigInt(voucherValue),
             );
@@ -532,7 +538,7 @@ describe('VoucherHub', function () {
             await expect(createVoucherTx).to.emit(voucherHub, 'VoucherCreated');
             // Second initialization should fail.
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
-            const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
+            const voucher: VoucherV1 = await commonUtils.getVoucher(voucherAddress);
             await expect(
                 voucher.initialize(
                     voucherOwner1,
@@ -583,7 +589,7 @@ describe('VoucherHub', function () {
 
     describe('Top up voucher', function () {
         let [voucherOwner1, anyone]: SignerWithAddress[] = [];
-        let voucherHub: VoucherHub;
+        let voucherHub: VoucherHubV1;
         let voucherAddress: string;
 
         beforeEach(async function () {
@@ -601,7 +607,7 @@ describe('VoucherHub', function () {
             const topUpValue = 123n; // arbitrary value
             const voucherCreditBalanceBefore = await voucherHub.balanceOf(voucherAddress);
             const voucherSrlcBalanceBefore = await iexecPocoInstance.balanceOf(voucherAddress);
-            const expirationBefore = await Voucher__factory.connect(
+            const expirationBefore = await VoucherV1__factory.connect(
                 voucherAddress,
                 anyone,
             ).getExpiration();
@@ -618,7 +624,7 @@ describe('VoucherHub', function () {
                 .equal(voucherCreditBalanceBefore + topUpValue)
                 .equal(voucherSrlcBalanceBefore + topUpValue)
                 .equal(voucherSrlcBalanceAfter);
-            expect(await Voucher__factory.connect(voucherAddress, anyone).getExpiration())
+            expect(await VoucherV1__factory.connect(voucherAddress, anyone).getExpiration())
                 .to.be.greaterThan(expirationBefore)
                 .to.be.equal(expectedExpiration);
         });
@@ -656,7 +662,7 @@ describe('VoucherHub', function () {
 
     describe('Debit voucher', function () {
         let [voucherOwner1, voucherOwner2, voucher, anyone]: SignerWithAddress[] = [];
-        let voucherHub: VoucherHub;
+        let voucherHub: VoucherHubV1;
 
         beforeEach(async function () {
             ({ voucherHub, voucherOwner1, voucherOwner2, anyone } =
@@ -820,7 +826,7 @@ describe('VoucherHub', function () {
 
     describe('Refund voucher', function () {
         let [voucherOwner1, voucher, anyone]: SignerWithAddress[] = [];
-        let voucherHub: VoucherHub;
+        let voucherHub: VoucherHubV1;
 
         beforeEach(async function () {
             ({ voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture));
@@ -895,8 +901,8 @@ describe('VoucherHub', function () {
 
     describe('Drain voucher', function () {
         let [voucherOwner1, anyone]: SignerWithAddress[] = [];
-        let voucherHub: VoucherHub;
-        let voucher: Voucher;
+        let voucherHub: VoucherHubV1;
+        let voucher: VoucherV1;
         let voucherAddress: string;
 
         beforeEach(async function () {
@@ -910,7 +916,7 @@ describe('VoucherHub', function () {
                 .createVoucher(voucherOwner1, voucherType, voucherValue)
                 .then((tx) => tx.wait())
                 .then(() => voucherHub.getVoucher(voucherOwner1));
-            voucher = Voucher__factory.connect(voucherAddress, anyone);
+            voucher = VoucherV1__factory.connect(voucherAddress, anyone);
         });
 
         it('Should drain all funds of expired voucher', async function () {
@@ -1067,7 +1073,7 @@ describe('VoucherHub', function () {
     });
 });
 
-async function getVoucherTypeCreatedId(voucherHub: VoucherHub) {
+async function getVoucherTypeCreatedId(voucherHub: VoucherHubV1) {
     const events = await voucherHub.queryFilter(voucherHub.filters.VoucherTypeCreated, -1);
     const typeId = Number(events[0].args[0]);
     return typeId;

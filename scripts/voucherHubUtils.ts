@@ -4,7 +4,7 @@
 import { ContractFactory } from 'ethers';
 import hre, { ethers, upgrades } from 'hardhat';
 import { getDeploymentConfig } from '../deploy/deploy';
-import { VoucherHub, VoucherProxy__factory } from '../typechain-types';
+import { VoucherHubV1, VoucherProxy__factory } from '../typechain-types';
 
 export async function deployHub(
     admin: string,
@@ -12,8 +12,8 @@ export async function deployHub(
     minter: string,
     iexecPoco: string,
     beacon: string,
-): Promise<VoucherHub> {
-    const VoucherHubFactory = await ethers.getContractFactory('VoucherHub');
+): Promise<VoucherHubV1> {
+    const VoucherHubFactory = await ethers.getContractFactory('VoucherHubV1');
     // @dev Type declaration produces a warning until feature is supported by
     // openzeppelin plugin. See "Support TypeChain in deployProxy function":
     // https://github.com/OpenZeppelin/openzeppelin-upgrades/pull/535
@@ -25,19 +25,19 @@ export async function deployHub(
         beacon,
     ]);
     // Workaround openzeppelin-upgrades/pull/535;
-    const voucherHub = contract as VoucherHub;
+    const voucherHub = contract as VoucherHubV1;
     return await voucherHub.waitForDeployment();
 }
 
 export async function upgradeProxy(
     voucherHubAddress: string,
     newVoucherHubImplementationFactory: ContractFactory,
-): Promise<VoucherHub> {
+): Promise<VoucherHubV1> {
     const contractUpgrade: unknown = await upgrades.upgradeProxy(
         voucherHubAddress,
         newVoucherHubImplementationFactory,
     );
-    const voucherHubUpgrade = contractUpgrade as VoucherHub;
+    const voucherHubUpgrade = contractUpgrade as VoucherHubV1;
     await voucherHubUpgrade.waitForDeployment();
     const voucherBeaconAddress = await voucherHubUpgrade.getVoucherBeacon();
     const expectedHash = await getExpectedVoucherProxyCodeHash(voucherBeaconAddress);
@@ -94,6 +94,6 @@ export async function getExpectedVoucherProxyCodeHash(voucherBeaconAddress: stri
          * Note: Look very carefully before updating this value to avoid messing with
          * existing vouchers already deployed in production.
          */
-        return '0x3133f81fb4215eb5a7cb107b3afe28ab6cfdc454c50a157aa2100446b6f1a9fc';
+        return '0x449675c37edf789a1c0fd983ae425bd6ba0cbd9ea33d6a821bc0544fe42a76c7';
     }
 }

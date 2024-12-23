@@ -1,27 +1,37 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
+import * as helpers from '@nomicfoundation/hardhat-network-helpers';
+import { ContractFactory } from 'ethers';
 import { deployments, ethers, upgrades } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import deploymentConfig from '../config/deployment';
+import { isLocalFork } from '../hardhat.config';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import {
-    ERC1967Proxy__factory,
     GenericFactory_shanghai__factory,
     UpgradeableBeacon,
     UpgradeableBeacon__factory,
-    VoucherHub__factory,
-    Voucher__factory,
+    VoucherHubV2__factory,
+    VoucherV2__factory,
 } from '../typechain-types';
 
 export default async function (hre: HardhatRuntimeEnvironment) {
+    if (isLocalFork) {
+        /**
+         * This fixes following issue when deploying to a local Bellecour fork:
+         * `ProviderError: No known hardfork for execution on historical block [...] in chain with id 134.`
+         * See: https://github.com/NomicFoundation/hardhat/issues/5511#issuecomment-2288072104
+         */
+        await helpers.mine();
+    }
     const { deployer, manager, minter } = await hre.getNamedAccounts();
     await deployAll(deployer, manager, minter);
 }
 
 export async function deployAll(
-    admin: string,
+    upgrader: string,
     manager: string,
     minter: string,
     iexecPoco?: string,
@@ -29,70 +39,122 @@ export async function deployAll(
     console.log(`Deploying all contracts related to voucher..`);
     const chainId = (await ethers.provider.getNetwork()).chainId.toString();
     console.log('ChainId:', chainId);
-    console.log(`Using admin address: ${admin}`);
+    console.log(`Using upgrader address: ${upgrader}`);
     console.log(`Using manager address: ${manager}`);
     console.log(`Using minter address: ${minter}`);
     const config = await getDeploymentConfig(Number(chainId));
     iexecPoco = iexecPoco || config.pocoAddress;
     console.log(`Using PoCo address: ${iexecPoco}`);
     return await (config.factory
-        ? deployAllWithFactory(admin, manager, minter, iexecPoco, config.salt || ethers.ZeroHash)
-        : deployAllWithEOA(admin, manager, minter, iexecPoco));
+        ? deployAllWithFactory(upgrader, manager, minter, iexecPoco, config.salt || ethers.ZeroHash)
+        : deployAllWithEOA(upgrader, manager, minter, iexecPoco));
 }
 
 /**
  * Deploy all contracts related to voucher through a generic factory.
  */
 async function deployAllWithFactory(
-    admin: string,
+    upgrader: string,
     manager: string,
     minter: string,
     iexecPoco: string,
     salt: string,
 ) {
-    const adminSigner = await ethers.getSigner(admin);
+    const upgraderSigner = await ethers.getSigner(upgrader);
     const factoryConfig = require('@amxx/factory/deployments/GenericFactory.json');
     const factoryAddress = factoryConfig.address;
     if ((await ethers.provider.getCode(factoryAddress)) == '0x') {
         console.log('Deploying factory on this network..');
-        await adminSigner
+        await upgraderSigner
             .sendTransaction({ to: factoryConfig.deployer, value: factoryConfig.cost })
             .then((tx) => tx.wait());
         await ethers.provider.broadcastTransaction(factoryConfig.tx).then((tx) => tx.wait());
     }
-    const genericFactory = GenericFactory_shanghai__factory.connect(factoryAddress, adminSigner);
+    const genericFactory = GenericFactory_shanghai__factory.connect(factoryAddress, upgraderSigner);
     console.log(`Factory: ${factoryAddress}`);
     console.log(`Salt: ${salt}`);
-    const voucherImplAddress = await deployWithFactory('VoucherImpl', Voucher__factory.bytecode);
+
+    /*
+    const voucherImplAddress = await deployWithFactory('VoucherImpl', new VoucherV1__factory(), []);
     const voucherUpgradableBeaconAddress = await deployWithFactory(
         'VoucherUpgradeableBeacon',
-        await new UpgradeableBeacon__factory()
-            .getDeployTransaction(voucherImplAddress, admin)
-            .then((tx) => tx.data),
+        new UpgradeableBeacon__factory(),
+        [voucherImplAddress, upgrader],
     );
+
     // Proxy needs to be registered in case an upgrade is performed later
-    await upgrades.forceImport(voucherUpgradableBeaconAddress, new Voucher__factory());
+    await upgrades.forceImport(voucherUpgradableBeaconAddress, new VoucherV1__factory());
     // Deploy VoucherHub implementation and proxy
     const voucherHubImplAddress = await deployWithFactory(
         'VoucherHubImpl',
-        VoucherHub__factory.bytecode,
+        new VoucherHubV1__factory(),
+        [],
     );
     const voucherHubERC1967ProxyAddress = await deployWithFactory(
         'VoucherHubERC1967Proxy',
-        await new ERC1967Proxy__factory()
-            .getDeployTransaction(
-                voucherHubImplAddress,
-                VoucherHub__factory.createInterface().encodeFunctionData('initialize', [
-                    admin,
-                    manager,
-                    minter,
-                    iexecPoco,
-                    voucherUpgradableBeaconAddress,
-                ]),
-            )
-            .then((tx) => tx.data),
+        new ERC1967Proxy__factory(),
+        [
+            voucherHubImplAddress,
+            VoucherHubV1__factory.createInterface().encodeFunctionData('initialize', [
+                upgrader,
+                manager,
+                minter,
+                iexecPoco,
+                voucherUpgradableBeaconAddress,
+            ]),
+        ],
     );
-    await upgrades.forceImport(voucherHubERC1967ProxyAddress, new VoucherHub__factory());
+    await upgrades.forceImport(voucherHubERC1967ProxyAddress, new VoucherHubV1__factory());
+    */
+
+    //const voucherUpgradableBeaconAddress = (await deployments.get("VoucherUpgradeableBeacon")).address;
+    //const voucherHubERC1967ProxyAddress = (await deployments.get("VoucherHubERC1967Proxy")).address;
+
+    const voucherUpgradableBeaconAddress = '0xFC43930c7bFb6499A692fcFC7199Ea5E68a3d9F8';
+    const voucherHubERC1967ProxyAddress = '0x3137B6DF4f36D338b82260eDBB2E7bab034AFEda';
+    const previousAdmin = await ethers.getImpersonatedSigner(
+        '0xA0C07ad0257522211c6359EC8A4EB5d21A4A1A14',
+    );
+    const nextAdmin = await ethers.getImpersonatedSigner(
+        '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+    );
+    const voucherHub = VoucherHubV2__factory.connect(
+        voucherHubERC1967ProxyAddress,
+        ethers.provider,
+    );
+    await voucherHub
+        .connect(previousAdmin)
+        .beginDefaultAdminTransfer(nextAdmin)
+        .then((tx) => tx.wait());
+    await voucherHub
+        .connect(nextAdmin)
+        .acceptDefaultAdminTransfer()
+        .then((tx) => tx.wait());
+    await voucherHub
+        .connect(nextAdmin)
+        .grantRole(await voucherHub.UPGRADER_ROLE(), nextAdmin)
+        .then((tx) => tx.wait());
+    await voucherHub
+        .connect(nextAdmin)
+        .grantRole(await voucherHub.MANAGER_ROLE(), '0x70997970C51812dc3A010C7d01b50e0d17dc79C8')
+        .then((tx) => tx.wait());
+    await voucherHub
+        .connect(nextAdmin)
+        .grantRole(await voucherHub.MINTER_ROLE(), '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC')
+        .then((tx) => tx.wait());
+    await UpgradeableBeacon__factory.connect(voucherUpgradableBeaconAddress, previousAdmin)
+        .transferOwnership(nextAdmin)
+        .then((tx) => tx.wait());
+    // Upgrade to Voucher V2
+    await upgrades.upgradeBeacon(
+        voucherUpgradableBeaconAddress,
+        new VoucherV2__factory().connect(nextAdmin),
+    );
+    // Upgrade to VoucherHub V2
+    await upgrades.upgradeProxy(
+        voucherHubERC1967ProxyAddress,
+        new VoucherHubV2__factory().connect(nextAdmin),
+    );
     return {
         voucherHubAddress: voucherHubERC1967ProxyAddress,
         voucherBeaconAddress: voucherUpgradableBeaconAddress,
@@ -104,17 +166,28 @@ async function deployAllWithFactory(
      * @param bytecode Contract bytecode
      * @returns instance address
      */
-    async function deployWithFactory(name: string, bytecode: string) {
+    async function deployWithFactory(
+        name: string,
+        contractFactory: ContractFactory,
+        constructorArgs: any[],
+    ) {
+        let bytecode = (await contractFactory.getDeployTransaction(...constructorArgs)).data;
         const contractAddress = await genericFactory.predictAddress(bytecode, salt);
+        let transactionReceipt;
         let justDeployed = false;
         if ((await ethers.provider.getCode(contractAddress)) == '0x') {
-            await genericFactory.createContract(bytecode, salt).then((tx) => tx.wait());
+            transactionReceipt = await genericFactory
+                .createContract(bytecode, salt)
+                .then((tx) => tx.wait());
             justDeployed = true;
         }
         console.log(`${name}: ${contractAddress} ${justDeployed ? '' : '(previously deployed)'}`);
         await deployments.save(name, {
-            abi: [],
+            abi: (contractFactory as any).constructor.abi,
             address: contractAddress,
+            args: constructorArgs,
+            transactionHash: transactionReceipt?.hash,
+            bytecode,
         });
         return contractAddress;
     }

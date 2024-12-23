@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract VoucherV2Mock is Initializable {
+contract VoucherV3Mock is Initializable {
     /// @custom:storage-location erc7201:iexec.voucher.storage.Voucher
     struct VoucherStorage {
         address _owner;
@@ -32,7 +32,7 @@ contract VoucherV2Mock is Initializable {
      * Initialize new implementation contract.
      * @param newStateVariable test variable.
      */
-    function initializeV2(uint256 newStateVariable) external reinitializer(2) {
+    function initializeV3(uint256 newStateVariable) external reinitializer(3) {
         VoucherStorage storage $ = _getVoucherStorage();
         $._newStateVariable = newStateVariable;
     }

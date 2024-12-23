@@ -3,14 +3,14 @@
 
 import { ContractTransactionReceipt } from 'ethers';
 import { ethers } from 'hardhat';
-import { Voucher, VoucherProxy, VoucherV2Mock } from '../typechain-types';
+import { VoucherProxy, VoucherV1, VoucherV3Mock } from '../typechain-types';
 
-export async function getVoucher(voucherAddress: string): Promise<Voucher> {
-    return await ethers.getContractAt('Voucher', voucherAddress);
+export async function getVoucher(voucherAddress: string): Promise<VoucherV1> {
+    return await ethers.getContractAt('VoucherV1', voucherAddress);
 }
 
-export async function getVoucherV2(voucherAddress: string): Promise<VoucherV2Mock> {
-    return await ethers.getContractAt('VoucherV2Mock', voucherAddress);
+export async function getVoucherV3(voucherAddress: string): Promise<VoucherV3Mock> {
+    return await ethers.getContractAt('VoucherV3Mock', voucherAddress);
 }
 
 export async function getVoucherAsProxy(voucherAddress: string): Promise<VoucherProxy> {

@@ -14,6 +14,7 @@ node_modules
 /coverage.json
 
 /deployments/hardhat
+/deployments/external-hardhat
 /deployments/localhost
 
 /contracts/hardhat-dependency-compiler

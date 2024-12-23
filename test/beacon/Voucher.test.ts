@@ -15,11 +15,11 @@ import {
     IexecPocoMock__factory,
     UpgradeableBeacon,
     UpgradeableBeacon__factory,
-    Voucher,
-    VoucherHub,
-    VoucherHub__factory,
+    VoucherHubV1,
+    VoucherHubV1__factory,
     VoucherProxy__factory,
-    Voucher__factory,
+    VoucherV1,
+    VoucherV1__factory,
 } from '../../typechain-types';
 import { random } from '../utils/address-utils';
 import { PocoMode, TaskStatusEnum, createMockOrder, getTaskId } from '../utils/poco-utils';
@@ -58,9 +58,9 @@ describe('Voucher', function () {
     let beacon: UpgradeableBeacon;
     let iexecPoco: string;
     let iexecPocoInstance: IexecPocoMock;
-    let [voucherHub, voucherHubAsMinter, voucherHubAsManager]: VoucherHub[] = [];
+    let [voucherHub, voucherHubAsMinter, voucherHubAsManager]: VoucherHubV1[] = [];
     let voucherHubAddress: string;
-    let [voucherAsOwner, voucherAsAnyone]: Voucher[] = [];
+    let [voucherAsOwner, voucherAsAnyone]: VoucherV1[] = [];
     let voucherAddress: string;
     let voucherCreationTxReceipt: ContractTransactionReceipt;
     let [appOrder, datasetOrder, workerpoolOrder, requestOrder]: ReturnType<
@@ -104,7 +104,7 @@ describe('Voucher', function () {
             minter.address,
             iexecPoco,
         ));
-        voucherHub = VoucherHub__factory.connect(voucherHubAddress, anyone);
+        voucherHub = VoucherHubV1__factory.connect(voucherHubAddress, anyone);
         beacon = UpgradeableBeacon__factory.connect(voucherBeaconAddress, anyone);
         voucherHubAsMinter = voucherHub.connect(minter);
         voucherHubAsManager = voucherHub.connect(manager);
@@ -120,7 +120,7 @@ describe('Voucher', function () {
             .then((tx) => tx.wait())
             .then((tx) => (voucherCreationTxReceipt = tx!))
             .then(() => voucherHub.getVoucher(voucherOwner1));
-        voucherAsOwner = Voucher__factory.connect(voucherAddress, voucherOwner1);
+        voucherAsOwner = VoucherV1__factory.connect(voucherAddress, voucherOwner1);
         voucherAsAnyone = voucherAsOwner.connect(anyone);
     }
 
@@ -152,13 +152,13 @@ describe('Voucher', function () {
             // Save old implementation address.
             const initialImplementation = await beacon.implementation();
             // Upgrade beacon.
-            const voucherImplV2Factory = await ethers.getContractFactory('VoucherV2Mock', admin);
+            const voucherImplV2Factory = await ethers.getContractFactory('VoucherV3Mock', admin);
             await voucherUtils.upgradeBeacon(beacon, voucherImplV2Factory);
-            const voucher1_V2 = await commonUtils.getVoucherV2(voucherAddress1);
-            const voucher2_V2 = await commonUtils.getVoucherV2(voucherAddress2);
+            const voucher1_V3 = await commonUtils.getVoucherV3(voucherAddress1);
+            const voucher2_V3 = await commonUtils.getVoucherV3(voucherAddress2);
             // Initialize new implementations.
-            await voucher1_V2.initializeV2(1);
-            await voucher2_V2.initializeV2(2);
+            await voucher1_V3.initializeV3(1);
+            await voucher2_V3.initializeV3(2);
 
             // Make sure the implementation has changed.
             expect(await beacon.implementation(), 'Implementation did not change').to.not.equal(
@@ -173,30 +173,30 @@ describe('Voucher', function () {
                 'New implementation mismatch between proxies',
             ).to.be.equal(await voucherAsProxy2.implementation());
             // Make sure the state did not change
-            expect(await voucher1_V2.owner(), 'New implementation owner mismatch').to.be.equal(
+            expect(await voucher1_V3.owner(), 'New implementation owner mismatch').to.be.equal(
                 voucherOwner1,
             );
-            expect(await voucher2_V2.owner(), 'New implementation owner mismatch').to.be.equal(
+            expect(await voucher2_V3.owner(), 'New implementation owner mismatch').to.be.equal(
                 voucherOwner2,
             );
             expect(
-                await voucher1_V2.getExpiration(),
+                await voucher1_V3.getExpiration(),
                 'New implementation expiration mismatch',
             ).to.be.equal(expectedExpirationVoucher1);
             expect(
-                await voucher2_V2.getExpiration(),
+                await voucher2_V3.getExpiration(),
                 'New implementation expiration mismatch',
             ).to.be.equal(expectedExpirationVoucher2);
             // Check new state variable.
-            expect(await voucher1_V2.getNewStateVariable()).to.be.equal(1);
-            expect(await voucher2_V2.getNewStateVariable()).to.be.equal(2);
+            expect(await voucher1_V3.getNewStateVariable()).to.be.equal(1);
+            expect(await voucher2_V3.getNewStateVariable()).to.be.equal(2);
         });
 
         it('Should not upgrade voucher when unauthorized', async function () {
             // Save implementation address.
             const initialImplementation = await beacon.implementation();
             // Try to upgrade beacon.
-            const voucherImplV2Factory = await ethers.getContractFactory('VoucherV2Mock', anyone);
+            const voucherImplV2Factory = await ethers.getContractFactory('VoucherV3Mock', anyone);
             await expect(
                 voucherUtils.upgradeBeacon(beacon, voucherImplV2Factory),
             ).to.revertedWithCustomError(beacon, 'OwnableUnauthorizedAccount');
@@ -214,7 +214,7 @@ describe('Voucher', function () {
                 .deploy(await beacon.getAddress())
                 .then((tx) => tx.waitForDeployment())
                 .then((proxy) => proxy.getAddress())
-                .then((address) => Voucher__factory.connect(address, anyone));
+                .then((address) => VoucherV1__factory.connect(address, anyone));
             await voucher.initialize(anyone.address, voucherHub, expiration, voucherType);
             expect(await voucher.getExpiration()).equal(expiration);
         });

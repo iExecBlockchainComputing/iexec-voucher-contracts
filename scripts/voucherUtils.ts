@@ -6,7 +6,7 @@ import { ethers, upgrades } from 'hardhat';
 import { UpgradeableBeacon } from '../typechain-types';
 
 export async function deployBeaconAndImplementation(admin: string): Promise<UpgradeableBeacon> {
-    const voucherFactory = await ethers.getContractFactory('Voucher');
+    const voucherFactory = await ethers.getContractFactory('VoucherV1');
     // upgrades.deployBeacon() does the following:
     // 1. Deploys the implementation contract.
     // 2. Deploys an instance of oz/UpgradeableBeacon contract.
