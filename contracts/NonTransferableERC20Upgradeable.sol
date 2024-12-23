@@ -32,4 +32,22 @@ contract NonTransferableERC20Upgradeable is ERC20Upgradeable {
     function transferFrom(address, address, uint256) public pure override returns (bool) {
         revert("NonTransferableERC20Upgradeable: Unsupported transferFrom");
     }
+
+    /**
+     * @dev Returns the number of decimal places used for user representation.
+     *
+     * This function defines how token balances are displayed to users. For example,
+     * if `decimals` is set to `2`, a balance of `505` tokens will be displayed as
+     * `5.05` (`505 / 10 ** 2`).
+     *
+     * By default, the standard ERC-20 `decimals` value is `18`. However, this value
+     * is overridden here to `9` to align with the number of decimal places used by
+     * the RLC token. This ensures consistency in how input values are handled
+     * when a voucher is minted.
+     *
+     * @return The number of decimal places (9) used for token representation.
+     */
+    function decimals() public pure override returns (uint8) {
+        return 9;
+    }
 }
