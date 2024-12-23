@@ -1,0 +1,122 @@
+name: Voucher Smart Contract CI
+
+on:
+    push:
+        branches:
+            - main
+            - '**'
+
+jobs:
+    install-deps:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 20
+
+            - name: Install dependencies
+              run: |
+                  node -v
+                  npm -v
+                  npm ci
+
+    bellecour-fork:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Start bellecour fork
+              run: |
+                  docker run -d --name bellecour-fork -p 8545:8545 ghcr.io/foundry-rs/foundry:latest \
+                    anvil --host 0.0.0.0 --port 8545 --hardfork berlin --fork-url https://bellecour.iex.ec --chain-id 134 --gas-limit 6700000 --gas-price 0
+
+    bellecour-fork-healthy:
+        runs-on: ubuntu-latest
+        needs: bellecour-fork
+        steps:
+            - name: Wait for bellecour fork to be ready
+              run: |
+                  while ! nc -z 127.0.0.1 8545; do sleep 1; done
+                  echo "Bellecour fork ready"
+
+    build:
+        runs-on: ubuntu-latest
+        needs: install-deps
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 20
+
+            - name: Build
+              run: npm run build
+
+    check-format:
+        runs-on: ubuntu-latest
+        needs: install-deps
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 20
+
+            - name: Check format
+              run: npm run check-format
+
+    uml-diagrams:
+        runs-on: ubuntu-latest
+        needs: install-deps
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 20
+
+            - name: Generate UML diagrams
+              run: npm run uml
+
+    static-analyzer:
+        runs-on: ubuntu-latest
+        needs: install-deps
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Clone and run static analyzer
+              run: |
+                  git clone https://github.com/Picodes/4naly3er.git
+                  cd 4naly3er
+                  git reset --hard HEAD~1 # FIX issue https://github.com/Picodes/4naly3er/issues/48
+                  yarn install
+                  yarn analyze ../contracts
+
+    hardhat-tests:
+        runs-on: ubuntu-latest
+        needs:
+            - build
+            - bellecour-fork-healthy
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 20
+
+            - name: Run Hardhat tests
+              run: npm run test-ci

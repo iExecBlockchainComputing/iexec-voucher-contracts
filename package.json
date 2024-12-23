@@ -59,6 +59,7 @@
   },
   "dependencies": {
     "@iexec/poco": "^5.5.0",
-    "@openzeppelin/contracts-upgradeable": "^5.0.2"
+    "@openzeppelin/contracts-upgradeable": "^5.0.2",
+    "dotenv": "^16.4.7"
   }
 }

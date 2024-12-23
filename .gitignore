@@ -13,11 +13,12 @@ node_modules
 /coverage
 /coverage.json
 
-/deployments/hardhat
-/deployments/external-hardhat
-/deployments/localhost
+# deployments files
+deployments/*/*
+!deployments/bellecour/
 
 /contracts/hardhat-dependency-compiler
 build/flatten.sol
-deployments/*/*
-!deployments/bellecour/
+
+# openzeppelin local-fork
+.openzeppelin/local-fork

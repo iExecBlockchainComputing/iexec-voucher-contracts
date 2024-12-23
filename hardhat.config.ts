@@ -3,6 +3,7 @@
 
 import '@nomicfoundation/hardhat-toolbox';
 import '@openzeppelin/hardhat-upgrades';
+import 'dotenv/config';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
 import { HardhatUserConfig, task } from 'hardhat/config';
@@ -16,8 +17,8 @@ import { forceZeroGasPriceWithSolidityCoverage } from './scripts/utils/modify-so
 
 const managerAccount = Number(process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
 const minterAccount = Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
-export const isLocalFork = process.env.LOCAL_FORK == 'true';
 const bellecourBlockscoutUrl = 'https://blockscout.bellecour.iex.ec';
+export const isLocalFork = process.env.LOCAL_FORK == 'true';
 
 const bellecourBase = {
     gasPrice: 0,
@@ -128,6 +129,10 @@ const config: HardhatUserConfig = {
             localhost: minterAccount,
             134: '0xA0C26578F762a06c14A8153F87D0EAA2fBd036af', // Bellecour & local fork
         },
+    },
+    // gas reporter
+    gasReporter: {
+        enabled: true,
     },
     dependencyCompiler: {
         paths: [
