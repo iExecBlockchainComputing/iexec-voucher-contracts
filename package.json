@@ -27,6 +27,8 @@
     "build": "hardhat clean && hardhat compile",
     "test": "hardhat test --network local-bellecour-fork",
     "test-ci": "npm run test && FACTORY=false npm run test",
+    "upgrade": "hardhat run ./scripts/upgrade.js",
+    "upgrade-local-fork": "mkdir -p .openzeppelin/local-fork && cp -r .openzeppelin/prod/. .openzeppelin/local-fork && MANIFEST_DEFAULT_DIR=.openzeppelin/local-fork ENV=prod hardhat run ./scripts/upgrade-local-fork.js",
     "coverage": "hardhat coverage",
     "format": "prettier --write '{scripts,test,contracts,deploy,config}/**/*.{js,sol}'",
     "check-format": "prettier --ignore-path .gitignore --check '{scripts,test,contracts}/**/*.{js,sol}'",
