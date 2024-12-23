@@ -46,9 +46,56 @@ export async function deployAll(
     const config = await getDeploymentConfig(Number(chainId));
     iexecPoco = iexecPoco || config.pocoAddress;
     console.log(`Using PoCo address: ${iexecPoco}`);
-    return await (config.factory
-        ? deployAllWithFactory(upgrader, manager, minter, iexecPoco, config.salt || ethers.ZeroHash)
-        : deployAllWithEOA(upgrader, manager, minter, iexecPoco));
+    if (!isLocalFork) {
+        return await (config.factory
+            ? deployAllWithFactory(
+                  upgrader,
+                  manager,
+                  minter,
+                  iexecPoco,
+                  config.salt || ethers.ZeroHash,
+              )
+            : deployAllWithEOA(upgrader, manager, minter, iexecPoco));
+    }
+    console.log('Transferring roles to default hardhat accounts when forking network..');
+    const voucherUpgradableBeaconAddress = '0xFC43930c7bFb6499A692fcFC7199Ea5E68a3d9F8';
+    const voucherHubERC1967ProxyAddress = '0x3137B6DF4f36D338b82260eDBB2E7bab034AFEda';
+    const admin = await ethers.getSigner(upgrader); //'0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+    const voucherHub = VoucherHub__factory.connect(voucherHubERC1967ProxyAddress, admin);
+    const previousAdmin = await ethers.getImpersonatedSigner(
+        await voucherHub.defaultAdmin(), //'0xA0C07ad0257522211c6359EC8A4EB5d21A4A1A14',
+    );
+    await voucherHub
+        .connect(previousAdmin)
+        .beginDefaultAdminTransfer(admin)
+        .then((tx) => tx.wait());
+    await voucherHub.acceptDefaultAdminTransfer().then((tx) => tx.wait());
+    await voucherHub.grantRole(await voucherHub.UPGRADER_ROLE(), upgrader).then((tx) => tx.wait());
+    await voucherHub.grantRole(await voucherHub.MANAGER_ROLE(), manager).then((tx) => tx.wait());
+    await voucherHub.grantRole(await voucherHub.MINTER_ROLE(), minter).then((tx) => tx.wait());
+    await UpgradeableBeacon__factory.connect(voucherUpgradableBeaconAddress, previousAdmin)
+        .transferOwnership(admin)
+        .then((tx) => tx.wait());
+    // Upgrade to Voucher V2
+    await upgrades.upgradeBeacon(
+        voucherUpgradableBeaconAddress,
+        new Voucher__factory().connect(admin),
+    );
+    // Upgrade to VoucherHub V2
+    await upgrades.upgradeProxy(
+        voucherHubERC1967ProxyAddress,
+        new VoucherHub__factory().connect(admin),
+    );
+    // Override Poco address
+    await helpers.setStorageAt(
+        voucherHubERC1967ProxyAddress,
+        '0xfff04942078b704e33df5cf14e409bc5d715ca54e60a675b011b759db89ef800',
+        iexecPoco,
+    );
+    return {
+        voucherHubAddress: voucherHubERC1967ProxyAddress,
+        voucherBeaconAddress: voucherUpgradableBeaconAddress,
+    };
 }
 
 /**
