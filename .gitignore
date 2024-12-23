@@ -19,3 +19,5 @@ node_modules
 
 /contracts/hardhat-dependency-compiler
 build/flatten.sol
+deployments/*/*
+!deployments/bellecour/
