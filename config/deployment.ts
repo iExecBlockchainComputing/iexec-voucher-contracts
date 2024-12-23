@@ -8,6 +8,7 @@ export type DeploymentConfig = {
         factory: boolean;
         salt: string;
         pocoAddress: string;
+        voucherHubAddress?: string; //some chains used doesn't have the voucher deployed
     };
 };
 

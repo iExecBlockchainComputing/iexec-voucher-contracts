@@ -29,7 +29,6 @@ jobs:
        run: npm run uml
 
      - name: Start Bellecour Fork
-       if: matrix.os == 'ubuntu-latest'
        run: |
          docker run -d --name bellecour-fork -p 8545:8545 ghcr.io/foundry-rs/foundry:latest \
            anvil --host 0.0.0.0 --port 8545 --hardfork berlin --fork-url https://bellecour.iex.ec \
@@ -47,6 +46,9 @@ jobs:
      - name: Coverage
        run: npm run coverage
 
+     - name: Run upgrade test
+       run: npm run upgrade-local-fork
+
      - name: Upload Coverage
        uses: codecov/codecov-action@v4.0.1
        with:
@@ -58,11 +60,13 @@ jobs:
        with:
          target: "contracts/"
          slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
-         node-version: "20"
-         fail-on: none
+         fail-on: none # TODO set this to high or other
          sarif: results.sarif
 
      - name: Upload SARIF
        uses: github/codeql-action/upload-sarif@v3
        with:
          sarif_file: results.sarif
+
+     - name: Display Anvil Logs
+       run: docker logs bellecour-fork
