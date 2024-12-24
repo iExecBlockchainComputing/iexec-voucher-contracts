@@ -1,73 +1,77 @@
 name: Voucher Smart Contract CI
 
 on:
- push:
-   branches: ["**"]
+  push:
+    branches: ["**"]
 
 jobs:
- default:
-   strategy:
-     matrix:
-       os: [ubuntu-latest]
-       node-version: [20] # According to https://nodejs.org/en/about/previous-releases
-   runs-on: ${{ matrix.os }}
-   steps:
-     - uses: actions/checkout@v3
-     - uses: actions/setup-node@v3
-       with:
-         node-version: ${{ matrix.node-version }}
-         cache: 'npm'
-     - run: npm ci
-     
-     - name: Build
-       run: npm run build
-       
-     - name: Check Format 
-       run: npm run check-format
-       
-     - name: Generate UML
-       run: npm run uml
+  default:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        node-version: [20]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
 
-     - name: Start Bellecour Fork
-       run: |
-         docker run -d --name bellecour-fork -p 8545:8545 ghcr.io/foundry-rs/foundry:latest \
-           anvil --host 0.0.0.0 --port 8545 --hardfork berlin --fork-url https://bellecour.iex.ec \
-           --chain-id 134 --gas-limit 6700000 --gas-price 0
+      - name: Build
+        run: npm run build
 
-     - name: Wait for Fork
-       timeout-minutes: 2
-       run: |
-         while ! nc -z 127.0.0.1 8545; do sleep 1; done
-         echo "Bellecour fork ready"
-         
-     - name: Run Tests
-       run: npm run test-ci
-       
-     - name: Run Coverage
-       run: npm run coverage
+      - name: Check Format
+        run: npm run check-format
 
-     - name: Run upgrade test
-       run: npm run upgrade-local-fork
+      - name: Generate UML
+        run: npm run uml
 
-     - name: Upload Coverage
-       uses: codecov/codecov-action@v4.0.1
-       with:
-         token: ${{ secrets.CODECOV_TOKEN }}
-         slug: iExecBlockchainComputing/iexec-voucher-contracts
+      # Install Docker on macOS runners
+      - name: Set up Docker on macOS
+        if: runner.os == 'macOS'
+        run: |
+          brew install docker colima
+          colima start
 
-     - name: Slither Analysis
-       uses: crytic/slither-action@v0.4.0
-       with:
-         target: "contracts/"
-         slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
-         fail-on: none # TODO set this to high or other
-         sarif: results.sarif
+      - name: Start Bellecour Fork
+        run: |
+          docker run -d --name bellecour-fork -p 8545:8545 ghcr.io/foundry-rs/foundry:latest \
+            anvil --host 0.0.0.0 --port 8545 --hardfork berlin --fork-url https://bellecour.iex.ec \
+            --chain-id 134 --gas-limit 6700000 --gas-price 0
 
-     - name: Upload SARIF
-       uses: github/codeql-action/upload-sarif@v3
-       with:
-         sarif_file: results.sarif
+      - name: Wait for Fork
+        timeout-minutes: 2
+        run: |
+          while ! nc -z 127.0.0.1 8545; do sleep 1; done
+          echo "Bellecour fork ready"
 
-     - name: Display Anvil Logs
-       run: docker logs bellecour-fork
+      - name: Run Tests
+        run: npm run test-ci
+        continue-on-error: false
 
+      - name: Run Coverage
+        run: npm run coverage
+
+      - name: Run Upgrade Test
+        run: npm run upgrade-local-fork
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: iExecBlockchainComputing/iexec-voucher-contracts
+
+      - name: Slither Analysis
+        uses: crytic/slither-action@v0.4.0
+        with:
+          target: "contracts/"
+          slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
+          fail-on: none # TODO set this to high or other
+          sarif: results.sarif
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
