@@ -8,8 +8,8 @@ jobs:
   default:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        node-version: [20]
+        os: [ubuntu-latest]
+        node-version: [18,20]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -27,11 +27,6 @@ jobs:
 
       - name: Generate UML
         run: npm run uml
-
-      # Install Docker on macOS runners
-      - name: Set up Docker on macOS
-        if: runner.os == 'macOS'
-        uses: douglascamata/setup-docker-macos-action@v1-alpha
 
       - name: Start Bellecour Fork
         run: |
