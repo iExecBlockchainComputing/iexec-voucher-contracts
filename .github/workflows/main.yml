@@ -31,9 +31,7 @@ jobs:
       # Install Docker on macOS runners
       - name: Set up Docker on macOS
         if: runner.os == 'macOS'
-        run: |
-          brew install docker colima
-          colima start
+        uses: douglascamata/setup-docker-macos-action@v1-alpha
 
       - name: Start Bellecour Fork
         run: |
@@ -48,8 +46,7 @@ jobs:
           echo "Bellecour fork ready"
 
       - name: Run Tests
-        run: npm run test-ci
-        continue-on-error: false
+        run: npm run test-ci -- --bail
 
       - name: Run Coverage
         run: npm run coverage
