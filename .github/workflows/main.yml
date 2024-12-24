@@ -41,7 +41,9 @@ jobs:
           echo "Bellecour fork ready"
 
       - name: Run Tests
-        run: npm run test-ci -- --bail
+        run: |
+            set -e
+            npm run test-ci
 
       - name: Run Coverage
         run: npm run coverage
