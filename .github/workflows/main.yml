@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node-version: [18,20]
+        node-version: [20]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -41,9 +41,7 @@ jobs:
           echo "Bellecour fork ready"
 
       - name: Run Tests
-        run: |
-            set -e
-            npm run test-ci
+        run: npm run test
 
       - name: Run Coverage
         run: npm run coverage
