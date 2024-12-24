@@ -31,8 +31,7 @@ async function upgradeVoucherHub() {
         '0x3137B6DF4f36D338b82260eDBB2E7bab034AFEda',
     );
     const voucherHubContract = voucherHub as VoucherHub;
-    const upgraderAddress = await voucherHubContract.defaultAdmin(); // getRoleAdmin should work here
-    console.log('🚀 ~ upgradeVoucherHub ~ defaultAdmin:', upgraderAddress);
+    const upgraderAddress = await voucherHubContract.defaultAdmin();
 
     if (!isProd) {
         console.log('Detected non-production environment. Starting impersonating...');
