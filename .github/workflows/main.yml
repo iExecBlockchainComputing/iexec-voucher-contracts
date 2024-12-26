@@ -43,7 +43,7 @@ jobs:
           echo "Bellecour fork ready"
 
       - name: Run Upgrade Test
-        run: npm run local-fork
+        run: npm run upgrade-local-fork
 
       - name: Run Tests
         run: npm run test --bail
