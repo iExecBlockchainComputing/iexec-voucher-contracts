@@ -21,7 +21,7 @@ const envSchema = z.object({
             'Must be a numeric index if provided',
         ),
     IS_LOCAL_FORK: z.preprocess(
-        (val) => val === 'true' || val === true,
+        (val) => (typeof val === 'string' ? val.toLowerCase() === 'true' : val === true),
         z.boolean().default(false),
     ),
     MNEMONIC: z.string().optional(),
@@ -33,7 +33,10 @@ const envSchema = z.object({
         .string()
         .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address if provided')
         .optional(),
-    FACTORY: z.preprocess((val) => val === 'true' || val === true, z.boolean().default(false)),
+    FACTORY: z.preprocess(
+        (val) => (typeof val === 'string' ? val.toLowerCase() === 'true' : val === true),
+        z.boolean().default(false),
+    ),
 });
 
 export const env = envSchema.parse(process.env);

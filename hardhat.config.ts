@@ -18,6 +18,7 @@ import { forceZeroGasPriceWithSolidityCoverage } from './scripts/utils/modify-so
 const managerAccount = Number(env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
 const minterAccount = Number(env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
 const bellecourBlockscoutUrl = 'https://blockscout.bellecour.iex.ec';
+console.log('🚀 IS_LOCAL_FORK', env.IS_LOCAL_FORK);
 
 const bellecourBase = {
     gasPrice: 0,
