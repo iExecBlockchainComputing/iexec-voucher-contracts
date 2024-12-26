@@ -50,6 +50,13 @@ jobs:
           ls -R .openzeppelin || echo ".openzeppelin directory does not exist"
           mkdir -p .openzeppelin/local-fork && cp -r .openzeppelin/prod/. .openzeppelin/local-fork
           ls -R .openzeppelin || echo ".openzeppelin directory does not exist"
+          cat .openzeppelin/local-fork/unknown-134.json || echo "unknown-134.json does not exist"
+          if diff .openzeppelin/local-fork/unknown-134.json .openzeppelin/prod/unknown-134.json; then
+          echo "Files are identical."
+          else
+            echo "Files differ!" >&2
+            exit 1
+          fi
           export MANIFEST_DEFAULT_DIR=.openzeppelin/local-fork
           echo "MANIFEST_DEFAULT_DIR is set to: $MANIFEST_DEFAULT_DIR"
           npx hardhat run ./scripts/upgrade.ts --network local-bellecour-fork
