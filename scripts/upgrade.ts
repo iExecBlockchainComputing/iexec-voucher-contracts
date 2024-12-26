@@ -1,5 +1,6 @@
 import { ethers, upgrades } from 'hardhat';
 import { getDeploymentConfig } from '../deploy/deploy';
+import { env } from '../env';
 import { VoucherHub } from '../typechain-types';
 import { upgradeProxy } from './voucherHubUtils';
 
@@ -10,12 +11,11 @@ async function upgradeVoucherHub() {
     console.log('ChainId:', chainId);
 
     const config = await getDeploymentConfig(Number(chainId));
-    if (!config.voucherHubAddress && !process.env.IEXEC_VOUCHER_HUB_ADDRESS) {
+    if (!config.voucherHubAddress && !env.IEXEC_VOUCHER_HUB_ADDRESS) {
         throw new Error(`No VoucherHub deployed on the target chain ${chainId}`);
     }
 
-    const voucherHubProxyAddress = (config.voucherHubAddress ||
-        process.env.IEXEC_VOUCHER_HUB_ADDRESS)!;
+    const voucherHubProxyAddress = (config.voucherHubAddress || env.IEXEC_VOUCHER_HUB_ADDRESS)!;
 
     // Fetch proxy admin details
     const VoucherHubFactoryUpgrade = await ethers.getContractFactory('VoucherHub');

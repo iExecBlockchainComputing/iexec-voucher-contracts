@@ -4,9 +4,9 @@
 import { ContractFactory } from 'ethers';
 import hre, { ethers, upgrades } from 'hardhat';
 import { getDeploymentConfig } from '../deploy/deploy';
+import { env } from '../env';
 import { Address, VoucherHub, VoucherProxy__factory } from '../typechain-types';
 import { impersonate, stopImpersonate } from './utils/impersonate';
-import { isFork } from './utils/utils';
 
 export async function deployHub(
     admin: string,
@@ -38,7 +38,7 @@ export async function upgradeProxy(
 ): Promise<VoucherHub> {
     let voucherHubUpgrade: VoucherHub;
 
-    if (isFork(hre.network.name)) {
+    if (env.IS_LOCAL_FORK) {
         console.log('Detected non-production environment. Starting impersonating...');
         await impersonate({
             rpcUrl: hre.network.config.url!,
@@ -91,7 +91,7 @@ export async function upgradeProxy(
 export async function getExpectedVoucherProxyCodeHash(voucherBeaconAddress: string) {
     const chainId = (await ethers.provider.getNetwork()).chainId.toString();
     const config = await getDeploymentConfig(Number(chainId));
-    if (!config.factory || (hre as any).__SOLIDITY_COVERAGE_RUNNING || isFork(hre.network.name)) {
+    if (!config.factory || (hre as any).__SOLIDITY_COVERAGE_RUNNING || env.IS_LOCAL_FORK) {
         /**
          * @dev Voucher proxy code hash is different from the production one:
          * - when running "test" without generic factory since voucher beacon address

@@ -6,15 +6,15 @@ import { ethers } from 'hardhat';
 import { Voucher, VoucherProxy, VoucherV2Mock } from '../typechain-types';
 
 export async function getVoucher(voucherAddress: string): Promise<Voucher> {
-    return await ethers.getContractAt('Voucher', voucherAddress);
+    return ethers.getContractAt('Voucher', voucherAddress) as unknown as Voucher;
 }
 
 export async function getVoucherV2(voucherAddress: string): Promise<VoucherV2Mock> {
-    return await ethers.getContractAt('VoucherV2Mock', voucherAddress);
+    return ethers.getContractAt('VoucherV2Mock', voucherAddress) as unknown as VoucherV2Mock;
 }
 
 export async function getVoucherAsProxy(voucherAddress: string): Promise<VoucherProxy> {
-    return await ethers.getContractAt('VoucherProxy', voucherAddress);
+    return ethers.getContractAt('VoucherProxy', voucherAddress) as unknown as VoucherProxy;
 }
 
 export async function getExpectedExpiration(

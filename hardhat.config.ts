@@ -3,7 +3,6 @@
 
 import '@nomicfoundation/hardhat-toolbox';
 import '@openzeppelin/hardhat-upgrades';
-import 'dotenv/config';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
 import { HardhatUserConfig, task } from 'hardhat/config';
@@ -13,12 +12,12 @@ import {
     defaultLocalhostNetworkParams,
 } from 'hardhat/internal/core/config/default-config';
 import 'solidity-docgen';
+import { env } from './env';
 import { forceZeroGasPriceWithSolidityCoverage } from './scripts/utils/modify-solidity-coverage-lib-api-js';
 
-const managerAccount = Number(process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
-const minterAccount = Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
+const managerAccount = Number(env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
+const minterAccount = Number(env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
 const bellecourBlockscoutUrl = 'https://blockscout.bellecour.iex.ec';
-export const isLocalFork = process.env.LOCAL_FORK == 'true';
 
 const bellecourBase = {
     gasPrice: 0,
@@ -57,9 +56,9 @@ const config: HardhatUserConfig = {
         hardhat: {
             ...bellecourBase,
             accounts: {
-                mnemonic: process.env.MNEMONIC || HARDHAT_NETWORK_MNEMONIC,
+                mnemonic: env.MNEMONIC || HARDHAT_NETWORK_MNEMONIC,
             },
-            ...(isLocalFork && {
+            ...(env.IS_LOCAL_FORK && {
                 forking: {
                     url: 'https://bellecour.iex.ec',
                 },
@@ -70,7 +69,7 @@ const config: HardhatUserConfig = {
             ...defaultHardhatNetworkParams,
             ...defaultLocalhostNetworkParams,
             accounts: 'remote', // will use accounts set in hardhat network config
-            ...(isLocalFork && {
+            ...(env.IS_LOCAL_FORK && {
                 chainId: 134,
             }),
             gasPrice: 0,
@@ -83,7 +82,7 @@ const config: HardhatUserConfig = {
             chainId: 65535,
             url: 'http://localhost:8545',
             accounts: {
-                mnemonic: process.env.MNEMONIC || '',
+                mnemonic: env.MNEMONIC || '',
             },
             gasPrice: 0, // Get closer to Bellecour network
         },
@@ -91,7 +90,7 @@ const config: HardhatUserConfig = {
             chainId: 134,
             url: 'https://bellecour.iex.ec',
             accounts: [
-                process.env.PROD_PRIVATE_KEY ||
+                env.PROD_PRIVATE_KEY ||
                     '0x0000000000000000000000000000000000000000000000000000000000000000',
             ],
             ...bellecourBase,

@@ -25,19 +25,30 @@ Deployment configuration can also be provided/overridden using env variables:
 * `IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX`
 
 Run:
+
 ```
 npx hardhat deploy --network <name>
 ```
 
 #### Local Bellecour fork
 
+Complete the `.env` file with the following variables:
+
 ```
-LOCAL_FORK=true MNEMONIC=<mnemonic> npx hardhat deploy --network hardhat
+IS_LOCAL_FORK=true
+MNEMONIC=<mnemonic>
+```
+
+If a `MNEMONIC` is not provided, the default Hardhat one will be used.
+
+```
+npm run start-fork
 ```
 
 #### Bellecour
 
 With appropriate deployer key:
+
 ```
 npx hardhat deploy --network bellecour
 ```
