@@ -49,7 +49,7 @@ jobs:
         run: npm run test --bail
           
       - name: Run Coverage
-        run: npm run coverage
+        run: npm run coverage #coverage only work on a non-fork hardhat node
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4.0.1
@@ -57,7 +57,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: iExecBlockchainComputing/iexec-voucher-contracts
 
-      - name: Slither Analysis
+      - name: Slither Static Analysis
         uses: crytic/slither-action@v0.4.0
         with:
           target: "contracts/"
