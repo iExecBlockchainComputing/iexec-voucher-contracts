@@ -43,13 +43,13 @@ jobs:
           echo "Bellecour fork ready"
 
       - name: Run Upgrade Test
-        run: npm run upgrade-local-fork
-
-      - name: Run Tests
         env:
           FACTORY: false
           IS_LOCAL_FORK: true
-        run: echo $IS_LOCAL_FORK && npm run test --bail
+        run: npm run upgrade-local-fork
+
+      - name: Run Tests
+        run: npm run test --bail
           
       - name: Run Coverage
         run: npm run coverage #coverage only work on a non-fork hardhat node
