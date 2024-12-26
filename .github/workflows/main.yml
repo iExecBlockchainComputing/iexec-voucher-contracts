@@ -44,18 +44,19 @@ jobs:
 
       - name: Run Tests
         run: npm run test --bail
-
+      
+      - name: Run Upgrade Test
+        run: |
+          ls -R .openzeppelin || echo ".openzeppelin directory does not exist"
+          mkdir -p .openzeppelin/local-fork && cp -r .openzeppelin/prod/. .openzeppelin/local-fork
+          ls -R .openzeppelin || echo ".openzeppelin directory does not exist"
+          export MANIFEST_DEFAULT_DIR=.openzeppelin/local-fork
+          echo "MANIFEST_DEFAULT_DIR is set to: $MANIFEST_DEFAULT_DIR"
+          npx hardhat run ./scripts/upgrade.ts --network local-bellecour-fork
+      
+          
       - name: Run Coverage
         run: npm run coverage
-      
-      - name: List .openzeppelin directory contents
-        run: |
-          echo "Contents of .openzeppelin directory:"
-          ls -R .openzeppelin
-
-      - name: Run Upgrade Test
-        run: npm run upgrade-local-fork
-        
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4.0.1
