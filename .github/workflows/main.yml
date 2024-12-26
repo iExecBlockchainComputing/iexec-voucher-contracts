@@ -48,6 +48,7 @@ jobs:
       - name: Run Tests
         env:
           FACTORY: false
+          IS_LOCAL_FORK: true
         run: npm run test --bail
           
       - name: Run Coverage
