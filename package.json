@@ -25,7 +25,7 @@
     "start-fork": "hardhat node",
     "clean": "hardhat clean",
     "build": "hardhat clean && hardhat compile",
-    "test": "FACTORY=false hardhat test --network local-fork",
+    "test": "hardhat test --network local-fork",
     "upgrade": "hardhat run ./scripts/upgrade.ts",
     "upgrade-local-fork": "mkdir -p .openzeppelin/local-fork && cp -r .openzeppelin/prod/. .openzeppelin/local-fork && MANIFEST_DEFAULT_DIR=.openzeppelin/local-fork npm run upgrade -- --network local-fork",
     "coverage": "hardhat coverage",

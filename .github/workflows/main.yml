@@ -46,6 +46,8 @@ jobs:
         run: npm run upgrade-local-fork
 
       - name: Run Tests
+        env:
+          FACTORY: false
         run: npm run test --bail
           
       - name: Run Coverage
