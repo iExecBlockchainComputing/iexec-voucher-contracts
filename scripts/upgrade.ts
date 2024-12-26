@@ -58,6 +58,7 @@ async function upgradeVoucherHub() {
         console.log('Running on Bellecour network. No impersonation required.');
         await upgradeProxy(voucherHubProxyAddress, VoucherHubFactoryUpgrade);
     }
+    console.log('VoucherHub upgraded successfully ✅!');
 
     // Fetch new implementation address
     const implementationAddress =
