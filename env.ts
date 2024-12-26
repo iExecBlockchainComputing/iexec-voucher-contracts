@@ -25,7 +25,10 @@ const envSchema = z.object({
         z.boolean().default(false),
     ),
     MNEMONIC: z.string().optional(),
-    PROD_PRIVATE_KEY: z.string().regex(/^([a-fA-F0-9]{64})$/, 'Invalid private key format'),
+    PROD_PRIVATE_KEY: z
+        .string()
+        .regex(/^([a-fA-F0-9]{64})$/, 'Invalid private key format')
+        .optional(),
     IEXEC_POCO_ADDRESS: z
         .string()
         .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address if provided')
