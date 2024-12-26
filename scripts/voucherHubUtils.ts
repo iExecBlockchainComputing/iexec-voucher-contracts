@@ -4,7 +4,9 @@
 import { ContractFactory } from 'ethers';
 import hre, { ethers, upgrades } from 'hardhat';
 import { getDeploymentConfig } from '../deploy/deploy';
-import { VoucherHub, VoucherProxy__factory } from '../typechain-types';
+import { Address, VoucherHub, VoucherProxy__factory } from '../typechain-types';
+import { impersonate, stopImpersonate } from './utils/impersonate';
+import { isFork } from './utils/utils';
 
 export async function deployHub(
     admin: string,
@@ -32,13 +34,44 @@ export async function deployHub(
 export async function upgradeProxy(
     voucherHubAddress: string,
     newVoucherHubImplementationFactory: ContractFactory,
+    upgraderAddress?: string,
 ): Promise<VoucherHub> {
-    const contractUpgrade: unknown = await upgrades.upgradeProxy(
-        voucherHubAddress,
-        newVoucherHubImplementationFactory,
-    );
-    const voucherHubUpgrade = contractUpgrade as VoucherHub;
-    await voucherHubUpgrade.waitForDeployment();
+    let voucherHubUpgrade: VoucherHub;
+
+    if (isFork(hre.network.name)) {
+        console.log('Detected non-production environment. Starting impersonating...');
+        await impersonate({
+            rpcUrl: hre.network.config.url!,
+            address: upgraderAddress as unknown as Address,
+        });
+
+        console.log(`Upgrading proxy at address: ${voucherHubAddress}`);
+
+        const upgradeDeployer = await ethers.provider.getSigner(upgraderAddress);
+        const contractUpgrade: unknown = await upgrades.upgradeProxy(
+            voucherHubAddress,
+            newVoucherHubImplementationFactory.connect(upgradeDeployer),
+        );
+        voucherHubUpgrade = contractUpgrade as VoucherHub;
+        await voucherHubUpgrade.waitForDeployment();
+
+        await stopImpersonate({
+            rpcUrl: hre.network.config.url!,
+            address: upgradeDeployer as unknown as Address,
+        });
+    } else {
+        console.log('Running on Bellecour network. No impersonation required.');
+        const [deployer] = await ethers.getSigners();
+        console.log('Deploying contracts with the account:', deployer.address);
+
+        const contractUpgrade: unknown = await upgrades.upgradeProxy(
+            voucherHubAddress,
+            newVoucherHubImplementationFactory,
+        );
+        voucherHubUpgrade = contractUpgrade as VoucherHub;
+        await voucherHubUpgrade.waitForDeployment();
+    }
+
     const voucherBeaconAddress = await voucherHubUpgrade.getVoucherBeacon();
     const expectedHash = await getExpectedVoucherProxyCodeHash(voucherBeaconAddress);
     const actualHash = await voucherHubUpgrade.getVoucherProxyCodeHash();
@@ -58,7 +91,7 @@ export async function upgradeProxy(
 export async function getExpectedVoucherProxyCodeHash(voucherBeaconAddress: string) {
     const chainId = (await ethers.provider.getNetwork()).chainId.toString();
     const config = await getDeploymentConfig(Number(chainId));
-    if (!config.factory || (hre as any).__SOLIDITY_COVERAGE_RUNNING) {
+    if (!config.factory || (hre as any).__SOLIDITY_COVERAGE_RUNNING || isFork(hre.network.name)) {
         /**
          * @dev Voucher proxy code hash is different from the production one:
          * - when running "test" without generic factory since voucher beacon address

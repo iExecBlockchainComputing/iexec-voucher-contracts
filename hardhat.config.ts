@@ -75,7 +75,7 @@ const config: HardhatUserConfig = {
             }),
             gasPrice: 0,
         },
-        'local-bellecour-fork': {
+        'local-fork': {
             ...bellecourBase,
             url: 'http://127.0.0.1:8545',
         },
