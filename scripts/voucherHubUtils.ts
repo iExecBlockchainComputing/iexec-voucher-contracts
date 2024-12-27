@@ -5,8 +5,7 @@ import { ContractFactory } from 'ethers';
 import hre, { ethers, upgrades } from 'hardhat';
 import { getDeploymentConfig } from '../deploy/deploy';
 import { env } from '../env';
-import { Address, VoucherHub, VoucherProxy__factory } from '../typechain-types';
-import { impersonate, stopImpersonate } from './utils/impersonate';
+import { VoucherHub, VoucherProxy__factory } from '../typechain-types';
 
 export async function deployHub(
     admin: string,
@@ -40,25 +39,15 @@ export async function upgradeProxy(
 
     if (env.IS_LOCAL_FORK) {
         console.log('Detected non-production environment. Starting impersonating...');
-        await impersonate({
-            rpcUrl: hre.network.config.url!,
-            address: upgraderAddress as unknown as Address,
-        });
-
+        const upgradeDeployer = await ethers.getImpersonatedSigner(upgraderAddress!);
         console.log(`Upgrading proxy at address: ${voucherHubAddress}`);
 
-        const upgradeDeployer = await ethers.provider.getSigner(upgraderAddress);
         const contractUpgrade: unknown = await upgrades.upgradeProxy(
             voucherHubAddress,
             newVoucherHubImplementationFactory.connect(upgradeDeployer),
         );
         voucherHubUpgrade = contractUpgrade as VoucherHub;
         await voucherHubUpgrade.waitForDeployment();
-
-        await stopImpersonate({
-            rpcUrl: hre.network.config.url!,
-            address: upgradeDeployer as unknown as Address,
-        });
     } else {
         console.log('Running on Bellecour network. No impersonation required.');
         const [deployer] = await ethers.getSigners();
