@@ -27,6 +27,7 @@
     "test-ci": "npm run test && FACTORY=false npm run test",
     "coverage": "npx hardhat coverage",
     "format": "npx prettier --write",
+    "check-types": "tsc --noEmit",
     "doc": "npx hardhat docgen",
     "uml": "./scripts/utils/sol2uml.sh"
   },
