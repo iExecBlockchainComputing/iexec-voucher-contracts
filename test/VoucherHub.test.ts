@@ -78,6 +78,18 @@ describe('VoucherHub', function () {
         };
     }
 
+    describe('Decimals', function () {
+        it('Should return 9 as the number of decimals', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+
+            // Call the decimals function and check the returned value
+            const decimals = await voucherHub.decimals();
+
+            // Assertion to check if the returned decimals value is 9
+            expect(decimals).to.equal(9);
+        });
+    });
+
     describe('Initialize', function () {
         it('Should initialize', async function () {
             const { beacon, voucherHub, admin, manager, minter } = await loadFixture(deployFixture);
