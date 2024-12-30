@@ -1,0 +1,18 @@
+{
+  "extends": [
+    "solhint:recommended"
+  ],
+  "plugins": [],
+  "rules": {
+    "func-visibility": [
+      "warn",
+      {
+        "ignoreConstructors": true
+      }
+    ],
+    "quotes": [
+      "double"
+    ],
+    "imports-order": "error"
+  }
+}

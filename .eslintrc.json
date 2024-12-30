@@ -1,0 +1,41 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint", "import", "sonarjs", "unicorn"],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "project": "./tsconfig.json",
+    "sourceType": "module"
+  },
+  "extends": [
+    "airbnb-typescript/base",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/recommended",
+    "plugin:sonarjs/recommended",
+    "prettier"
+  ],
+  "overrides": [
+    {
+      "files": ["scripts/**/*.ts", "test/**/*.ts", "hardhat.config.ts"],
+      "rules": {
+        "import/no-extraneous-dependencies": [
+          "error",
+          {
+            "devDependencies": true
+          }
+        ],
+        "import/prefer-default-export": ["off", { "target": "any" }]
+      }
+    },
+    {
+      "files": ["test/**/*.ts"],
+      "globals": {
+        "describe": "readonly",
+        "it": "readonly"
+      },
+      "rules": {
+        "no-unused-expressions": "off",
+        "no-shadow": "off"
+      }
+    }
+  ]
+}

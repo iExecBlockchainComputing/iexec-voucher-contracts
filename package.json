@@ -29,17 +29,37 @@
     "format": "npx prettier --write",
     "check-types": "tsc --noEmit",
     "doc": "npx hardhat docgen",
-    "uml": "./scripts/utils/sol2uml.sh"
+    "uml": "./scripts/utils/sol2uml.sh",
+    "lint": "npm run lint:js && npm run lint:sol",
+    "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
+    "lint:js": "prettier --log-level warn --ignore-path .gitignore '**/*.{js,ts}' --check && eslint .",
+    "lint:js:fix": "prettier --log-level warn --ignore-path .gitignore '**/*.{js,ts}' --write && eslint . --fix",
+    "lint:sol": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
+    "lint:sol:fix": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --write"
   },
   "lint-staged": {
-    "*.{js,ts,sol}": [
-      "prettier --write"
+    "*.{js,ts}": [
+      "prettier --log-level warn --ignore-path .gitignore --check",
+      "eslint"
+    ],
+    "*.sol": [
+      "prettier --log-level warn --ignore-path .gitignore --check",
+      "solhint"
     ]
   },
   "devDependencies": {
     "@amxx/factory": "^1.0.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/hardhat-upgrades": "^3.2.1",
+    "@typescript-eslint/eslint-plugin": "^6.7.5",
+    "@typescript-eslint/parser": "^6.7.5",
+    "eslint": "^8.51.0",
+    "eslint-config-airbnb-typescript": "^17.1.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-sonarjs": "^0.21.0",
+    "eslint-plugin-unicorn": "^51.0.1",
     "ethers": "^6.13.2",
     "hardhat": "^2.22.10",
     "hardhat-dependency-compiler": "^1.2.1",
@@ -50,6 +70,7 @@
     "prettier-plugin-organize-imports": "^4.0.0",
     "prettier-plugin-solidity": "^1.4.1",
     "sol2uml": "^2.5.19",
+    "solhint": "^5.0.3",
     "solidity-docgen": "^0.6.0-beta.36"
   },
   "devDependencies_comment": {
