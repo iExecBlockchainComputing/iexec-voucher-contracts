@@ -57,9 +57,9 @@ function createVoucherType(string description, uint256 duration) external
 function updateVoucherTypeDescription(uint256 id, string description) external
 ```
 
-This function updates only the duration setting for the next minted voucher and not the active one.
-The manager of vouchers wants to provide guarantees regarding the expiration of a voucher.
-When a voucher is delivered, the credits inside the voucher should not expire before the original expiration date.
+This function only updates the duration for newly minted vouchers and not the existing ones to provide
+guarantees regarding the expiration of vouchers. When a voucher is delivered, its credits should not expire
+before the original expiration date.
 
 ### updateVoucherTypeDuration
 

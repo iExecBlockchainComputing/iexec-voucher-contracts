@@ -78,15 +78,6 @@ describe('VoucherHub', function () {
         };
     }
 
-    describe('Decimals', function () {
-        it('Should return 9 as the number of decimals', async function () {
-            const { voucherHub } = await loadFixture(deployFixture);
-
-            // Call the decimals function and check the returned value
-            expect(await voucherHub.decimals()).to.equal(9);
-        });
-    });
-
     describe('Initialize', function () {
         it('Should initialize', async function () {
             const { beacon, voucherHub, admin, manager, minter } = await loadFixture(deployFixture);
@@ -1072,6 +1063,13 @@ describe('VoucherHub', function () {
             await expect(voucherHub.transferFrom(anyone, anyone, 0)).to.be.revertedWith(
                 'NonTransferableERC20Upgradeable: Unsupported transferFrom',
             );
+        });
+
+        it('Should return 9 as the number of decimals', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+
+            // Call the decimals function and check the returned value
+            expect(await voucherHub.decimals()).to.equal(9);
         });
     });
 });
