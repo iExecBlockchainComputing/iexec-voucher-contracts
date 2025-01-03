@@ -107,7 +107,7 @@ contract VoucherHub is
      * This function only updates the duration for newly minted vouchers and not the existing ones to provide
      * guarantees regarding the expiration of vouchers. When a voucher is delivered, its credits should not expire
      * before the original expiration date.
-     * This is not a bug as mentioned in audit of Halborn (HAL-01) but an intended feature.
+     * As mentioned in Halborn audit report (HAL-01), this is not a bug, but rather, an intended feature.
      */
     function updateVoucherTypeDescription(
         uint256 id,
