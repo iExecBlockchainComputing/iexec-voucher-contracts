@@ -8,18 +8,12 @@ const privateKeyRegex = /^([a-fA-F0-9]{64})$/;
 const envSchema = z.object({
     IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX: z
         .string()
-        .optional()
-        .refine(
-            (val) => val === undefined || numericRegex.test(val),
-            'Must be a numeric index if provided',
-        ),
+        .refine((val) => numericRegex.test(val), 'Must be a numeric index if provided')
+        .optional(),
     IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX: z
         .string()
-        .optional()
-        .refine(
-            (val) => val === undefined || numericRegex.test(val),
-            'Must be a numeric index if provided',
-        ),
+        .refine((val) => numericRegex.test(val), 'Must be a numeric index if provided')
+        .optional(),
     IS_LOCAL_FORK: z.preprocess(
         (val) => typeof val === 'string' && val.toLowerCase() === 'true',
         z.boolean().default(false),
