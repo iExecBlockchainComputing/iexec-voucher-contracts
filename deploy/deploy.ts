@@ -7,7 +7,6 @@ import { deployments, ethers, upgrades } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import deploymentConfig from '../config/deployment';
 import { env } from '../env';
-import { isLocalFork } from '../hardhat.config';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import {
@@ -20,7 +19,7 @@ import {
 } from '../typechain-types';
 
 export default async function (hre: HardhatRuntimeEnvironment) {
-    if (isLocalFork) {
+    if (env.IS_LOCAL_FORK) {
         /**
          * This fixes following issue when deploying to a local Bellecour fork:
          * `ProviderError: No known hardfork for execution on historical block [...] in chain with id 134.`
