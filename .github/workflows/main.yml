@@ -58,13 +58,13 @@ jobs:
       - name: Run Coverage
         run: npm run coverage #coverage only work on a non-fork hardhat node
 
-      - name: Upload Coverage
+      - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: iExecBlockchainComputing/iexec-voucher-contracts
 
-      - name: Slither Static Analysis
+      - name: Run static analysis with slither
         uses: crytic/slither-action@v0.4.0
         with:
           target: "contracts/"
@@ -72,7 +72,7 @@ jobs:
           fail-on: none # TODO set this to high or other
           sarif: results.sarif
 
-      - name: Upload SARIF
+      - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
