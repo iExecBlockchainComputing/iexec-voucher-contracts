@@ -3,7 +3,7 @@
 ## vNEXT
 
 - Remove references to blockscout v5. (#49)
-- Overrode the decimals function of ERC-20 to set the token's decimal precision to 9, aligning with RLC standards.
+- Override the decimals function of ERC-20 to set the token's decimal precision to 9, aligning with RLC standards.
 - Verify VoucherProxy contracts. (#51)
 
 ## v1.0.0
