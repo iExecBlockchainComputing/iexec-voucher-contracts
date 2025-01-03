@@ -2,6 +2,9 @@
 
 ## vNEXT
 
+### Added
+
+- Run upgrade when a smart contract is modified to check storage is not damaged. (#51)
 - Remove references to blockscout v5. (#49)
 - Verify VoucherProxy contracts. (#51)
 
