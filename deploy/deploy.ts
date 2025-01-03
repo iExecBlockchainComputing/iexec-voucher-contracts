@@ -6,6 +6,7 @@ import { ContractFactory } from 'ethers';
 import { deployments, ethers, upgrades } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import deploymentConfig from '../config/deployment';
+import { env } from '../env';
 import { isLocalFork } from '../hardhat.config';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
@@ -182,15 +183,15 @@ export async function getDeploymentConfig(chainId: number) {
     // Read default config of the target chain.
     const config = deploymentConfig[chainId];
     // Override config if required.
-    if (process.env.IEXEC_POCO_ADDRESS) {
-        config.pocoAddress = process.env.IEXEC_POCO_ADDRESS;
+    if (env.IEXEC_POCO_ADDRESS) {
+        config.pocoAddress = env.IEXEC_POCO_ADDRESS;
     }
     // Check final config.
     if (!ethers.isAddress(config.pocoAddress)) {
         throw new Error('Valid PoCo address must be provided');
     }
-    if (process.env.FACTORY) {
-        config.factory = process.env.FACTORY == 'true';
+    if (env.FACTORY) {
+        config.factory = env.FACTORY;
     }
     return config;
 }
