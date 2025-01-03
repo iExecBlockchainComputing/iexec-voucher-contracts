@@ -3,6 +3,7 @@
 ## vNEXT
 
 - Remove references to blockscout v5. (#49)
+- Verify VoucherProxy contracts. (#51)
 
 ## v1.0.0
 

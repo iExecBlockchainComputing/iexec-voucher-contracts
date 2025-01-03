@@ -58,3 +58,12 @@ npx hardhat deploy --network bellecour
 ```
 npx hardhat run ./scripts/verify.ts --network bellecour
 ```
+
+Once a Voucher (proxy) is deployed, it can be verified with:
+
+```
+npx hardhat verify <voucherProxyAddress> --network bellecour <beaconAddress>
+```
+
+Note: no need to verify all VoucherProxy contracts because Blockscout automatically
+matches all similar contracts with the submitted source code.

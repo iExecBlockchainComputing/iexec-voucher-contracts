@@ -53,6 +53,8 @@
     "prettier-plugin-organize-imports": "^4.0.0",
     "prettier-plugin-solidity": "^1.4.1",
     "sol2uml": "^2.5.19",
+    "dotenv": "^16.4.7",
+    "zod": "^3.24.1",
     "solidity-docgen": "^0.6.0-beta.36"
   },
   "devDependencies_comment": {
@@ -60,8 +62,6 @@
   },
   "dependencies": {
     "@iexec/poco": "^5.5.0",
-    "@openzeppelin/contracts-upgradeable": "^5.0.2",
-    "dotenv": "^16.4.7",
-    "zod": "^3.24.1"
+    "@openzeppelin/contracts-upgradeable": "^5.0.2"
   }
 }
