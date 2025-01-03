@@ -83,10 +83,7 @@ describe('VoucherHub', function () {
             const { voucherHub } = await loadFixture(deployFixture);
 
             // Call the decimals function and check the returned value
-            const decimals = await voucherHub.decimals();
-
-            // Assertion to check if the returned decimals value is 9
-            expect(decimals).to.equal(9);
+            expect(await voucherHub.decimals()).to.equal(9);
         });
     });
 
