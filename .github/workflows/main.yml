@@ -39,7 +39,6 @@ jobs:
       - name: Start Bellecour Fork
         run: |
           nohup anvil --host 0.0.0.0 --port 8545 --hardfork berlin --fork-url https://bellecour.iex.ec --chain-id 134 --gas-limit 6700000 --gas-price 0 &
-      
 
       - name: Wait for Fork
         timeout-minutes: 2
