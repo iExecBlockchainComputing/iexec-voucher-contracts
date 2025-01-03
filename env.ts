@@ -2,10 +2,6 @@ import 'dotenv/config';
 import { z } from 'zod';
 
 const envSchema = z.object({
-    IEXEC_VOUCHER_HUB_ADDRESS: z
-        .string()
-        .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address')
-        .optional(),
     IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX: z
         .string()
         .optional()
