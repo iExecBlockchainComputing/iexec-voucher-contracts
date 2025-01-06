@@ -6,7 +6,7 @@ import { ContractFactory } from 'ethers';
 import { deployments, ethers, upgrades } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import deploymentConfig from '../config/deployment';
-import { isLocalFork } from '../hardhat.config';
+import { env } from '../config/env';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import {
@@ -19,7 +19,7 @@ import {
 } from '../typechain-types';
 
 export default async function (hre: HardhatRuntimeEnvironment) {
-    if (isLocalFork) {
+    if (env.IS_LOCAL_FORK) {
         /**
          * This fixes following issue when deploying to a local Bellecour fork:
          * `ProviderError: No known hardfork for execution on historical block [...] in chain with id 134.`
@@ -182,15 +182,15 @@ export async function getDeploymentConfig(chainId: number) {
     // Read default config of the target chain.
     const config = deploymentConfig[chainId];
     // Override config if required.
-    if (process.env.IEXEC_POCO_ADDRESS) {
-        config.pocoAddress = process.env.IEXEC_POCO_ADDRESS;
+    if (env.IEXEC_POCO_ADDRESS) {
+        config.pocoAddress = env.IEXEC_POCO_ADDRESS;
     }
     // Check final config.
     if (!ethers.isAddress(config.pocoAddress)) {
         throw new Error('Valid PoCo address must be provided');
     }
-    if (process.env.FACTORY) {
-        config.factory = process.env.FACTORY == 'true';
+    if (env.USE_FACTORY) {
+        config.factory = env.USE_FACTORY;
     }
     return config;
 }

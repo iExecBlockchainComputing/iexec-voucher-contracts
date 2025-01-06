@@ -2,6 +2,7 @@
 
 ## vNEXT
 
+- Better handling for env variables. (#55)
 - Remove references to blockscout v5. (#49)
 - Override the decimals function of ERC-20 to set the token's decimal precision to 9, aligning with RLC standards. (#50)
 - Verify VoucherProxy contracts. (#51)

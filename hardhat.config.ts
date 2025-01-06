@@ -12,11 +12,11 @@ import {
     defaultLocalhostNetworkParams,
 } from 'hardhat/internal/core/config/default-config';
 import 'solidity-docgen';
+import { env } from './config/env';
 import { forceZeroGasPriceWithSolidityCoverage } from './scripts/utils/modify-solidity-coverage-lib-api-js';
 
-const managerAccount = Number(process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
-const minterAccount = Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
-export const isLocalFork = process.env.LOCAL_FORK == 'true';
+const managerAccount = env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX || null;
+const minterAccount = env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX || null;
 const bellecourBlockscoutUrl = 'https://blockscout.bellecour.iex.ec';
 
 const config: HardhatUserConfig = {
@@ -50,9 +50,9 @@ const config: HardhatUserConfig = {
         hardhat: {
             hardfork: 'berlin', // No EIP-1559 before London fork
             accounts: {
-                mnemonic: process.env.MNEMONIC || HARDHAT_NETWORK_MNEMONIC,
+                mnemonic: env.MNEMONIC || HARDHAT_NETWORK_MNEMONIC,
             },
-            ...(isLocalFork && {
+            ...(env.IS_LOCAL_FORK && {
                 forking: {
                     url: 'https://bellecour.iex.ec',
                 },
@@ -65,7 +65,7 @@ const config: HardhatUserConfig = {
             ...defaultHardhatNetworkParams,
             ...defaultLocalhostNetworkParams,
             accounts: 'remote', // will use accounts set in hardhat network config
-            ...(isLocalFork && {
+            ...(env.IS_LOCAL_FORK && {
                 chainId: 134,
             }),
             gasPrice: 0,
@@ -74,7 +74,7 @@ const config: HardhatUserConfig = {
             chainId: 65535,
             url: 'http://localhost:8545',
             accounts: {
-                mnemonic: process.env.MNEMONIC || '',
+                mnemonic: env.MNEMONIC || '',
             },
             gasPrice: 0, // Get closer to Bellecour network
         },
@@ -82,7 +82,7 @@ const config: HardhatUserConfig = {
             chainId: 134,
             url: 'https://bellecour.iex.ec',
             accounts: [
-                process.env.PROD_PRIVATE_KEY ||
+                env.PROD_PRIVATE_KEY ||
                     '0x0000000000000000000000000000000000000000000000000000000000000000',
             ],
             gasPrice: 0,
