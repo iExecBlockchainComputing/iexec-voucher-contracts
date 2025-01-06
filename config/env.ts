@@ -24,7 +24,7 @@ const envSchema = z.object({
         .string()
         .regex(addressRegex, 'Invalid Ethereum address if provided')
         .optional(),
-    FACTORY: z.preprocess(
+    USE_FACTORY: z.preprocess(
         (val) => typeof val === 'string' && val.toLowerCase() === 'true',
         z.boolean().default(false),
     ),

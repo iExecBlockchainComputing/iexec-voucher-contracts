@@ -24,7 +24,7 @@
     "prepare": "husky",
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
-    "test-ci": "npm run test && FACTORY=false npm run test",
+    "test-ci": "npm run test && USE_FACTORY=false npm run test",
     "coverage": "npx hardhat coverage",
     "format": "npx prettier --write",
     "doc": "npx hardhat docgen",

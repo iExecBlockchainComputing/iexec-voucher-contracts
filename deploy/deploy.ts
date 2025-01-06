@@ -189,8 +189,8 @@ export async function getDeploymentConfig(chainId: number) {
     if (!ethers.isAddress(config.pocoAddress)) {
         throw new Error('Valid PoCo address must be provided');
     }
-    if (env.FACTORY) {
-        config.factory = env.FACTORY;
+    if (env.USE_FACTORY) {
+        config.factory = env.USE_FACTORY;
     }
     return config;
 }
