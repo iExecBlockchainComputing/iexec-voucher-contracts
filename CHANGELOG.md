@@ -14,10 +14,7 @@
 
 ### What's new?
 
-### Added
-
 - Allow users to access resources of the iExec network via a sponsorship voucher.
-- Add new script to enable `voucherHub` contract upgrade.
 
 ### More details
 
