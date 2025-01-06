@@ -1064,6 +1064,13 @@ describe('VoucherHub', function () {
                 'NonTransferableERC20Upgradeable: Unsupported transferFrom',
             );
         });
+
+        it('Should return 9 as the number of decimals', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+
+            // Call the decimals function and check the returned value
+            expect(await voucherHub.decimals()).to.equal(9);
+        });
     });
 });
 

@@ -57,6 +57,11 @@ function createVoucherType(string description, uint256 duration) external
 function updateVoucherTypeDescription(uint256 id, string description) external
 ```
 
+This function only updates the duration for newly minted vouchers and not the existing ones to provide
+guarantees regarding the expiration of vouchers. When a voucher is delivered, its credits should not expire
+before the original expiration date.
+As mentioned in Halborn audit report (HAL-01), this is not a bug, but rather, an intended feature.
+
 ### updateVoucherTypeDuration
 
 ```solidity
