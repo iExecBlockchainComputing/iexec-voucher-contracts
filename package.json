@@ -32,6 +32,7 @@
     "format": "prettier --write '{scripts,test,contracts,deploy,config}/**/*.{js,sol}'",
     "check-format": "prettier --ignore-path .gitignore --check '{scripts,test,contracts}/**/*.{js,sol}'",
     "doc": "hardhat docgen",
+    "test-ci": "npm run test && USE_FACTORY=false npm run test",
     "uml": "./scripts/utils/sol2uml.sh"
   },
   "lint-staged": {

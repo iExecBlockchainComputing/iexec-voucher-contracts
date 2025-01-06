@@ -6,7 +6,7 @@ import { ContractFactory } from 'ethers';
 import { deployments, ethers, upgrades } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import deploymentConfig from '../config/deployment';
-import { env } from '../env';
+import { env } from '../config/env';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import {
@@ -189,8 +189,8 @@ export async function getDeploymentConfig(chainId: number) {
     if (!ethers.isAddress(config.pocoAddress)) {
         throw new Error('Valid PoCo address must be provided');
     }
-    if (env.FACTORY) {
-        config.factory = env.FACTORY;
+    if (env.USE_FACTORY) {
+        config.factory = env.USE_FACTORY;
     }
     return config;
 }
