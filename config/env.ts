@@ -9,10 +9,12 @@ const envSchema = z.object({
     IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX: z
         .string()
         .refine((val) => numericRegex.test(val), 'Must be a numeric index if provided')
+        .transform((val) => Number(val))
         .optional(),
     IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX: z
         .string()
         .refine((val) => numericRegex.test(val), 'Must be a numeric index if provided')
+        .transform((val) => Number(val))
         .optional(),
     IS_LOCAL_FORK: z.preprocess(
         (val) => typeof val === 'string' && val.toLowerCase() === 'true',

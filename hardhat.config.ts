@@ -15,8 +15,8 @@ import 'solidity-docgen';
 import { env } from './config/env';
 import { forceZeroGasPriceWithSolidityCoverage } from './scripts/utils/modify-solidity-coverage-lib-api-js';
 
-const managerAccount = Number(env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
-const minterAccount = Number(env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
+const managerAccount = env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX || null;
+const minterAccount = env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX || null;
 const bellecourBlockscoutUrl = 'https://blockscout.bellecour.iex.ec';
 
 const config: HardhatUserConfig = {
