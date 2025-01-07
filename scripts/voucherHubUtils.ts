@@ -3,8 +3,8 @@
 
 import { ContractFactory } from 'ethers';
 import hre, { ethers, upgrades } from 'hardhat';
+import { env } from '../config/env';
 import { getDeploymentConfig } from '../deploy/deploy';
-import { env } from '../env';
 import { VoucherHub, VoucherProxy__factory } from '../typechain-types';
 
 export async function deployHub(

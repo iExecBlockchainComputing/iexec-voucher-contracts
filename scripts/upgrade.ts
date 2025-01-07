@@ -1,6 +1,6 @@
 import { ethers, upgrades } from 'hardhat';
+import { env } from '../config/env';
 import { getDeploymentConfig } from '../deploy/deploy';
-import { env } from '../env';
 import { VoucherHub } from '../typechain-types';
 import { upgradeProxy } from './voucherHubUtils';
 
