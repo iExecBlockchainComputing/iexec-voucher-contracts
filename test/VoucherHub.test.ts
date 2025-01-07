@@ -1064,7 +1064,9 @@ describe('VoucherHub', function () {
                 'NonTransferableERC20Upgradeable: Unsupported transferFrom',
             );
         });
+    });
 
+    describe('iExec Voucher token - VCHR', function () {
         it('Should return 9 as the number of decimals', async function () {
             const { voucherHub } = await loadFixture(deployFixture);
 
