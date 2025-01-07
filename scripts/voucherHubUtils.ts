@@ -50,7 +50,7 @@ export async function upgradeProxy(
         await voucherHubUpgrade.waitForDeployment();
     } else {
         console.log('Running on Bellecour network. No impersonation required.');
-        const [deployer] = await ethers.getSigners();
+        console.log('Running on Bellecour network. \nNo impersonation required.');
         console.log('Deploying contracts with the account:', deployer.address);
 
         const contractUpgrade: unknown = await upgrades.upgradeProxy(
