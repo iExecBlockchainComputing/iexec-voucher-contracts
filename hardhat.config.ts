@@ -65,6 +65,7 @@ const config: HardhatUserConfig = {
                 chainId: 134,
             }),
         },
+        //TODO: rename into 'external-node'
         'external-hardhat': {
             ...defaultHardhatNetworkParams,
             ...defaultLocalhostNetworkParams,
@@ -73,10 +74,6 @@ const config: HardhatUserConfig = {
                 chainId: 134,
             }),
             gasPrice: 0,
-        },
-        'local-fork': {
-            ...bellecourBase,
-            url: 'http://127.0.0.1:8545',
         },
         'dev-native': {
             chainId: 65535,

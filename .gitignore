@@ -20,5 +20,5 @@ deployments/*/*
 /contracts/hardhat-dependency-compiler
 build/flatten.sol
 
-# openzeppelin local-fork
-.openzeppelin/local-fork
+# openzeppelin external-hardhat
+.openzeppelin/external-node
