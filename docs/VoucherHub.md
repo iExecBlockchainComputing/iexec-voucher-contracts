@@ -315,3 +315,22 @@ function getVoucherType(uint256 id) public view returns (struct IVoucherHub.Vouc
 
 Get the voucher type details by ID.
 
+### decimals
+
+```solidity
+function decimals() public pure returns (uint8)
+```
+
+_By default, the standard ERC-20 `decimals` value is `18`. However, this value
+is overridden here to `9` to align with the number of decimal places used by
+the RLC token. This ensures consistency in how input values are handled
+when a voucher is minted.
+
+See https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol#L78_
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint8 | The number of decimal places (9) used for token representation. |
+
