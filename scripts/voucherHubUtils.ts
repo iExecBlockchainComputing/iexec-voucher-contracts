@@ -38,7 +38,7 @@ export async function upgradeProxy(
     let voucherHubUpgrade: VoucherHub;
 
     if (env.IS_LOCAL_FORK) {
-        console.log('Detected non-production environment. Starting impersonating...');
+        console.log('Detected non-production environment.\n Starting impersonating...');
         const upgradeDeployer = await ethers.getImpersonatedSigner(upgraderAddress!);
         console.log(`Upgrading proxy at address: ${voucherHubAddress}`);
 
@@ -49,9 +49,7 @@ export async function upgradeProxy(
         voucherHubUpgrade = contractUpgrade as VoucherHub;
         await voucherHubUpgrade.waitForDeployment();
     } else {
-        console.log('Running on Bellecour network. No impersonation required.');
-        console.log('Running on Bellecour network. \nNo impersonation required.');
-        console.log('Deploying contracts with the account:', deployer.address);
+        console.log('Running on Bellecour network.\n No impersonation required.');
 
         const contractUpgrade: unknown = await upgrades.upgradeProxy(
             voucherHubAddress,
