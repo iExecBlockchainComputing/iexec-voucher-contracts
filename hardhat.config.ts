@@ -46,6 +46,9 @@ const config: HardhatUserConfig = {
             },
         ],
     },
+    typechain: {
+        tsNocheck: true, // Disable type checking to avoid issue in `IexecLibOrders_v5` typechain generation
+    },
     networks: {
         hardhat: {
             hardfork: 'berlin', // No EIP-1559 before London fork
