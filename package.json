@@ -22,17 +22,13 @@
   "homepage": "https://github.com/iExecBlockchainComputing/iexec-voucher-contracts#readme",
   "scripts": {
     "prepare": "husky",
-    "start-fork": "hardhat node",
-    "clean": "hardhat clean",
-    "build": "hardhat clean && hardhat compile",
-    "test": "hardhat test --network external-hardhat",
+    "build": "npx hardhat compile",
     "upgrade": "hardhat run ./scripts/upgrade.ts",
     "upgrade-local-fork": "mkdir -p .openzeppelin/external-node && cp -r .openzeppelin/prod/. .openzeppelin/external-node && MANIFEST_DEFAULT_DIR=.openzeppelin/external-node npm run upgrade -- --network external-hardhat",
-    "coverage": "hardhat coverage",
-    "format": "prettier --write '{scripts,test,contracts,deploy,config}/**/*.{js,sol}'",
-    "check-format": "prettier --ignore-path .gitignore --check '{scripts,test,contracts}/**/*.{js,sol}'",
-    "doc": "hardhat docgen",
-    "test-ci": "npm run test && USE_FACTORY=false npm run test",
+    "test": "hardhat test --network external-hardhat",
+    "coverage": "npx hardhat coverage",
+    "format": "npx prettier --write",
+    "doc": "npx hardhat docgen",
     "uml": "./scripts/utils/sol2uml.sh"
   },
   "lint-staged": {
