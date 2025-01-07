@@ -382,6 +382,20 @@ contract VoucherHub is
         return $._voucherTypes[id];
     }
 
+    /**
+     * @dev By default, the standard ERC-20 `decimals` value is `18`. However, this value
+     * is overridden here to `9` to align with the number of decimal places used by
+     * the RLC token. This ensures consistency in how input values are handled
+     * when a voucher is minted.
+     *
+     * See https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol#L78
+     *
+     * @return The number of decimal places (9) used for token representation.
+     */
+    function decimals() public pure override returns (uint8) {
+        return 9;
+    }
+
     function _authorizeUpgrade(
         address newImplementation
     ) internal override onlyRole(UPGRADER_ROLE) {}
