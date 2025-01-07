@@ -54,7 +54,6 @@ const config: HardhatUserConfig = {
     },
     networks: {
         hardhat: {
-            ...bellecourBase,
             accounts: {
                 mnemonic: env.MNEMONIC || HARDHAT_NETWORK_MNEMONIC,
             },
@@ -64,6 +63,7 @@ const config: HardhatUserConfig = {
                 },
                 chainId: 134,
             }),
+            ...bellecourBase,
         },
         //TODO: rename into 'external-node'
         'external-hardhat': {
@@ -73,7 +73,7 @@ const config: HardhatUserConfig = {
             ...(env.IS_LOCAL_FORK && {
                 chainId: 134,
             }),
-            gasPrice: 0,
+            ...bellecourBase,
         },
         'dev-native': {
             chainId: 65535,
@@ -81,7 +81,7 @@ const config: HardhatUserConfig = {
             accounts: {
                 mnemonic: env.MNEMONIC || '',
             },
-            gasPrice: 0, // Get closer to Bellecour network
+            ...bellecourBase,
         },
         bellecour: {
             chainId: 134,
