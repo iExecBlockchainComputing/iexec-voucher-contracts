@@ -11,22 +11,21 @@ async function upgradeVoucherHub() {
     console.log('ChainId:', chainId);
 
     const config = await getDeploymentConfig(Number(chainId));
-    if (!config.voucherHubAddress && !env.IEXEC_VOUCHER_HUB_ADDRESS) {
+    const voucherHubProxyAddress = config.voucherHubAddress || env.IEXEC_VOUCHER_HUB_ADDRESS;
+    if (!voucherHubProxyAddress) {
         throw new Error(`No VoucherHub deployed on the target chain ${chainId}`);
     }
 
-    const voucherHubProxyAddress = (config.voucherHubAddress || env.IEXEC_VOUCHER_HUB_ADDRESS)!;
-
     // Fetch proxy admin details
-    const VoucherHubFactoryUpgrade = await ethers.getContractFactory('VoucherHub');
-    const voucherHub: unknown = VoucherHubFactoryUpgrade.attach(voucherHubProxyAddress);
+    const voucherHubFactoryUpgrade = await ethers.getContractFactory('VoucherHub');
+    const voucherHub: unknown = voucherHubFactoryUpgrade.attach(voucherHubProxyAddress);
     const voucherHubContract = voucherHub as VoucherHub;
     const upgraderAddress = await voucherHubContract.defaultAdmin();
 
     const upgrader = env.IS_LOCAL_FORK
         ? await ethers.getImpersonatedSigner(upgraderAddress)
         : await ethers.getSigner(upgraderAddress);
-    await upgradeProxy(voucherHubProxyAddress, VoucherHubFactoryUpgrade.connect(upgrader));
+    await upgradeProxy(voucherHubProxyAddress, voucherHubFactoryUpgrade.connect(upgrader));
 
     // Fetch new implementation address
     const implementationAddress =
