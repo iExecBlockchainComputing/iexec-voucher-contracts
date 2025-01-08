@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
-import { ContractFactory } from 'ethers';
 import hre, { ethers, upgrades } from 'hardhat';
 import { env } from '../config/env';
 import { getDeploymentConfig } from '../deploy/deploy';
@@ -30,12 +29,18 @@ export async function deployHub(
     return await voucherHub.waitForDeployment();
 }
 
-export async function upgradeProxy(
-    voucherHubAddress: string,
-    newVoucherHubImplementationFactory: ContractFactory,
-): Promise<VoucherHub> {
+export async function upgradeProxy(voucherHubAddress: string): Promise<VoucherHub> {
+    // Fetch proxy admin details
+    const voucherHubFactoryUpgrade = await ethers.getContractFactory('VoucherHub');
+    const voucherHub: unknown = voucherHubFactoryUpgrade.attach(voucherHubAddress);
+    const voucherHubContract = voucherHub as VoucherHub;
+    const upgraderAddress = await voucherHubContract.defaultAdmin();
+    const upgrader = env.IS_LOCAL_FORK
+        ? await ethers.getImpersonatedSigner(upgraderAddress)
+        : await ethers.getSigner(upgraderAddress);
+
     const contractUpgrade: unknown = await upgrades
-        .upgradeProxy(voucherHubAddress, newVoucherHubImplementationFactory)
+        .upgradeProxy(voucherHubAddress, voucherHubFactoryUpgrade.connect(upgrader))
         .then((contract) => contract.waitForDeployment());
     return contractUpgrade as VoucherHub;
 }

@@ -1,7 +1,6 @@
 import { ethers, upgrades } from 'hardhat';
 import { env } from '../config/env';
 import { getDeploymentConfig } from '../deploy/deploy';
-import { VoucherHub } from '../typechain-types';
 import { upgradeProxy } from './voucherHubUtils';
 
 async function upgradeVoucherHub() {
@@ -16,16 +15,7 @@ async function upgradeVoucherHub() {
         throw new Error(`No VoucherHub deployed on the target chain ${chainId}`);
     }
 
-    // Fetch proxy admin details
-    const voucherHubFactoryUpgrade = await ethers.getContractFactory('VoucherHub');
-    const voucherHub: unknown = voucherHubFactoryUpgrade.attach(voucherHubProxyAddress);
-    const voucherHubContract = voucherHub as VoucherHub;
-    const upgraderAddress = await voucherHubContract.defaultAdmin();
-
-    const upgrader = env.IS_LOCAL_FORK
-        ? await ethers.getImpersonatedSigner(upgraderAddress)
-        : await ethers.getSigner(upgraderAddress);
-    await upgradeProxy(voucherHubProxyAddress, voucherHubFactoryUpgrade.connect(upgrader));
+    await upgradeProxy(voucherHubProxyAddress);
 
     // Fetch new implementation address
     const implementationAddress =
