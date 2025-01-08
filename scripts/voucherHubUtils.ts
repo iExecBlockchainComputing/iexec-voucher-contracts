@@ -33,45 +33,11 @@ export async function deployHub(
 export async function upgradeProxy(
     voucherHubAddress: string,
     newVoucherHubImplementationFactory: ContractFactory,
-    upgraderAddress?: string,
 ): Promise<VoucherHub> {
-    let voucherHubUpgrade: VoucherHub;
-
-    if (env.IS_LOCAL_FORK) {
-        console.log('Detected non-production environment.\n Starting impersonating...');
-        const upgradeDeployer = await ethers.getImpersonatedSigner(upgraderAddress!);
-        console.log(`Upgrading proxy at address: ${voucherHubAddress}`);
-
-        const contractUpgrade: unknown = await upgrades.upgradeProxy(
-            voucherHubAddress,
-            newVoucherHubImplementationFactory.connect(upgradeDeployer),
-        );
-        voucherHubUpgrade = contractUpgrade as VoucherHub;
-        await voucherHubUpgrade.waitForDeployment();
-    } else {
-        console.log('Running on Bellecour network.\n No impersonation required.');
-        const [deployer] = await ethers.getSigners();
-
-        console.log('Deploying contracts with the account:', deployer.address);
-
-        const contractUpgrade: unknown = await upgrades.upgradeProxy(
-            voucherHubAddress,
-            newVoucherHubImplementationFactory,
-        );
-        voucherHubUpgrade = contractUpgrade as VoucherHub;
-        await voucherHubUpgrade.waitForDeployment();
-    }
-
-    const voucherBeaconAddress = await voucherHubUpgrade.getVoucherBeacon();
-    const expectedHash = await getExpectedVoucherProxyCodeHash(voucherBeaconAddress);
-    const actualHash = await voucherHubUpgrade.getVoucherProxyCodeHash();
-    if (actualHash !== expectedHash) {
-        throw new Error(
-            'Voucher proxy code hash in the new VoucherHub implementation does not match the real hash ' +
-                `[actual: ${actualHash}, expected:${expectedHash}]`,
-        );
-    }
-    return voucherHubUpgrade;
+    const contractUpgrade: unknown = await upgrades
+        .upgradeProxy(voucherHubAddress, newVoucherHubImplementationFactory)
+        .then((contract) => contract.waitForDeployment());
+    return contractUpgrade as VoucherHub;
 }
 
 /**

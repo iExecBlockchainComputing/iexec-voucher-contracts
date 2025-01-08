@@ -23,7 +23,10 @@ async function upgradeVoucherHub() {
     const voucherHubContract = voucherHub as VoucherHub;
     const upgraderAddress = await voucherHubContract.defaultAdmin();
 
-    await upgradeProxy(voucherHubProxyAddress, VoucherHubFactoryUpgrade, upgraderAddress);
+    const upgrader = env.IS_LOCAL_FORK
+        ? await ethers.getImpersonatedSigner(upgraderAddress)
+        : await ethers.getSigner(upgraderAddress);
+    await upgradeProxy(voucherHubProxyAddress, VoucherHubFactoryUpgrade.connect(upgrader));
 
     // Fetch new implementation address
     const implementationAddress =
