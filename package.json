@@ -29,6 +29,7 @@
     "test-ci": "npm run test && USE_FACTORY=false npm run test",
     "coverage": "npx hardhat coverage",
     "format": "npx prettier --write",
+    "check-format": "prettier --ignore-path .gitignore --check '{scripts,test,contracts}/**/*.{js,sol}'",
     "doc": "npx hardhat docgen",
     "uml": "./scripts/utils/sol2uml.sh"
   },
