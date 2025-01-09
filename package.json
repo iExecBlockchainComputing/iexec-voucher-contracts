@@ -24,7 +24,6 @@
     "prepare": "husky",
     "build": "npx hardhat compile",
     "upgrade": "hardhat run ./scripts/upgradeHub.ts",
-    "upgrade-local-fork": "mkdir -p .openzeppelin/external-node && cp -r .openzeppelin/prod/. .openzeppelin/external-node && MANIFEST_DEFAULT_DIR=.openzeppelin/external-node npm run upgrade -- --network external-hardhat",
     "test": "npx hardhat test",
     "test-ci": "npm run test && USE_FACTORY=false npm run test",
     "coverage": "npx hardhat coverage",

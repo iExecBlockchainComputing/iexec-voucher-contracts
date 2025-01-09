@@ -1,10 +1,12 @@
 import { ethers, upgrades } from 'hardhat';
 import { env } from '../config/env';
 import { getDeploymentConfig } from '../deploy/deploy';
+import { mineBlock } from './utils/mineBlock';
 import { upgradeProxy } from './voucherHubUtils';
 
 async function upgradeVoucherHub() {
     console.log(`Upgrading VoucherHub contract ...`);
+    mineBlock();
 
     const chainId = (await ethers.provider.getNetwork()).chainId.toString();
     console.log('ChainId:', chainId);

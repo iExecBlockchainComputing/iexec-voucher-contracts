@@ -29,27 +29,14 @@ jobs:
       - name: Generate UML
         run: npm run uml
 
-      - name: Setup Foundry Toolchain
-        uses: foundry-rs/foundry-toolchain@v1
-
-      - name: Start Bellecour Fork
-        run: |
-          nohup anvil --host 0.0.0.0 --port 8545 --hardfork berlin --fork-url https://bellecour.iex.ec --chain-id 134 --gas-limit 6700000 --gas-price 0 &
-
-      - name: Wait for Fork
-        timeout-minutes: 2
-        run: |
-          while ! nc -z 127.0.0.1 8545; do sleep 1; done
-          echo "Bellecour fork ready"
-
       - name: Run Upgrade Test
         env:
           FACTORY: false
           IS_LOCAL_FORK: true
-        run: npm run upgrade-local-fork
+        run: npm run upgrade
 
       - name: Run Tests
-        run: npm run test --bail
+        run: npm run test ----bail
           
       - name: Run Coverage
         run: npm run coverage #coverage only works on a non-fork hardhat node
