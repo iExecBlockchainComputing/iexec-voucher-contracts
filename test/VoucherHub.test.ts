@@ -595,7 +595,6 @@ describe('VoucherHub', function () {
                 .createVoucher(voucherOwner1, voucherType, voucherValue)
                 .then((tx) => tx.wait())
                 .then(() => voucherHub.getVoucher(voucherOwner1));
-            await network.provider.send('evm_increaseTime', [1000]); // Fork has auto-mine, it could lead to test failure
         });
 
         it('Should top up voucher', async function () {
