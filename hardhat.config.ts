@@ -126,10 +126,6 @@ const config: HardhatUserConfig = {
             134: '0xA0C26578F762a06c14A8153F87D0EAA2fBd036af', // Bellecour & local fork
         },
     },
-    // gas reporter
-    gasReporter: {
-        enabled: true,
-    },
     dependencyCompiler: {
         paths: [
             '@amxx/factory/contracts/v8/GenericFactory.sol',
