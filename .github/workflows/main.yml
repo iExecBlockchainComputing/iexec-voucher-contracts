@@ -1,7 +1,7 @@
 name: Voucher Smart Contract CI
 
 on:
-  pull_request:
+  push:
     branches: ["**"]
 
 jobs:
@@ -10,43 +10,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
-
       - name: Install Dependencies
         run: npm ci
-
       - name: Build
         run: npm run build
-
       - name: Check Format
         run: npm run check-format
-
       - name: Generate UML
         run: npm run uml
-
       - name: Run Upgrade Test
         env:
           FACTORY: false
           IS_LOCAL_FORK: true
         run: npm run upgrade
-
       - name: Run Tests
         run: npm run test ----bail
-          
       - name: Run Coverage
         run: npm run coverage #coverage only works on a non-fork hardhat node
-
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: iExecBlockchainComputing/iexec-voucher-contracts
-
       - name: Run static analysis with slither
         uses: crytic/slither-action@v0.4.0
         with:
@@ -54,7 +44,6 @@ jobs:
           slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
           fail-on: none # TODO set this to high or other
           sarif: results.sarif
-
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
         with:
