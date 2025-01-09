@@ -14,8 +14,9 @@ node_modules
 /coverage.json
 
 # deployments files
-deployments/*/*
-!deployments/bellecour/
+/deployments/hardhat
+/deployments/external-hardhat
+/deployments/localhost
 
 /contracts/hardhat-dependency-compiler
 build/flatten.sol
