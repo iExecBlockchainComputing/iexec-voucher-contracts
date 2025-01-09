@@ -6,6 +6,8 @@ import { upgradeProxy } from './voucherHubUtils';
 
 async function upgradeVoucherHub() {
     console.log(`Upgrading VoucherHub contract ...`);
+    console.log('Current implementation address:',
+        await upgrades.erc1967.getImplementationAddress(voucherHubProxyAddress));
     mineBlock();
 
     const chainId = (await ethers.provider.getNetwork()).chainId.toString();
