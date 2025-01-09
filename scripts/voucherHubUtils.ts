@@ -32,10 +32,10 @@ export async function deployHub(
 
 export async function upgradeProxy(
     voucherHubAddress: string,
-    voucherHubFactoryUpgrade: ContractFactory,
+    newVoucherHubImplementationFactory: ContractFactory,
 ): Promise<VoucherHub> {
     // Fetch proxy admin details
-    const voucherHub: unknown = voucherHubFactoryUpgrade.attach(voucherHubAddress);
+    const voucherHub: unknown = newVoucherHubImplementationFactory.attach(voucherHubAddress);
     const voucherHubContract = voucherHub as VoucherHub;
     const upgraderAddress = await voucherHubContract.defaultAdmin();
     const upgrader = env.IS_LOCAL_FORK
@@ -43,7 +43,7 @@ export async function upgradeProxy(
         : await ethers.getSigner(upgraderAddress);
 
     const contractUpgrade: unknown = await upgrades
-        .upgradeProxy(voucherHubAddress, voucherHubFactoryUpgrade.connect(upgrader))
+        .upgradeProxy(voucherHubAddress, newVoucherHubImplementationFactory.connect(upgrader))
         .then((contract) => contract.waitForDeployment());
     return contractUpgrade as VoucherHub;
 }
