@@ -35,7 +35,7 @@ jobs:
           IS_LOCAL_FORK: true
         run: npm run upgrade
       - name: Run Tests
-        run: npm run test ----bail
+        run: npm run test -- --bail
       - name: Run Coverage
         run: npm run coverage #coverage only works on a non-fork hardhat node
       - name: Upload coverage reports to Codecov
