@@ -1,14 +1,12 @@
 import { ethers, upgrades } from 'hardhat';
 import { env } from '../config/env';
 import { getDeploymentConfig } from '../deploy/deploy';
-import { mineBlock } from './utils/mineBlock';
+import { mineBlockIfOnLocalFork } from './utils/mineBlockIfOnLocalFork';
 import { upgradeProxy } from './voucherHubUtils';
 
 async function upgradeVoucherHub() {
     console.log(`Upgrading VoucherHub contract ...`);
-    console.log('Current implementation address:',
-        await upgrades.erc1967.getImplementationAddress(voucherHubProxyAddress));
-    mineBlock();
+    mineBlockIfOnLocalFork();
 
     const chainId = (await ethers.provider.getNetwork()).chainId.toString();
     console.log('ChainId:', chainId);
@@ -18,6 +16,10 @@ async function upgradeVoucherHub() {
     if (!voucherHubProxyAddress) {
         throw new Error(`No VoucherHub deployed on the target chain ${chainId}`);
     }
+    console.log(
+        'Current implementation address:',
+        await upgrades.erc1967.getImplementationAddress(voucherHubProxyAddress),
+    );
 
     const voucherHubFactoryUpgrade = await ethers.getContractFactory('VoucherHub');
     await upgradeProxy(voucherHubProxyAddress, voucherHubFactoryUpgrade);

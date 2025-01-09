@@ -6,7 +6,7 @@ import { deployments, ethers, upgrades } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import deploymentConfig from '../config/deployment';
 import { env } from '../config/env';
-import { mineBlock } from '../scripts/utils/mineBlock';
+import { mineBlockIfOnLocalFork } from '../scripts/utils/mineBlockIfOnLocalFork';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import {
@@ -19,7 +19,7 @@ import {
 } from '../typechain-types';
 
 export default async function (hre: HardhatRuntimeEnvironment) {
-    mineBlock();
+    mineBlockIfOnLocalFork();
     const { deployer, manager, minter } = await hre.getNamedAccounts();
     await deployAll(deployer, manager, minter);
 }
