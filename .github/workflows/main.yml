@@ -2,7 +2,13 @@ name: Voucher Smart Contract CI
 
 on:
   push:
-    branches: ["**"]
+    branches:
+      - feature/*
+      - bugfix/*
+      - release/*
+      - hotfix/*
+      - develop
+      - main
 
 jobs:
   default:
