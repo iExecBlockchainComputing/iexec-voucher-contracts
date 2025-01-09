@@ -17,7 +17,8 @@ async function upgradeVoucherHub() {
         throw new Error(`No VoucherHub deployed on the target chain ${chainId}`);
     }
 
-    await upgradeProxy(voucherHubProxyAddress);
+    const voucherHubFactoryUpgrade = await ethers.getContractFactory('VoucherHub');
+    await upgradeProxy(voucherHubProxyAddress, voucherHubFactoryUpgrade);
 
     // Fetch new implementation address
     const implementationAddress =
