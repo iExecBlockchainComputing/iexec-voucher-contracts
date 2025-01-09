@@ -25,7 +25,6 @@
     "build": "npx hardhat compile",
     "upgrade": "hardhat run ./scripts/upgradeHub.ts",
     "test": "npx hardhat test",
-    "test-ci": "npm run test && USE_FACTORY=false npm run test",
     "coverage": "npx hardhat coverage",
     "format": "npx prettier --write",
     "check-format": "prettier --ignore-path .gitignore --check '{scripts,test,contracts}/**/*.{js,sol}'",
