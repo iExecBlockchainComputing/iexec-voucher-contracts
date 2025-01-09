@@ -1,8 +1,10 @@
 import * as helpers from '@nomicfoundation/hardhat-network-helpers';
 import { env } from '../../config/env';
 
-// This function is used to force mining if we are one a local fork
-export async function mineBlock() {
+/**
+ * This function is used to force mining if we are one a local fork
+ */
+export async function mineBlockIfOnLocalFork() {
     if (env.IS_LOCAL_FORK) {
         /**
          * This fixes following issue when deploying to a local Bellecour fork:
