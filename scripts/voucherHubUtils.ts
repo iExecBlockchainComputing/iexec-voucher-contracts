@@ -55,7 +55,7 @@ export async function upgradeProxy(
 export async function getExpectedVoucherProxyCodeHash(voucherBeaconAddress: string) {
     const chainId = (await ethers.provider.getNetwork()).chainId.toString();
     const config = await getDeploymentConfig(Number(chainId));
-    if (!config.factory || (hre as any).__SOLIDITY_COVERAGE_RUNNING || env.IS_LOCAL_FORK) {
+    if (!config.factory || (hre as any).__SOLIDITY_COVERAGE_RUNNING) {
         /**
          * @dev Voucher proxy code hash is different from the production one:
          * - when running "test" without generic factory since voucher beacon address
