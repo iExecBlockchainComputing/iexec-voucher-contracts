@@ -26,6 +26,10 @@ const envSchema = z.object({
         .string()
         .regex(addressRegex, 'Invalid Ethereum address if provided')
         .optional(),
+    IEXEC_VOUCHER_HUB_ADDRESS: z
+        .string()
+        .regex(addressRegex, 'Invalid Ethereum address if provided')
+        .optional(),
     USE_FACTORY: z.preprocess(
         (val) => typeof val === 'string' && val.toLowerCase() === 'true',
         z.boolean().default(false),

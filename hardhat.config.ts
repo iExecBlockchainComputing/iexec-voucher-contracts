@@ -19,6 +19,12 @@ const managerAccount = env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX || null;
 const minterAccount = env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX || null;
 const bellecourBlockscoutUrl = 'https://blockscout.bellecour.iex.ec';
 
+const bellecourBase = {
+    gasPrice: 0,
+    blockGasLimit: 6_700_000,
+    hardfork: 'berlin', // No EIP-1559 before London fork
+};
+
 const config: HardhatUserConfig = {
     solidity: {
         compilers: [
@@ -48,7 +54,6 @@ const config: HardhatUserConfig = {
     },
     networks: {
         hardhat: {
-            hardfork: 'berlin', // No EIP-1559 before London fork
             accounts: {
                 mnemonic: env.MNEMONIC || HARDHAT_NETWORK_MNEMONIC,
             },
@@ -58,9 +63,9 @@ const config: HardhatUserConfig = {
                 },
                 chainId: 134,
             }),
-            gasPrice: 0,
-            blockGasLimit: 6_700_000,
+            ...bellecourBase,
         },
+        //TODO: rename into 'external-node'
         'external-hardhat': {
             ...defaultHardhatNetworkParams,
             ...defaultLocalhostNetworkParams,
@@ -68,7 +73,7 @@ const config: HardhatUserConfig = {
             ...(env.IS_LOCAL_FORK && {
                 chainId: 134,
             }),
-            gasPrice: 0,
+            ...bellecourBase,
         },
         'dev-native': {
             chainId: 65535,
@@ -76,7 +81,7 @@ const config: HardhatUserConfig = {
             accounts: {
                 mnemonic: env.MNEMONIC || '',
             },
-            gasPrice: 0, // Get closer to Bellecour network
+            ...bellecourBase,
         },
         bellecour: {
             chainId: 134,
@@ -85,8 +90,7 @@ const config: HardhatUserConfig = {
                 env.PROD_PRIVATE_KEY ||
                     '0x0000000000000000000000000000000000000000000000000000000000000000',
             ],
-            gasPrice: 0,
-            gas: 6700000,
+            ...bellecourBase,
         },
     },
     etherscan: {
