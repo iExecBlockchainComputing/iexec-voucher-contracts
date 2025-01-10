@@ -13,6 +13,7 @@ node_modules
 /coverage
 /coverage.json
 
+# deployments files
 /deployments/hardhat
 /deployments/external-hardhat
 /deployments/localhost

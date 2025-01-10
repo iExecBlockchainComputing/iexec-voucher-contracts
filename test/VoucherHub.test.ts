@@ -122,7 +122,7 @@ describe('VoucherHub', function () {
 
     describe('Upgrade', function () {
         it('Should upgrade', async function () {
-            const { voucherHub, admin } = await loadFixture(deployFixture);
+            const { admin } = await loadFixture(deployFixture);
             const VoucherHubV2Factory = await ethers.getContractFactory('VoucherHubV2Mock', admin);
             // Next line should throw if new storage schema is not compatible with previous one
             await voucherHubUtils.upgradeProxy(voucherHubAddress, VoucherHubV2Factory);
@@ -135,7 +135,7 @@ describe('VoucherHub', function () {
         });
 
         it('Should not upgrade when account is unauthorized', async function () {
-            const { voucherHub, anyone } = await loadFixture(deployFixture);
+            const { voucherHub } = await loadFixture(deployFixture);
 
             await expect(
                 voucherHubAsAnyone.upgradeToAndCall(ethers.Wallet.createRandom().address, '0x'),
@@ -159,7 +159,7 @@ describe('VoucherHub', function () {
         });
 
         it('Should not create a voucher type when the caller is not authorized', async function () {
-            const { voucherHub, anyone } = await loadFixture(deployFixture);
+            const { voucherHub } = await loadFixture(deployFixture);
             await expect(
                 voucherHubAsAnyone.createVoucherType(description, duration),
             ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
@@ -1063,6 +1063,15 @@ describe('VoucherHub', function () {
             await expect(voucherHub.transferFrom(anyone, anyone, 0)).to.be.revertedWith(
                 'NonTransferableERC20Upgradeable: Unsupported transferFrom',
             );
+        });
+    });
+
+    describe('iExec Voucher token - VCHR', function () {
+        it('Should return 9 as the number of decimals', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+
+            // Call the decimals function and check the returned value
+            expect(await voucherHub.decimals()).to.equal(9);
         });
     });
 });
