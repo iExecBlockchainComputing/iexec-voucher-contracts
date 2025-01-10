@@ -23,8 +23,7 @@ async function upgradeVoucherHub() {
         await upgrades.erc1967.getImplementationAddress(voucherHubProxyAddress),
     );
 
-    const voucherHubFactoryUpgrade = await ethers.getContractFactory('VoucherHub');
-    await upgradeProxy(voucherHubProxyAddress, voucherHubFactoryUpgrade);
+    await upgradeProxy(voucherHubProxyAddress, new VoucherHub__factory().connect(ethers.provider));
 
     // Fetch new implementation address
     const implementationAddress =
