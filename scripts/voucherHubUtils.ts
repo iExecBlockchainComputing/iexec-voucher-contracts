@@ -3,7 +3,6 @@
 
 import { ContractFactory } from 'ethers';
 import hre, { ethers, upgrades } from 'hardhat';
-import { env } from '../config/env';
 import { getDeploymentConfig } from '../deploy/deploy';
 import { VoucherHub, VoucherProxy__factory } from '../typechain-types';
 
@@ -34,16 +33,8 @@ export async function upgradeProxy(
     voucherHubAddress: string,
     newVoucherHubImplementationFactory: ContractFactory,
 ): Promise<VoucherHub> {
-    // Fetch proxy admin details
-    const voucherHub: unknown = newVoucherHubImplementationFactory.attach(voucherHubAddress);
-    const voucherHubContract = voucherHub as VoucherHub;
-    const upgraderAddress = await voucherHubContract.defaultAdmin();
-    const upgrader = env.IS_LOCAL_FORK
-        ? await ethers.getImpersonatedSigner(upgraderAddress)
-        : await ethers.getSigner(upgraderAddress);
-
     const contractUpgrade: unknown = await upgrades
-        .upgradeProxy(voucherHubAddress, newVoucherHubImplementationFactory.connect(upgrader))
+        .upgradeProxy(voucherHubAddress, newVoucherHubImplementationFactory)
         .then((contract) => contract.waitForDeployment());
     return contractUpgrade as VoucherHub;
 }

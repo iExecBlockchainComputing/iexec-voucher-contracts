@@ -2,6 +2,7 @@
 
 ## vNEXT
 
+- Run partial upgrade tests on fork. (#58)
 - Implement `VoucherHub` upgrade and test it on GitHub Action CI using a local fork. (#57)
 - Relocate `decimals()` function in VoucherHub smart contract. (#56)
 - Better handling for env variables. (#55)
