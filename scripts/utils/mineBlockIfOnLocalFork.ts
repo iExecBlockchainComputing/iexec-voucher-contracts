@@ -2,7 +2,7 @@ import * as helpers from '@nomicfoundation/hardhat-network-helpers';
 import { env } from '../../config/env';
 
 /**
- * This function is used to force mining if we are one a local fork
+ * This function is used to mine one bock if we are on a local fork
  */
 export async function mineBlockIfOnLocalFork() {
     if (env.IS_LOCAL_FORK) {
