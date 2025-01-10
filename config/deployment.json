@@ -2,7 +2,8 @@
     "31337": {
         "factory": true,
         "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "pocoAddress": "0x123456789a123456789b123456789b123456789d"
+        "pocoAddress": "0x123456789a123456789b123456789b123456789d",
+        "voucherHubAddress": "0x63264C515d0121B0C167098aF1661d8ADE7BCD3d"
     },
     "65535": {
         "factory": true,
@@ -12,6 +13,7 @@
     "134": {
         "factory": true,
         "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "pocoAddress": "0x3eca1B216A7DF1C7689aEb259fFB83ADFB894E7f"
+        "pocoAddress": "0x3eca1B216A7DF1C7689aEb259fFB83ADFB894E7f",
+        "voucherHubAddress": "0x3137B6DF4f36D338b82260eDBB2E7bab034AFEda"
     }
 }

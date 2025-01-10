@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
-import * as helpers from '@nomicfoundation/hardhat-network-helpers';
 import { ContractFactory } from 'ethers';
 import { deployments, ethers, upgrades } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import deploymentConfig from '../config/deployment';
 import { env } from '../config/env';
+import { mineBlockIfOnLocalFork } from '../scripts/utils/mineBlockIfOnLocalFork';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import {
@@ -19,14 +19,7 @@ import {
 } from '../typechain-types';
 
 export default async function (hre: HardhatRuntimeEnvironment) {
-    if (env.IS_LOCAL_FORK) {
-        /**
-         * This fixes following issue when deploying to a local Bellecour fork:
-         * `ProviderError: No known hardfork for execution on historical block [...] in chain with id 134.`
-         * See: https://github.com/NomicFoundation/hardhat/issues/5511#issuecomment-2288072104
-         */
-        await helpers.mine();
-    }
+    mineBlockIfOnLocalFork();
     const { deployer, manager, minter } = await hre.getNamedAccounts();
     await deployAll(deployer, manager, minter);
 }
