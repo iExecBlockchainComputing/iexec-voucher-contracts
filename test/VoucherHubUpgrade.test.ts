@@ -9,6 +9,7 @@ import { getDeploymentConfig } from '../deploy/deploy';
 import { mineBlockIfOnLocalFork } from '../scripts/utils/mineBlockIfOnLocalFork';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import { VoucherHub__factory } from '../typechain-types';
+const BELLECOUR_CHAIN_ID = 134;
 
 describe('VoucherHub upgrade (vNEXT)', function () {
     before(function () {
@@ -18,17 +19,12 @@ describe('VoucherHub upgrade (vNEXT)', function () {
     });
 
     async function deployFixture() {
-        const voucherHubERC1967ProxyAddress = await ethers.provider
-            .getNetwork()
-            .then((network) => network.chainId.toString())
-            .then((chainId) => {
-                if (chainId != '134') {
-                    console.error('Bellecour fork network required');
-                    process.exit(1);
-                }
-                return getDeploymentConfig(Number(chainId));
-            })
-            .then((config) => config.voucherHubAddress);
+        if ((await ethers.provider.getNetwork()).chainId !== BigInt(BELLECOUR_CHAIN_ID)) {
+            console.error('Bellecour fork network required');
+            process.exit(1);
+        }
+        const voucherHubERC1967ProxyAddress = (await getDeploymentConfig(BELLECOUR_CHAIN_ID))
+            .voucherHubAddress;
         await mineBlockIfOnLocalFork();
         const { deployer, manager, minter } = await getNamedAccounts();
         const admin = await ethers.getSigner(deployer); // admin and upgrader
