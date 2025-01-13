@@ -3,7 +3,7 @@
 
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
-import { ethers, getNamedAccounts } from 'hardhat';
+import { ethers } from 'hardhat';
 import { env } from '../config/env';
 import { getDeploymentConfig } from '../deploy/deploy';
 import { mineBlockIfOnLocalFork } from '../scripts/utils/mineBlockIfOnLocalFork';
@@ -26,16 +26,19 @@ describe('VoucherHub upgrade (vNEXT)', function () {
         const voucherHubERC1967ProxyAddress = (await getDeploymentConfig(BELLECOUR_CHAIN_ID))
             .voucherHubAddress;
         await mineBlockIfOnLocalFork();
-        const { deployer, manager, minter } = await getNamedAccounts();
-        const admin = await ethers.getSigner(deployer); // admin and upgrader
-        const upgrader = await ethers.getSigner(deployer); // are currently the same account
+        const [admin, manager, minter] = await ethers.getSigners(); // default hardhat account
+        const upgrader = admin; // admin and upgrader are currently the same account
         const voucherHub = VoucherHub__factory.connect(voucherHubERC1967ProxyAddress!, admin);
         const previousAdmin = await ethers.getImpersonatedSigner(
             await voucherHub.defaultAdmin(), //'0xA0C07ad0257522211c6359EC8A4EB5d21A4A1A14',
         );
         console.log(
             `Transferring VoucherHub:${voucherHubERC1967ProxyAddress} ` +
-                `roles to default hardhat accounts on this forked network..`,
+                `roles on this forked network to default hardhat accounts:\n` +
+                `admin:     ${await admin.getAddress()}\n` +
+                `upgrader:  ${await upgrader.getAddress()}\n` +
+                `manager:   ${await manager.getAddress()}\n` +
+                `minter:    ${await minter.getAddress()}\n`,
         );
         await voucherHub
             .connect(previousAdmin)
