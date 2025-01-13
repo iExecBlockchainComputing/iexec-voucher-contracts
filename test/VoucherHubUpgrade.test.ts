@@ -11,6 +11,7 @@ import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import { VoucherHub__factory } from '../typechain-types';
 const BELLECOUR_CHAIN_ID = 134;
 
+// TODO: Remove this after upgrade
 describe('VoucherHub upgrade (vNEXT)', function () {
     before(function () {
         if (!env.IS_LOCAL_FORK) {
