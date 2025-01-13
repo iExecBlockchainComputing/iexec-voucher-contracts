@@ -1,4 +1,4 @@
-# iexec-voucher-contracts
+# iExec Voucher contracts
 
 [![codecov](https://codecov.io/github/iExecBlockchainComputing/iexec-voucher-contracts/graph/badge.svg)](https://codecov.io/github/iExecBlockchainComputing/iexec-voucher-contracts)
 
@@ -25,6 +25,45 @@ Deployment configuration can also be provided/overridden using env variables:
 * `IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX`
 
 Run:
+
 ```
 npx hardhat deploy --network <name>
 ```
+
+#### Local Bellecour fork
+
+Complete the `.env` file with the following variables:
+
+```
+IS_LOCAL_FORK=true
+MNEMONIC=<mnemonic>
+```
+
+If a `MNEMONIC` is not provided, the default Hardhat one will be used.
+
+```
+npx hardhat node
+```
+
+#### Bellecour
+
+With appropriate deployer key:
+
+```
+npx hardhat deploy --network bellecour
+```
+
+### Verify contracts
+
+```
+npx hardhat run ./scripts/verify.ts --network bellecour
+```
+
+Once a Voucher (proxy) is deployed, it can be verified with:
+
+```
+npx hardhat verify <voucherProxyAddress> --network bellecour <beaconAddress>
+```
+
+Note: no need to verify all VoucherProxy contracts because Blockscout automatically
+matches all similar contracts with the submitted source code.

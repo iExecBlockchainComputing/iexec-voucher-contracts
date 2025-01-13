@@ -103,6 +103,12 @@ contract VoucherHub is
         emit VoucherTypeCreated($._voucherTypes.length - 1, description, duration);
     }
 
+    /**
+     * This function only updates the duration for newly minted vouchers and not the existing ones to provide
+     * guarantees regarding the expiration of vouchers. When a voucher is delivered, its credits should not expire
+     * before the original expiration date.
+     * As mentioned in Halborn audit report (HAL-01), this is not a bug, but rather, an intended feature.
+     */
     function updateVoucherTypeDescription(
         uint256 id,
         string memory description
@@ -374,6 +380,20 @@ contract VoucherHub is
     ) public view whenVoucherTypeExists(id) returns (VoucherType memory) {
         VoucherHubStorage storage $ = _getVoucherHubStorage();
         return $._voucherTypes[id];
+    }
+
+    /**
+     * @dev By default, the standard ERC-20 `decimals` value is `18`. However, this value
+     * is overridden here to `9` to align with the number of decimal places used by
+     * the RLC token. This ensures consistency in how input values are handled
+     * when a voucher is minted.
+     *
+     * See https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol#L78
+     *
+     * @return The number of decimal places (9) used for token representation.
+     */
+    function decimals() public pure override returns (uint8) {
+        return 9;
     }
 
     function _authorizeUpgrade(
