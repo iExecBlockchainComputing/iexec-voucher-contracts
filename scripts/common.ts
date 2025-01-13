@@ -5,7 +5,6 @@ import { ContractTransactionReceipt } from 'ethers';
 import { ethers } from 'hardhat';
 import {
     Voucher,
-    Voucher__factory,
     VoucherProxy,
     VoucherProxy__factory,
     VoucherV2Mock,
@@ -13,7 +12,7 @@ import {
 } from '../typechain-types';
 
 export async function getVoucher(voucherAddress: string): Promise<Voucher> {
-    return Voucher__factory.connect(voucherAddress, ethers.provider);
+    return await ethers.getContractAt('Voucher', voucherAddress);
 }
 
 export async function getVoucherV2(voucherAddress: string): Promise<VoucherV2Mock> {
