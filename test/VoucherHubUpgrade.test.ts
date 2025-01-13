@@ -3,7 +3,7 @@
 
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
-import { ethers } from 'hardhat';
+import { ethers, getNamedAccounts } from 'hardhat';
 import { env } from '../config/env';
 import { getDeploymentConfig } from '../deploy/deploy';
 import { mineBlockIfOnLocalFork } from '../scripts/utils/mineBlockIfOnLocalFork';
@@ -30,7 +30,9 @@ describe('VoucherHub upgrade (vNEXT)', function () {
             })
             .then((config) => config.voucherHubAddress);
         await mineBlockIfOnLocalFork();
-        const [admin, upgrader, manager, minter] = await ethers.getSigners();
+        const { deployer, manager, minter } = await getNamedAccounts();
+        const admin = await ethers.getSigner(deployer); // admin and upgrader
+        const upgrader = await ethers.getSigner(deployer); // are currently the same account
         const voucherHub = VoucherHub__factory.connect(voucherHubERC1967ProxyAddress!, admin);
         const previousAdmin = await ethers.getImpersonatedSigner(
             await voucherHub.defaultAdmin(), //'0xA0C07ad0257522211c6359EC8A4EB5d21A4A1A14',
@@ -45,13 +47,14 @@ describe('VoucherHub upgrade (vNEXT)', function () {
             .then((tx) => tx.wait());
         await voucherHub.acceptDefaultAdminTransfer().then((tx) => tx.wait());
         [
-            [await voucherHub.UPGRADER_ROLE(), upgrader],
-            [await voucherHub.MANAGER_ROLE(), manager],
-            [await voucherHub.MINTER_ROLE(), minter],
-        ].forEach((x) => voucherHub.grantRole(x[0].toString(), x[1]).then((tx) => tx.wait()));
+            { id: await voucherHub.UPGRADER_ROLE(), account: upgrader },
+            { id: await voucherHub.MANAGER_ROLE(), account: manager },
+            { id: await voucherHub.MINTER_ROLE(), account: minter },
+        ].forEach((role) =>
+            voucherHub.grantRole(role.id.toString(), role.account).then((tx) => tx.wait()),
+        );
         return {
             voucherHub,
-            admin,
             upgrader,
             manager,
             minter,
