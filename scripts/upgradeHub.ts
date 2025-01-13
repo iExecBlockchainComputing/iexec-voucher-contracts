@@ -1,6 +1,6 @@
-// SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
+// SPDX-FileCopyrightText: 2024-2025 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
-import { ethers, upgrades } from 'hardhat';
+import { ethers, getNamedAccounts, upgrades } from 'hardhat';
 import { env } from '../config/env';
 import { getDeploymentConfig } from '../deploy/deploy';
 import { VoucherHub__factory } from '../typechain-types';
@@ -23,8 +23,11 @@ async function upgradeVoucherHub() {
         'Current implementation address:',
         await upgrades.erc1967.getImplementationAddress(voucherHubProxyAddress),
     );
-
-    await upgradeProxy(voucherHubProxyAddress, new VoucherHub__factory().connect(ethers.provider));
+    const { deployer } = await getNamedAccounts();
+    const upgrader = env.IS_LOCAL_FORK
+        ? await ethers.getImpersonatedSigner(deployer)
+        : await ethers.getSigner(deployer);
+    await upgradeProxy(voucherHubProxyAddress, new VoucherHub__factory().connect(upgrader));
 
     // Fetch new implementation address
     const implementationAddress =
