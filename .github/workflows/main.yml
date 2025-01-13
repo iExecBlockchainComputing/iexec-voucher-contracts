@@ -11,7 +11,7 @@ on:
       - main
 
 jobs:
-  coverage:
+  default:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
