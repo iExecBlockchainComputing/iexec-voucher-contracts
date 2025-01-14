@@ -1,9 +1,9 @@
 # Changelog
 
 ## vNEXT
-- Add `dealId` to `TaskClaimedWithVoucher` event. (#59)
+- Add `dealId` to `TaskClaimedWithVoucher` event. (#61)
 - Run partial upgrade tests on fork.
-    - Should maintain consistent voucher addresses (#59)
+    - Should maintain consistent voucher addresses (#61)
     - Should upgrade decimals (#58)
 - Implement `VoucherHub` upgrade and test it on GitHub Action CI using a local fork. (#57)
 - Relocate `decimals()` function in VoucherHub smart contract. (#56)
