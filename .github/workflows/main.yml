@@ -29,7 +29,11 @@ jobs:
         run: npm run check-format
       - name: Generate UML
         run: npm run uml
-      - name: Run Upgrade Test
+      - name: Run partial upgrade tests on fork
+        env:
+          IS_LOCAL_FORK: true
+        run: npm run test test/VoucherHubUpgrade.test.ts
+      - name: Simulate upgrade on fork
         env:
           USE_FACTORY: false
           IS_LOCAL_FORK: true
