@@ -12,7 +12,7 @@ import { mineBlockIfOnLocalFork } from './utils/mineBlockIfOnLocalFork';
 import { upgradeProxy } from './voucherHubUtils';
 import { upgradeBeacon } from './voucherUtils';
 
-//TODO: Rename function name
+//TODO: Rename function anf file to `upgrade`
 async function upgradeVoucherHub() {
     console.log(`Upgrading VoucherHub contract ...`);
     mineBlockIfOnLocalFork();
@@ -45,13 +45,13 @@ async function upgradeVoucherHub() {
         voucherHubProxyAddress,
         ethers.provider,
     ).getVoucherBeacon();
-    console.log(`Upgrading Voucher:${voucherBeaconAddress} beacon implementation..`);
+    console.log(`Upgrading VoucherBeacon:${voucherBeaconAddress} implementation..`);
     const voucherBeacon = UpgradeableBeacon__factory.connect(voucherBeaconAddress, ethers.provider);
     const previousVoucherImplementationAddress = await voucherBeacon.implementation();
     await upgradeBeacon(voucherBeacon, new Voucher__factory().connect(upgrader));
     const nextVoucherImplementationAddress = await voucherBeacon.implementation();
     console.log(
-        `Voucher beacon implementation upgraded [previousImpl:${previousVoucherImplementationAddress}, nextImpl:${nextVoucherImplementationAddress}]`,
+        `VoucherBeacon implementation upgraded [previousImpl:${previousVoucherImplementationAddress}, nextImpl:${nextVoucherImplementationAddress}]`,
     );
 }
 

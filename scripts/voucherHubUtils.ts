@@ -46,6 +46,11 @@ export async function upgradeProxy(
 export async function getExpectedVoucherProxyCodeHash(voucherBeaconAddress: string) {
     const chainId = (await ethers.provider.getNetwork()).chainId.toString();
     const config = await getDeploymentConfig(Number(chainId));
+    if (chainId == '134') {
+        // See https://blockscout-bellecour.iex.ec/token/0x3137B6DF4f36D338b82260eDBB2E7bab034AFEda?tab=read_proxy
+        // `getVoucherProxyCodeHash` >
+        return '0x2a2da9e75edfb4be8fa6cf0e9bd092957dd28ffa588d8528ca66a5cd3712ffa2';
+    }
     if (!config.factory || (hre as any).__SOLIDITY_COVERAGE_RUNNING) {
         /**
          * @dev Voucher proxy code hash is different from the production one:
@@ -81,6 +86,8 @@ export async function getExpectedVoucherProxyCodeHash(voucherBeaconAddress: stri
          *
          * Note: Look very carefully before updating this value to avoid messing with
          * existing vouchers already deployed in production.
+         *
+         * Also see test/NextVersionUpgrade.test.ts to double check behavior.
          */
         return '0x31a4f4707138270dd34b040129096c67e1039fb242deebb8a0d0f8ed9da82232';
     }
