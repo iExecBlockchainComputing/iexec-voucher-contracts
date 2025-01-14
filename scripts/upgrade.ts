@@ -12,7 +12,7 @@ import { mineBlockIfOnLocalFork } from './utils/mineBlockIfOnLocalFork';
 import { upgradeProxy } from './voucherHubUtils';
 import { upgradeBeacon } from './voucherUtils';
 
-async function upgradeVoucherHub() {
+async function upgrade() {
     console.log(`Upgrading VoucherHub contract ...`);
     mineBlockIfOnLocalFork();
 
@@ -54,7 +54,7 @@ async function upgradeVoucherHub() {
     );
 }
 
-upgradeVoucherHub().catch((error) => {
+upgrade().catch((error) => {
     console.error(error);
     process.exitCode = 1;
 });
