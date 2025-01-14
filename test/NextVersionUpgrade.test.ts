@@ -3,6 +3,7 @@
 
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
+import { AddressLike } from 'ethers';
 import { ethers } from 'hardhat';
 import { env } from '../config/env';
 import { getDeploymentConfig } from '../deploy/deploy';
@@ -31,7 +32,7 @@ describe('Next version upgrade', function () {
         const voucherHubERC1967ProxyAddress = (await getDeploymentConfig(BELLECOUR_CHAIN_ID))
             .voucherHubAddress;
         await mineBlockIfOnLocalFork();
-        const [admin, manager, minter, voucherOwner] = await ethers.getSigners(); // default hardhat account
+        const [admin, manager, minter, voucherOwner1, voucherOwner2] = await ethers.getSigners(); // default hardhat account
         const upgrader = admin; // admin and upgrader are currently the same account
         const voucherHub = VoucherHub__factory.connect(voucherHubERC1967ProxyAddress!, admin);
         const previousAdmin = await ethers.getImpersonatedSigner(
@@ -79,7 +80,8 @@ describe('Next version upgrade', function () {
             upgrader,
             manager,
             minter,
-            voucherOwner,
+            voucherOwner1,
+            voucherOwner2,
         };
     }
 
@@ -98,13 +100,22 @@ describe('Next version upgrade', function () {
 
     describe('Voucher address', function () {
         it('Should create and predict consistent voucher addresses across versions', async function () {
-            const { voucherHub, upgrader, minter, voucherOwner } = await loadFixture(deployFixture);
-            const createVoucher = () =>
+            const { voucherHub, upgrader, minter, voucherOwner1, voucherOwner2 } =
+                await loadFixture(deployFixture);
+
+            const staticCallCreateVoucher = (voucherOwner: AddressLike) =>
                 voucherHub.connect(minter).createVoucher.staticCall(voucherOwner, 0, 100);
-            const predictVoucher = () =>
-                voucherHub.connect(minter).predictVoucher.staticCall(voucherOwner);
-            const previouslyCreatedVoucherAddress = await createVoucher();
-            const previouslyPredictedVoucherAddress = await predictVoucher();
+            const createVoucher = (voucherOwner: AddressLike) =>
+                voucherHub.connect(minter).createVoucher(voucherOwner, 0, 100);
+            const predictVoucher = (voucherOwner: AddressLike) =>
+                voucherHub.connect(minter).predictVoucher(voucherOwner);
+            // Voucher1 is not created
+            const voucherAddress1 = await staticCallCreateVoucher(voucherOwner1);
+            const predictedVoucherAddress1 = await predictVoucher(voucherOwner1);
+            // Voucher2 is created
+            await createVoucher(voucherOwner2);
+            const predictedVoucherAddress2 = await predictVoucher(voucherOwner2);
+
             // Upgrade VoucherHub
             await voucherHubUtils.upgradeProxy(
                 await voucherHub.getAddress(),
@@ -119,11 +130,16 @@ describe('Next version upgrade', function () {
                 voucherBeacon,
                 new Voucher__factory().connect(upgrader),
             );
-
-            expect(await createVoucher())
-                .to.equal(previouslyCreatedVoucherAddress)
-                .to.equal(await predictVoucher())
-                .to.equal(previouslyPredictedVoucherAddress)
+            // Voucher1 would have the same address on any version
+            expect(await staticCallCreateVoucher(voucherOwner1))
+                .to.equal(voucherAddress1)
+                .to.equal(await predictVoucher(voucherOwner1))
+                .to.equal(predictedVoucherAddress1)
+                .to.not.equal(ethers.ZeroAddress);
+            // Voucher2 cannot be re-created since already created on previous version
+            await expect(createVoucher(voucherOwner2)).to.be.revertedWithoutReason();
+            expect(await predictVoucher(voucherOwner2))
+                .to.equal(predictedVoucherAddress2)
                 .to.not.equal(ethers.ZeroAddress);
         });
     });
