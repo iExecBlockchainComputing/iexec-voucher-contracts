@@ -16,7 +16,6 @@ import {
 } from '../typechain-types';
 const BELLECOUR_CHAIN_ID = 134;
 
-// TODO: Rename file to `NextVersionUpgrade.test.ts`
 describe('Next version upgrade', function () {
     before(function () {
         if (!env.IS_LOCAL_FORK) {

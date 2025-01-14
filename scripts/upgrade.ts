@@ -12,7 +12,6 @@ import { mineBlockIfOnLocalFork } from './utils/mineBlockIfOnLocalFork';
 import { upgradeProxy } from './voucherHubUtils';
 import { upgradeBeacon } from './voucherUtils';
 
-//TODO: Rename function anf file to `upgrade`
 async function upgradeVoucherHub() {
     console.log(`Upgrading VoucherHub contract ...`);
     mineBlockIfOnLocalFork();

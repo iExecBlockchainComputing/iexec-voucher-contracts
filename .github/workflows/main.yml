@@ -32,7 +32,7 @@ jobs:
       - name: Run partial upgrade tests on fork
         env:
           IS_LOCAL_FORK: true
-        run: npm run test test/VoucherHubUpgrade.test.ts
+        run: npm run test test/NextVersionUpgrade.test.ts
       - name: Simulate upgrade on fork
         env:
           USE_FACTORY: false
