@@ -2,6 +2,10 @@
 
 ## vNEXT
 
+- Add type-checking script (#53)
+- Run partial upgrade tests on fork.
+  - VoucherHub
+    - [Should upgrade decimals](test/VoucherHubUpgrade.test.ts) (#58)
 - Implement `VoucherHub` upgrade and test it on GitHub Action CI using a local fork. (#57)
 - Relocate `decimals()` function in VoucherHub smart contract. (#56)
 - Better handling for env variables. (#55)

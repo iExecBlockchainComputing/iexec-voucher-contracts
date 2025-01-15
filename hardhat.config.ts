@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
+// SPDX-FileCopyrightText: 2024-2025 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
 import '@nomicfoundation/hardhat-toolbox';
@@ -51,6 +51,9 @@ const config: HardhatUserConfig = {
                 },
             },
         ],
+    },
+    typechain: {
+        tsNocheck: true, // Disable type checking to avoid issue in `IexecLibOrders_v5` typechain generation
     },
     networks: {
         hardhat: {
