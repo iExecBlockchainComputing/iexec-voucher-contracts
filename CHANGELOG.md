@@ -2,6 +2,7 @@
 
 ## vNEXT
 - Add `dealId` to `TaskClaimedWithVoucher` event. (#61)
+- Add type-checking script (#53)
 - Run partial upgrade tests on fork.
     - Should maintain consistent voucher addresses (#61)
     - Should upgrade decimals (#58)
