@@ -1,0 +1,25 @@
+on:
+  workflow_dispatch:
+      inputs:
+        network:
+            description: 'Network'
+            required: true
+            default: 'hardhat'
+            type: choice
+            options:
+            - hardhat
+            - bellecour
+
+jobs:
+  run-upgrade:
+      runs-on: ubuntu-latest
+      steps:
+      - run: | # TODO: Commit all changed files
+          echo "Network: $NETWORK"
+          if [ "$NETWORK" == 'hardhat' ]; then 
+            export IS_LOCAL_FORK=true
+            echo "IS_LOCAL_FORK: $IS_LOCAL_FORK"
+          fi
+          npm run upgrade
+        env:
+          NETWORK: ${{ inputs.network }}
