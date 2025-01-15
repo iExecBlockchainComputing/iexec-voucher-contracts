@@ -1,3 +1,5 @@
+name: Voucher Smart Contract CI
+
 on:
   push:
     branches:
@@ -8,8 +10,12 @@ on:
       - develop
       - main
 
+concurrency:
+  group: ci-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
-  default:
+  coverage:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -18,16 +24,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm' # Cache dependencies
-      - name: Install dependencies
+          cache: 'npm'
+      - name: Install Dependencies
         run: npm ci
-      - name: Build
-        run: npm run build
       - name: Check Format
         run: npm run check-format
+      - name: Build
+        run: npm run build
+      - name: Check Types
+        run: npm run check-types
       - name: Generate UML
         run: npm run uml
-      - name: Run Upgrade Test
+      - name: Run partial upgrade tests on fork
+        env:
+          IS_LOCAL_FORK: true
+        run: npm run test test/VoucherHubUpgrade.test.ts
+      - name: Simulate upgrade on fork
         env:
           USE_FACTORY: false
           IS_LOCAL_FORK: true
@@ -47,7 +59,6 @@ jobs:
           target: "contracts/"
           slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
           fail-on: none # TODO set this to high or other
-          node-version: 20
           sarif: results.sarif
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
