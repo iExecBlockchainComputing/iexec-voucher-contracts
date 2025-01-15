@@ -34,17 +34,22 @@ jobs:
         run: npm run upgrade
       - name: Run Tests
         run: npm run test -- --bail
-      # - name: Run static analysis with Slither
-      #   uses: crytic/slither-action@v0.4.0
-      #   id: slither
-      #   with:
-      #     target: "contracts/"
-      #     slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
-      #     node-version: 20
-      #     fail-on: none # TODO set this to high or other
-      #     sarif: results.sarif
-      # - name: Upload SARIF file
-      #   uses: github/codeql-action/upload-sarif@v3
-      #   with:
-      #     sarif_file: results.sarif
-          
+      - name: Run Coverage
+        run: npm run coverage #coverage only works on a non-fork hardhat node
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: iExecBlockchainComputing/iexec-voucher-contracts
+      - name: Run static analysis with slither
+        uses: crytic/slither-action@v0.4.0
+        with:
+          target: "contracts/"
+          slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
+          fail-on: none # TODO set this to high or other
+          node-version: 20
+          sarif: results.sarif
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
