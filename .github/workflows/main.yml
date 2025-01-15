@@ -29,10 +29,10 @@ jobs:
         run: npm ci
       - name: Check Format
         run: npm run check-format
-      - name: Check Types
-        run: npm run check-types
       - name: Build
         run: npm run build
+      - name: Check Types
+        run: npm run check-types
       - name: Generate UML
         run: npm run uml
       - name: Run Upgrade Test
