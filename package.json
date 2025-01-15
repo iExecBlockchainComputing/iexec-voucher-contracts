@@ -28,6 +28,7 @@
     "coverage": "npx hardhat coverage",
     "format": "npx prettier --write",
     "check-format": "prettier --ignore-path .gitignore --check '{scripts,test,contracts}/**/*.{js,sol}'",
+    "check-types": "tsc --noEmit",
     "doc": "npx hardhat docgen",
     "uml": "./scripts/utils/sol2uml.sh"
   },

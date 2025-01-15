@@ -519,7 +519,7 @@ describe('VoucherHub', function () {
         });
 
         it('Should not initialize voucher more than once', async function () {
-            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
             await voucherHubAsManager.createVoucherType(description, duration);
             // Create voucher.
             const createVoucherTx = await voucherHubAsMinter
@@ -534,12 +534,14 @@ describe('VoucherHub', function () {
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
             await expect(
-                voucher.initialize(
-                    voucherOwner1,
-                    await voucherHub.getAddress(),
-                    expectedExpiration,
-                    voucherType,
-                ),
+                voucher
+                    .connect(anyone)
+                    .initialize(
+                        voucherOwner1,
+                        await voucherHub.getAddress(),
+                        expectedExpiration,
+                        voucherType,
+                    ),
             ).to.be.revertedWithCustomError(voucher, 'InvalidInitialization');
         });
 
