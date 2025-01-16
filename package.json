@@ -39,9 +39,8 @@
     "lint:sol:fix": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --write"
   },
   "lint-staged": {
-    "*.{js,ts}": [
-      "prettier --log-level warn --ignore-path .gitignore --check",
-      "eslint"
+    "*.{js,ts,sol}": [
+      "prettier --write"
     ]
   },
   "devDependencies": {
