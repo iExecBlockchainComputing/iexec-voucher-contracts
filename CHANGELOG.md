@@ -1,19 +1,30 @@
 # Changelog
 
 ## vNEXT
+
+- Add type-checking script (#53)
+- Run partial upgrade tests on fork.
+  - VoucherHub
+    - [Should upgrade decimals](test/VoucherHubUpgrade.test.ts) (#58)
+- Implement `VoucherHub` upgrade and test it on GitHub Action CI using a local fork. (#57)
+- Relocate `decimals()` function in VoucherHub smart contract. (#56)
+- Better handling for env variables. (#55)
 - Remove references to blockscout v5. (#49)
+- Override the decimals function of ERC-20 to set the token's decimal precision to 9, aligning with RLC standards. (#50)
 - Verify VoucherProxy contracts. (#51)
 
 ## v1.0.0
 
 ### What's new?
+
 - Allow users to access resources of the iExec network via a sponsorship voucher.
 
 ### More details
+
 - Upgrade Solidity Compiler to `v0.8.27`. (#45)
 - Bump dependencies: (#44)
-    - `@openzeppelin/hardhat-upgrades`, `hardhat`, `ethers`, `prettier`, and others [minor version bump]
-    - `prettier-plugin-organize-imports@4`
+  - `@openzeppelin/hardhat-upgrades`, `hardhat`, `ethers`, `prettier`, and others [minor version bump]
+  - `prettier-plugin-organize-imports@4`
 - Add `getVoucherProxyCodeHash(..)` & `isRefundedTask(..)` view functions. (#43)
 - Add `predictVoucher(..)` & `isVoucher(..)` functions. (#42)
 - Generate UML class diagram for contracts. (#41)
@@ -44,12 +55,12 @@
 - Match orders through voucher. (#12)
 - Add external-hardhat network configuration. (#11)
 - Add voucher credit and SRLC manipulation. (#10)
-    - SRLC and iExec poco is mocked.
-    - set voucher credit as VoucherHub is ERC20.
+  - SRLC and iExec poco is mocked.
+  - set voucher credit as VoucherHub is ERC20.
 - Upgrade configuration: (#9)
-    - Upgrade dependencies: hardhat, husky, iExec Poco.
-    - Ignore mocks in coverage.
-    - Add solidity optimizer and use Bellecour network config.
+  - Upgrade dependencies: hardhat, husky, iExec Poco.
+  - Ignore mocks in coverage.
+  - Add solidity optimizer and use Bellecour network config.
 - Add role-based access control to VoucherHub. (#8)
 - Create voucher from VoucherHub with : type, expiration, authorize list. (#6)
 - Create vouchers with create2. (#5)

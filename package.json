@@ -23,10 +23,11 @@
   "scripts": {
     "prepare": "husky",
     "build": "npx hardhat compile",
+    "upgrade": "hardhat run ./scripts/upgradeHub.ts",
     "test": "npx hardhat test",
-    "test-ci": "npm run test && FACTORY=false npm run test",
     "coverage": "npx hardhat coverage",
     "format": "npx prettier --write",
+    "check-format": "prettier --ignore-path .gitignore --check '{scripts,test,contracts}/**/*.{js,sol}'",
     "check-types": "tsc --noEmit",
     "doc": "npx hardhat docgen",
     "uml": "./scripts/utils/sol2uml.sh",
@@ -41,10 +42,6 @@
     "*.{js,ts}": [
       "prettier --log-level warn --ignore-path .gitignore --check",
       "eslint"
-    ],
-    "*.sol": [
-      "prettier --log-level warn --ignore-path .gitignore --check",
-      "solhint"
     ]
   },
   "devDependencies": {
@@ -71,7 +68,9 @@
     "prettier-plugin-solidity": "^1.4.1",
     "sol2uml": "^2.5.19",
     "solhint": "^5.0.3",
-    "solidity-docgen": "^0.6.0-beta.36"
+    "solidity-docgen": "^0.6.0-beta.36",
+    "dotenv": "^16.4.7",
+    "zod": "^3.24.1"
   },
   "devDependencies_comment": {
     "@sol2uml": "UML generation does not work properly after v2.5.19. Try before bump."

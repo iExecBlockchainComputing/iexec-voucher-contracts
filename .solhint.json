@@ -11,6 +11,7 @@
       }
     ],
     "quotes": [
+      "error",
       "double"
     ],
     "imports-order": "error"

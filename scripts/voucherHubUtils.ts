@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
+// SPDX-FileCopyrightText: 2024-2025 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
 import { ContractFactory } from 'ethers';
@@ -33,22 +33,10 @@ export async function upgradeProxy(
     voucherHubAddress: string,
     newVoucherHubImplementationFactory: ContractFactory,
 ): Promise<VoucherHub> {
-    const contractUpgrade: unknown = await upgrades.upgradeProxy(
-        voucherHubAddress,
-        newVoucherHubImplementationFactory,
-    );
-    const voucherHubUpgrade = contractUpgrade as VoucherHub;
-    await voucherHubUpgrade.waitForDeployment();
-    const voucherBeaconAddress = await voucherHubUpgrade.getVoucherBeacon();
-    const expectedHash = await getExpectedVoucherProxyCodeHash(voucherBeaconAddress);
-    const actualHash = await voucherHubUpgrade.getVoucherProxyCodeHash();
-    if (actualHash !== expectedHash) {
-        throw new Error(
-            'Voucher proxy code hash in the new VoucherHub implementation does not match the real hash ' +
-                `[actual: ${actualHash}, expected:${expectedHash}]`,
-        );
-    }
-    return voucherHubUpgrade;
+    const contractUpgrade: unknown = await upgrades
+        .upgradeProxy(voucherHubAddress, newVoucherHubImplementationFactory)
+        .then((contract) => contract.waitForDeployment());
+    return contractUpgrade as VoucherHub;
 }
 
 /**

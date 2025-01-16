@@ -9,5 +9,6 @@
     "resolveJsonModule": true
   },
   "include": ["config/**/*", "deploy/**/*", "scripts/**/*","test/**/*"],
-  "exclude": ["node_modules", "typechain-types"]
+  "exclude": ["node_modules", "typechain-types"],
+  "files": ["./hardhat.config.ts"]
 }
