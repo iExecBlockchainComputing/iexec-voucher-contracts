@@ -1,4 +1,5 @@
 on:
+  pull_request: # https://github.com/orgs/community/discussions/25219#discussioncomment-10902997
   workflow_dispatch:
       inputs:
         network:
