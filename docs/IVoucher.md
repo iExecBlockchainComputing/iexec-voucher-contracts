@@ -35,7 +35,7 @@ event OrdersBoostMatchedWithVoucher(bytes32 dealId)
 ### TaskClaimedWithVoucher
 
 ```solidity
-event TaskClaimedWithVoucher(bytes32 taskId)
+event TaskClaimedWithVoucher(bytes32 taskId, bytes32 dealId)
 ```
 
 ### setExpiration

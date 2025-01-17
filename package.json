@@ -23,7 +23,7 @@
   "scripts": {
     "prepare": "husky",
     "build": "npx hardhat compile",
-    "upgrade": "hardhat run ./scripts/upgradeHub.ts",
+    "upgrade": "hardhat run ./scripts/upgrade.ts",
     "test": "npx hardhat test",
     "coverage": "npx hardhat coverage",
     "format": "npx prettier --write",

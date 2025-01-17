@@ -214,7 +214,8 @@ contract Voucher is Initializable, IVoucher {
         if (task.status != IexecLibCore_v5.TaskStatusEnum.FAILED) {
             IexecPoco2(iexecPoco).claim(taskId);
         }
-        IexecLibCore_v5.Deal memory deal = IexecPocoAccessors(iexecPoco).viewDeal(task.dealid);
+        bytes32 dealId = task.dealid;
+        IexecLibCore_v5.Deal memory deal = IexecPocoAccessors(iexecPoco).viewDeal(dealId);
         // If the deal was matched by the voucher, then the voucher should be refunded.
         // If the deal was partially or not sponsored by the voucher, then the requester
         // should be refunded.
@@ -229,7 +230,7 @@ contract Voucher is Initializable, IVoucher {
                 deal.requester
             );
         }
-        emit TaskClaimedWithVoucher(taskId);
+        emit TaskClaimedWithVoucher(taskId, dealId);
     }
 
     /**
@@ -262,7 +263,7 @@ contract Voucher is Initializable, IVoucher {
                 deal.requester
             );
         }
-        emit TaskClaimedWithVoucher(taskId);
+        emit TaskClaimedWithVoucher(taskId, dealId);
     }
 
     /**

@@ -3,11 +3,16 @@
 import { ethers, getNamedAccounts, upgrades } from 'hardhat';
 import { env } from '../config/env';
 import { getDeploymentConfig } from '../deploy/deploy';
-import { VoucherHub__factory } from '../typechain-types';
+import {
+    UpgradeableBeacon__factory,
+    VoucherHub__factory,
+    Voucher__factory,
+} from '../typechain-types';
 import { mineBlockIfOnLocalFork } from './utils/mineBlockIfOnLocalFork';
 import { upgradeProxy } from './voucherHubUtils';
+import { upgradeBeacon } from './voucherUtils';
 
-async function upgradeVoucherHub() {
+async function upgrade() {
     console.log(`Upgrading VoucherHub contract ...`);
     mineBlockIfOnLocalFork();
 
@@ -35,9 +40,21 @@ async function upgradeVoucherHub() {
     console.log(
         `VoucherHub upgraded successfully ✅! New implementation address (VoucherHub.sol): ${implementationAddress}`,
     );
+    const voucherBeaconAddress = await VoucherHub__factory.connect(
+        voucherHubProxyAddress,
+        ethers.provider,
+    ).getVoucherBeacon();
+    console.log(`Upgrading VoucherBeacon:${voucherBeaconAddress} implementation..`);
+    const voucherBeacon = UpgradeableBeacon__factory.connect(voucherBeaconAddress, ethers.provider);
+    const previousVoucherImplementationAddress = await voucherBeacon.implementation();
+    await upgradeBeacon(voucherBeacon, new Voucher__factory().connect(upgrader));
+    const nextVoucherImplementationAddress = await voucherBeacon.implementation();
+    console.log(
+        `VoucherBeacon implementation upgraded [previousImpl:${previousVoucherImplementationAddress}, nextImpl:${nextVoucherImplementationAddress}]`,
+    );
 }
 
-upgradeVoucherHub().catch((error) => {
+upgrade().catch((error) => {
     console.error(error);
     process.exitCode = 1;
 });
