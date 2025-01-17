@@ -1,5 +1,4 @@
 on:
-  pull_request: # https://github.com/orgs/community/discussions/25219#discussioncomment-10902997
   workflow_dispatch:
       inputs:
         network:
@@ -12,24 +11,24 @@ on:
             - bellecour
 
 jobs:
-  run-upgrade:
-      runs-on: ubuntu-latest
-      steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
-      - run: | # TODO: Commit all changed files
-          echo "Network: $NETWORK"
-          if [ "$NETWORK" == 'hardhat' ]; then 
-            export IS_LOCAL_FORK=true
-            echo "IS_LOCAL_FORK: $IS_LOCAL_FORK"
-          fi
-          npm run upgrade
-        env:
-          NETWORK: ${{ inputs.network }}
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'npm'
+    - name: Install dependencies
+      run: npm ci
+    - run: | # TODO: Commit all file changed and create PR
+        echo "Network: $NETWORK"
+        if [ "$NETWORK" == 'hardhat' ]; then 
+          export IS_LOCAL_FORK=true
+          echo "IS_LOCAL_FORK: $IS_LOCAL_FORK"
+        fi
+        npm run upgrade
+      env:
+        NETWORK: ${{ inputs.network }}
