@@ -7,17 +7,5 @@
     "plugins": [
         "prettier-plugin-organize-imports",
         "prettier-plugin-solidity"
-    ],
-    "pluginsComments": {
-        "prettier-plugin-organize-import": "Supports .ts files (not .sol)",
-        "prettier-plugin-solidity": "Does not support imports sorting yet. See prettier-solidity/prettier-plugin-solidity#918"
-    },
-    "overrides": [
-        {
-          "files": "*.sol",
-          "options": {
-                "singleQuote": false 
-            }    
-        }
-      ]
+    ]
 }
