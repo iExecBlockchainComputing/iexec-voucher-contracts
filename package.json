@@ -47,7 +47,6 @@
     "@amxx/factory": "^1.0.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/hardhat-upgrades": "^3.2.1",
-    "dotenv": "^16.4.7",
     "ethers": "^6.13.2",
     "hardhat": "^2.22.10",
     "hardhat-dependency-compiler": "^1.2.1",
@@ -60,6 +59,7 @@
     "sol2uml": "^2.5.19",
     "solhint": "^5.0.5",
     "solidity-docgen": "^0.6.0-beta.36",
+    "dotenv": "^16.4.7",
     "zod": "^3.24.1"
   },
   "devDependencies_comment": {
