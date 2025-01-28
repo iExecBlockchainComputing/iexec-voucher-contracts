@@ -35,7 +35,7 @@
     "lint:sol:fix": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --write"
   },
   "lint-staged": {
-    "*.{js,ts,sol}": [
+    "*.{js,ts}": [
       "prettier --write"
     ],
     "*.sol": [
