@@ -1,3 +1,4 @@
 *.yml
 *json
 *.md
+./contracts/hardhat-dependency-compiler/

@@ -7,5 +7,13 @@
     "plugins": [
         "prettier-plugin-organize-imports",
         "prettier-plugin-solidity"
+    ],
+    "overrides": [
+        {
+            "files": "*.sol",
+            "options": {
+                "singleQuote": false
+            }
+        }
     ]
 }
