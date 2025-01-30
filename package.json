@@ -39,8 +39,7 @@
       "prettier --write"
     ],
     "*.sol": [
-      "prettier --log-level warn --ignore-path .gitignore --check",
-      "solhint"
+      "npm run lint:sol"
     ]
   },
   "devDependencies": {
