@@ -27,12 +27,12 @@
     "test": "npx hardhat test",
     "coverage": "npx hardhat coverage",
     "format": "npx prettier --write",
-    "check-format": "prettier --ignore-path .gitignore --check '{scripts,test,contracts}/**/*.{js,sol}'",
+    "check-format": "prettier --check '{scripts,test,contracts}/**/*.{js,sol}'",
     "check-types": "tsc --noEmit",
     "doc": "npx hardhat docgen",
     "uml": "./scripts/utils/sol2uml.sh",
-    "lint:sol": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
-    "lint:sol:fix": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --write"
+    "lint:sol": "prettier --log-level warn '{contracts,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
+    "lint:sol:fix": "prettier --log-level warn '{contracts,test}/**/*.sol' --write"
   },
   "lint-staged": {
     "*.{js,ts}": [
