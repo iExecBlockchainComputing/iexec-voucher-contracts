@@ -27,14 +27,19 @@
     "test": "npx hardhat test",
     "coverage": "npx hardhat coverage",
     "format": "npx prettier --write",
-    "check-format": "prettier --ignore-path .gitignore --check '{scripts,test,contracts}/**/*.{js,sol}'",
+    "check-format": "prettier --check '{scripts,test,contracts}/**/*.{js,sol}'",
     "check-types": "tsc --noEmit",
     "doc": "npx hardhat docgen",
-    "uml": "./scripts/utils/sol2uml.sh"
+    "uml": "./scripts/utils/sol2uml.sh",
+    "lint:sol": "prettier --log-level warn 'contracts/**/*.sol' --check && solhint 'contracts/**/*.sol'",
+    "lint:sol:fix": "prettier --log-level warn 'contracts/**/*.sol' --write"
   },
   "lint-staged": {
-    "*.{js,ts,sol}": [
+    "*.{js,ts}": [
       "prettier --write"
+    ],
+    "*.sol": [
+      "npm run lint:sol"
     ]
   },
   "devDependencies": {
@@ -51,6 +56,7 @@
     "prettier-plugin-organize-imports": "^4.0.0",
     "prettier-plugin-solidity": "^1.4.1",
     "sol2uml": "^2.5.19",
+    "solhint": "^5.0.5",
     "solidity-docgen": "^0.6.0-beta.36",
     "dotenv": "^16.4.7",
     "zod": "^3.24.1"
