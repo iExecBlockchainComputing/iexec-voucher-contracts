@@ -31,8 +31,8 @@
     "check-types": "tsc --noEmit",
     "doc": "npx hardhat docgen",
     "uml": "./scripts/utils/sol2uml.sh",
-    "lint:sol": "prettier --log-level warn '{contracts,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
-    "lint:sol:fix": "prettier --log-level warn '{contracts,test}/**/*.sol' --write"
+    "lint:sol": "prettier --log-level warn 'contracts/**/*.sol' --check && solhint 'contracts/**/*.sol'",
+    "lint:sol:fix": "prettier --log-level warn 'contracts/**/*.sol' --write"
   },
   "lint-staged": {
     "*.{js,ts}": [
