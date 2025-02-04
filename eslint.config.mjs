@@ -4,8 +4,9 @@ import tsParser from '@typescript-eslint/parser';
 import importPlugin from 'eslint-plugin-import';
 
 export default [
-    eslint.configs.recommended,
     {
+        ...eslint.configs.recommended,
+        ignores: ['.solcover.js'],
         languageOptions: {
             parser: tsParser,
             parserOptions: {
