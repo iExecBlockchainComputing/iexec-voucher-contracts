@@ -3,7 +3,7 @@
 
 import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.sol";
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 interface IVoucher {
     event ExpirationUpdated(uint256 expiration);

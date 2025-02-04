@@ -13,8 +13,6 @@
     "quotes": [
       "error",
       "double"
-    ],
-    "imports-order": "warn",
-    "compiler-version": "warn"
+    ]
   }
 }
