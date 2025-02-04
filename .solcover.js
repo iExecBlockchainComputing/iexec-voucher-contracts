@@ -1,3 +1,1 @@
-module.exports = {
-    skipFiles: ['mocks'],
-};
+export const skipFiles = ['mocks'];
