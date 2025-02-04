@@ -14,42 +14,29 @@ interface IVoucher {
     event TaskClaimedWithVoucher(bytes32 indexed taskId, bytes32 indexed dealId);
 
     function setExpiration(uint256 expiration) external;
-
     function authorizeAccount(address account) external;
-
     function unauthorizeAccount(address account) external;
-
     function matchOrders(
         IexecLibOrders_v5.AppOrder calldata appOrder,
         IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
         IexecLibOrders_v5.RequestOrder calldata requestOrder
     ) external returns (bytes32);
-
     function matchOrdersBoost(
         IexecLibOrders_v5.AppOrder calldata appOrder,
         IexecLibOrders_v5.DatasetOrder calldata datasetOrder,
         IexecLibOrders_v5.WorkerpoolOrder calldata workerpoolOrder,
         IexecLibOrders_v5.RequestOrder calldata requestOrder
     ) external returns (bytes32);
-
     function claim(bytes32 taskId) external;
-
     function claimBoost(bytes32 dealId, uint256 taskIndex) external;
-
     function drain(uint256 amount) external;
 
     function getVoucherHub() external view returns (address);
-
     function getType() external view returns (uint256);
-
     function getExpiration() external view returns (uint256);
-
     function getBalance() external view returns (uint256);
-
     function isAccountAuthorized(address account) external view returns (bool);
-
     function getSponsoredAmount(bytes32 dealId) external view returns (uint256);
-
     function isRefundedTask(bytes32 taskId) external view returns (bool);
 }
