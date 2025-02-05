@@ -214,7 +214,8 @@ contract Voucher is Initializable, IVoucher {
         if (task.status != IexecLibCore_v5.TaskStatusEnum.FAILED) {
             IexecPoco2(iexecPoco).claim(taskId);
         }
-        IexecLibCore_v5.Deal memory deal = IexecPocoAccessors(iexecPoco).viewDeal(task.dealid);
+        bytes32 dealId = task.dealid;
+        IexecLibCore_v5.Deal memory deal = IexecPocoAccessors(iexecPoco).viewDeal(dealId);
         // If the deal was matched by the voucher, then the voucher should be refunded.
         // If the deal was partially or not sponsored by the voucher, then the requester
         // should be refunded.
@@ -229,7 +230,7 @@ contract Voucher is Initializable, IVoucher {
                 deal.requester
             );
         }
-        emit TaskClaimedWithVoucher(taskId);
+        emit TaskClaimedWithVoucher(taskId, dealId);
     }
 
     /**
@@ -262,7 +263,7 @@ contract Voucher is Initializable, IVoucher {
                 deal.requester
             );
         }
-        emit TaskClaimedWithVoucher(taskId);
+        emit TaskClaimedWithVoucher(taskId, dealId);
     }
 
     /**
@@ -313,6 +314,15 @@ contract Voucher is Initializable, IVoucher {
     function getSponsoredAmount(bytes32 dealId) external view returns (uint256) {
         VoucherStorage storage $ = _getVoucherStorage();
         return $._sponsoredAmounts[dealId];
+    }
+
+    /**
+     * Check if a task has been refunded.
+     * @param taskId The task to be checked.
+     */
+    function isRefundedTask(bytes32 taskId) external view returns (bool) {
+        VoucherStorage storage $ = _getVoucherStorage();
+        return $._refundedTasks[taskId];
     }
 
     /**

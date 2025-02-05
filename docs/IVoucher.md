@@ -35,7 +35,7 @@ event OrdersBoostMatchedWithVoucher(bytes32 dealId)
 ### TaskClaimedWithVoucher
 
 ```solidity
-event TaskClaimedWithVoucher(bytes32 taskId)
+event TaskClaimedWithVoucher(bytes32 taskId, bytes32 dealId)
 ```
 
 ### setExpiration
@@ -120,5 +120,11 @@ function isAccountAuthorized(address account) external view returns (bool)
 
 ```solidity
 function getSponsoredAmount(bytes32 dealId) external view returns (uint256)
+```
+
+### isRefundedTask
+
+```solidity
+function isRefundedTask(bytes32 taskId) external view returns (bool)
 ```
 

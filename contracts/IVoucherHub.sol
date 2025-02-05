@@ -53,11 +53,14 @@ interface IVoucherHub {
 
     function getIexecPoco() external view returns (address);
     function getVoucherBeacon() external view returns (address);
+    function getVoucherProxyCodeHash() external view returns (bytes32);
     function getVoucherType(uint256 id) external view returns (VoucherType memory);
     function getVoucherTypeCount() external view returns (uint256);
     function isAssetEligibleToMatchOrdersSponsoring(
         uint256 voucherTypeId,
         address asset
     ) external view returns (bool);
-    function getVoucher(address account) external view returns (address);
+    function isVoucher(address account) external view returns (bool);
+    function getVoucher(address owner) external view returns (address);
+    function predictVoucher(address owner) external view returns (address);
 }

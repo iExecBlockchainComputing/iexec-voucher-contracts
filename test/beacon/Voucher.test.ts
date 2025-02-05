@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
+// SPDX-FileCopyrightText: 2024-2025 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
@@ -157,8 +157,8 @@ describe('Voucher', function () {
             const voucher1_V2 = await commonUtils.getVoucherV2(voucherAddress1);
             const voucher2_V2 = await commonUtils.getVoucherV2(voucherAddress2);
             // Initialize new implementations.
-            await voucher1_V2.initializeV2(1);
-            await voucher2_V2.initializeV2(2);
+            await voucher1_V2.connect(anyone).initializeV2(1);
+            await voucher2_V2.connect(anyone).initializeV2(2);
 
             // Make sure the implementation has changed.
             expect(await beacon.implementation(), 'Implementation did not change').to.not.equal(
@@ -761,13 +761,15 @@ describe('Voucher', function () {
                 const taskSponsoredAmount = dealSponsoredAmount / volume;
                 expect(dealSponsoredAmount).to.be.equal(dealPrice);
                 expect(taskSponsoredAmount).to.be.equal(taskPrice);
+                // Task should not be marked as refunded before claim
+                expect(await voucherAsOwner.isRefundedTask(taskId)).to.be.false;
 
                 // Claim task
                 await expect(claimBoostOrClassic())
                     .to.emit(voucherHub, 'VoucherRefunded')
                     .withArgs(voucherAddress, taskSponsoredAmount)
                     .to.emit(voucherAsOwner, 'TaskClaimedWithVoucher')
-                    .withArgs(taskId);
+                    .withArgs(taskId, dealId);
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
                     voucherSrlcBalance: voucherSrlcBalancePostClaim,
@@ -784,6 +786,8 @@ describe('Voucher', function () {
                 expect(await voucherAsOwner.getSponsoredAmount(dealId)).to.be.equal(
                     dealSponsoredAmount,
                 );
+                // Task should be marked as refunded after claim
+                expect(await voucherAsOwner.isRefundedTask(taskId)).to.be.true;
                 // Check task status.
                 expect((await iexecPocoInstance.viewTask(taskId)).status).to.equal(
                     TaskStatusEnum.FAILED,

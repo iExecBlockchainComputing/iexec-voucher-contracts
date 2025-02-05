@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
+// SPDX-FileCopyrightText: 2024-2025 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
@@ -97,11 +97,10 @@ describe('VoucherHub', function () {
             expect(await voucherHub.getIexecPoco()).to.equal(iexecPoco);
             expect(await voucherHub.getVoucherBeacon()).to.equal(voucherBeaconAddress);
             // Check VoucherProxy code hash
-            const actualCodeHash =
-                await voucherHubUtils.getVoucherProxyCreationCodeHashFromStorage(voucherHubAddress);
-            const expectedHashes =
-                await voucherHubUtils.getVoucherProxyCreationCodeHash(voucherBeaconAddress);
-            expect(expectedHashes).to.include(actualCodeHash);
+            const actualCodeHash = await voucherHub.getVoucherProxyCodeHash();
+            const expectedCodeHash =
+                await voucherHubUtils.getExpectedVoucherProxyCodeHash(voucherBeaconAddress);
+            expect(actualCodeHash).to.equal(expectedCodeHash);
         });
 
         it('Should not initialize without admin', async function () {
@@ -123,7 +122,7 @@ describe('VoucherHub', function () {
 
     describe('Upgrade', function () {
         it('Should upgrade', async function () {
-            const { voucherHub, admin } = await loadFixture(deployFixture);
+            const { admin } = await loadFixture(deployFixture);
             const VoucherHubV2Factory = await ethers.getContractFactory('VoucherHubV2Mock', admin);
             // Next line should throw if new storage schema is not compatible with previous one
             await voucherHubUtils.upgradeProxy(voucherHubAddress, VoucherHubV2Factory);
@@ -136,7 +135,7 @@ describe('VoucherHub', function () {
         });
 
         it('Should not upgrade when account is unauthorized', async function () {
-            const { voucherHub, anyone } = await loadFixture(deployFixture);
+            const { voucherHub } = await loadFixture(deployFixture);
 
             await expect(
                 voucherHubAsAnyone.upgradeToAndCall(ethers.Wallet.createRandom().address, '0x'),
@@ -160,7 +159,7 @@ describe('VoucherHub', function () {
         });
 
         it('Should not create a voucher type when the caller is not authorized', async function () {
-            const { voucherHub, anyone } = await loadFixture(deployFixture);
+            const { voucherHub } = await loadFixture(deployFixture);
             await expect(
                 voucherHubAsAnyone.createVoucherType(description, duration),
             ).to.be.revertedWithCustomError(voucherHub, 'AccessControlUnauthorizedAccount');
@@ -520,7 +519,7 @@ describe('VoucherHub', function () {
         });
 
         it('Should not initialize voucher more than once', async function () {
-            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            const { voucherHub, voucherOwner1, anyone } = await loadFixture(deployFixture);
             await voucherHubAsManager.createVoucherType(description, duration);
             // Create voucher.
             const createVoucherTx = await voucherHubAsMinter
@@ -535,12 +534,14 @@ describe('VoucherHub', function () {
             const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
             const voucher: Voucher = await commonUtils.getVoucher(voucherAddress);
             await expect(
-                voucher.initialize(
-                    voucherOwner1,
-                    await voucherHub.getAddress(),
-                    expectedExpiration,
-                    voucherType,
-                ),
+                voucher
+                    .connect(anyone)
+                    .initialize(
+                        voucherOwner1,
+                        await voucherHub.getAddress(),
+                        expectedExpiration,
+                        voucherType,
+                    ),
             ).to.be.revertedWithCustomError(voucher, 'InvalidInitialization');
         });
 
@@ -996,10 +997,51 @@ describe('VoucherHub', function () {
         });
     });
 
+    describe('Is voucher', function () {
+        it('Should be true when account is a voucher', async function () {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            await voucherHubAsManager
+                .createVoucherType(description, duration)
+                .then((tx) => tx.wait());
+            await voucherHubAsMinter
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait());
+            const voucherAddress = await voucherHub.getVoucher(voucherOwner1);
+            expect(await voucherHub.isVoucher(voucherAddress)).to.be.true;
+        });
+
+        it('Should be false when account is not a voucher', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            expect(await voucherHub.isVoucher(random())).to.be.false;
+        });
+    });
+
     describe('Get voucher', function () {
-        it('Should return address 0 when voucher is not created', async function () {
-            const { voucherHub, admin } = await loadFixture(deployFixture);
-            await expect(await voucherHub.getVoucher(admin)).to.be.equal(ethers.ZeroAddress);
+        it('Should not get voucher when voucher is not created', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+            expect(await voucherHub.getVoucher(random())).to.be.equal(ethers.ZeroAddress);
+        });
+    });
+
+    describe('Predict voucher', function () {
+        it('Should predict voucher', async function () {
+            const { voucherHub, voucherOwner1 } = await loadFixture(deployFixture);
+            const predictedVoucherAddress = await voucherHub.predictVoucher(voucherOwner1);
+            await voucherHubAsManager
+                .createVoucherType(description, duration)
+                .then((tx) => tx.wait());
+            await voucherHubAsMinter
+                .createVoucher(voucherOwner1, voucherType, voucherValue)
+                .then((tx) => tx.wait());
+            expect(predictedVoucherAddress)
+                .to.be.equal(
+                    ethers.getCreate2Address(
+                        await voucherHub.getAddress(), // deployer
+                        ethers.zeroPadValue(voucherOwner1.address, 32), // salt
+                        await voucherHub.getVoucherProxyCodeHash(), // bytecode hash
+                    ),
+                )
+                .to.be.equal(await voucherHub.getVoucher(voucherOwner1));
         });
     });
 
@@ -1023,6 +1065,15 @@ describe('VoucherHub', function () {
             await expect(voucherHub.transferFrom(anyone, anyone, 0)).to.be.revertedWith(
                 'NonTransferableERC20Upgradeable: Unsupported transferFrom',
             );
+        });
+    });
+
+    describe('iExec Voucher token - VCHR', function () {
+        it('Should return 9 as the number of decimals', async function () {
+            const { voucherHub } = await loadFixture(deployFixture);
+
+            // Call the decimals function and check the returned value
+            expect(await voucherHub.decimals()).to.equal(9);
         });
     });
 });

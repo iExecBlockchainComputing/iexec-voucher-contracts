@@ -57,6 +57,11 @@ function createVoucherType(string description, uint256 duration) external
 function updateVoucherTypeDescription(uint256 id, string description) external
 ```
 
+This function only updates the duration for newly minted vouchers and not the existing ones to provide
+guarantees regarding the expiration of vouchers. When a voucher is delivered, its credits should not expire
+before the original expiration date.
+As mentioned in Halborn audit report (HAL-01), this is not a bug, but rather, an intended feature.
+
 ### updateVoucherTypeDuration
 
 ```solidity
@@ -228,6 +233,14 @@ function getVoucherBeacon() external view returns (address)
 
 Get voucher beacon address.
 
+### getVoucherProxyCodeHash
+
+```solidity
+function getVoucherProxyCodeHash() external view returns (bytes32)
+```
+
+Get voucher proxy code hash.
+
 ### getVoucherTypeCount
 
 ```solidity
@@ -251,20 +264,48 @@ Check if an asset is eligible to match orders sponsoring.
 | voucherTypeId | uint256 | The ID of the voucher type. |
 | asset | address | The address of the asset to check. |
 
+### isVoucher
+
+```solidity
+function isVoucher(address account) external view returns (bool)
+```
+
+Check if a voucher exists at a given address.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| account | address | The address to be checked. |
+
 ### getVoucher
 
 ```solidity
-function getVoucher(address account) external view returns (address voucherAddress)
+function getVoucher(address owner) external view returns (address voucherAddress)
 ```
 
-Get voucher address of a given account.
+Get the address of the voucher belonging to a given owner.
 Returns address(0) if voucher is not found.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| account | address | voucher's owner address. |
+| owner | address | The owner of the voucher. |
+
+### predictVoucher
+
+```solidity
+function predictVoucher(address owner) public view returns (address)
+```
+
+Predict the address of the (created or not) voucher for a given owner.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| owner | address | The owner of the voucher. |
 
 ### getVoucherType
 
@@ -273,4 +314,23 @@ function getVoucherType(uint256 id) public view returns (struct IVoucherHub.Vouc
 ```
 
 Get the voucher type details by ID.
+
+### decimals
+
+```solidity
+function decimals() public pure returns (uint8)
+```
+
+_By default, the standard ERC-20 `decimals` value is `18`. However, this value
+is overridden here to `9` to align with the number of decimal places used by
+the RLC token. This ensures consistency in how input values are handled
+when a voucher is minted.
+
+See https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol#L78_
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint8 | The number of decimal places (9) used for token representation. |
 

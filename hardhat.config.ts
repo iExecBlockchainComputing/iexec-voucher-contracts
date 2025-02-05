@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
+// SPDX-FileCopyrightText: 2024-2025 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
 import '@nomicfoundation/hardhat-foundry';
@@ -6,23 +6,33 @@ import '@nomicfoundation/hardhat-toolbox';
 import '@openzeppelin/hardhat-upgrades';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
-import { HardhatUserConfig } from 'hardhat/config';
+import { HardhatUserConfig, task } from 'hardhat/config';
 import {
     HARDHAT_NETWORK_MNEMONIC,
     defaultHardhatNetworkParams,
     defaultLocalhostNetworkParams,
 } from 'hardhat/internal/core/config/default-config';
 import 'solidity-docgen';
+import { env } from './config/env';
+import { forceZeroGasPriceWithSolidityCoverage } from './scripts/utils/modify-solidity-coverage-lib-api-js';
 
-const managerAccount = Number(process.env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX) || null;
-const minterAccount = Number(process.env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX) || null;
+const managerAccount = env.IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX || null;
+const minterAccount = env.IEXEC_VOUCHER_MINTER_ACCOUNT_INDEX || null;
+const bellecourBlockscoutUrl = 'https://blockscout.bellecour.iex.ec';
+
+const bellecourBase = {
+    gasPrice: 0,
+    blockGasLimit: 6_700_000,
+    hardfork: 'berlin', // No EIP-1559 before London fork
+};
 
 const config: HardhatUserConfig = {
     solidity: {
         compilers: [
             {
-                version: '0.8.24',
+                version: '0.8.27',
                 settings: {
+                    evmVersion: 'berlin',
                     /**
                      * Enable Intermediate Representation (IR) to reduce `Stack too deep` occurrences
                      * at compile time (e.g.: too many local variables in `matchOrdersBoost`).
@@ -35,15 +45,7 @@ const config: HardhatUserConfig = {
                         details: {
                             yul: true,
                             yulDetails: {
-                                /**
-                                 * Disable temporarily.
-                                 * Causes:
-                                 * YulException: Cannot swap Slot RET with Variable value10: too deep in the stack
-                                 * by 1 slots in [ RET value15 value14 value13 value12 value11 headStart value9
-                                 * value8 value7 value6 value5 value4 value3 value2 value1 value0 value10 ]
-                                 * memoryguard was present.
-                                 */
-                                // optimizerSteps: 'u',
+                                optimizerSteps: 'u',
                             },
                         },
                     },
@@ -51,43 +53,81 @@ const config: HardhatUserConfig = {
             },
         ],
     },
+    typechain: {
+        tsNocheck: true, // Disable type checking to avoid issue in `IexecLibOrders_v5` typechain generation
+    },
     networks: {
         hardhat: {
-            hardfork: 'berlin', // No EIP-1559 before London fork
-            gasPrice: 0,
-            blockGasLimit: 6_700_000,
+            accounts: {
+                mnemonic: env.MNEMONIC || HARDHAT_NETWORK_MNEMONIC,
+            },
+            ...(env.IS_LOCAL_FORK && {
+                forking: {
+                    url: 'https://bellecour.iex.ec',
+                },
+                chainId: 134,
+            }),
+            ...bellecourBase,
         },
+        //TODO: rename into 'external-node'
         'external-hardhat': {
             ...defaultHardhatNetworkParams,
             ...defaultLocalhostNetworkParams,
-            accounts: {
-                mnemonic: HARDHAT_NETWORK_MNEMONIC,
-            },
+            accounts: 'remote', // will use accounts set in hardhat network config
+            ...(env.IS_LOCAL_FORK && {
+                chainId: 134,
+            }),
+            ...bellecourBase,
         },
         'dev-native': {
             chainId: 65535,
             url: 'http://localhost:8545',
             accounts: {
-                mnemonic: process.env.MNEMONIC || '',
+                mnemonic: env.MNEMONIC || '',
             },
-            gasPrice: 0, // Get closer to Bellecour network
+            ...bellecourBase,
         },
+        bellecour: {
+            chainId: 134,
+            url: 'https://bellecour.iex.ec',
+            accounts: [
+                env.PROD_PRIVATE_KEY ||
+                    '0x0000000000000000000000000000000000000000000000000000000000000000',
+            ],
+            ...bellecourBase,
+        },
+    },
+    etherscan: {
+        apiKey: {
+            bellecour: '<>', // a non-empty string is needed by the plugin.
+        },
+        customChains: [
+            {
+                network: 'bellecour',
+                chainId: 134,
+                urls: {
+                    apiURL: `${bellecourBlockscoutUrl}/api`,
+                    browserURL: bellecourBlockscoutUrl,
+                },
+            },
+        ],
     },
     namedAccounts: {
         deployer: {
             default: 0,
+            134: '0xA0C07ad0257522211c6359EC8A4EB5d21A4A1A14', // Bellecour & local fork
         },
         manager: {
-            hardhat: 1,
-            'external-hardhat': 1,
+            31337: 1, // hardhat & external-hardhat without local fork
             'dev-native': 1,
             localhost: managerAccount,
+            134: '0xA0C1939182b454911b78f9b087D5444d7d0E82E3', // Bellecour & local fork
         },
         minter: {
-            hardhat: 2,
-            'external-hardhat': 2,
+            31337: 2, // hardhat & external-hardhat without local fork
             'dev-native': 2,
             localhost: minterAccount,
+            134: '0xA0C26578F762a06c14A8153F87D0EAA2fBd036af', // Bellecour & local fork
         },
     },
     dependencyCompiler: {
@@ -104,5 +144,10 @@ const config: HardhatUserConfig = {
         exclude: ['mocks', 'NonTransferableERC20Upgradeable.sol', 'beacon/VoucherProxy.sol'],
     },
 };
+
+task('coverage').setAction((_, {}, runSuper) => {
+    forceZeroGasPriceWithSolidityCoverage();
+    return runSuper();
+});
 
 export default config;
