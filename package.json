@@ -27,20 +27,20 @@
     "test": "npx hardhat test",
     "coverage": "npx hardhat coverage",
     "format": "npx prettier --write",
-    "check-format": "prettier --check '{scripts,test,contracts}/**/*.{js,sol}'",
+    "check-format": "prettier --check '{scripts,test,contracts}/**/*.{ts,sol}'",
     "check-types": "tsc --noEmit",
     "doc": "npx hardhat docgen",
     "uml": "./scripts/utils/sol2uml.sh",
-    "lint": "npm run lint:js && npm run lint:sol",
-    "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
+    "lint": "npm run lint:ts && npm run lint:sol",
+    "lint:fix": "npm run lint:ts:fix && npm run lint:sol:fix",
     "lint:sol": "prettier --log-level warn 'contracts/**/*.sol' --check && solhint 'contracts/**/*.sol'",
     "lint:sol:fix": "prettier --log-level warn 'contracts/**/*.sol' --write",
-    "lint:js": "prettier --log-level warn '**/*.{js,ts}' --check && eslint .",
-    "lint:js:fix": "prettier --log-level warn '**/*.{js,ts}' --write && eslint . --fix"
+    "lint:ts": "prettier --log-level warn '**/*.ts' --check && eslint .",
+    "lint:ts:fix": "prettier --log-level warn '**/*.ts' --write && eslint . --fix"
   },
   "lint-staged": {
-    "*.{js,ts}": [
-      "npm run lint:js"
+    "*.ts": [
+      "npm run lint:ts"
     ],
     "*.sol": [
       "npm run lint:sol"
