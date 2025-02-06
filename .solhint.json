@@ -4,6 +4,10 @@
   ],
   "plugins": [],
   "rules": {
+    "compiler-version": [
+      "error",
+      "^0.8.20"
+    ],
     "func-visibility": [
       "warn",
       {
@@ -13,8 +17,6 @@
     "quotes": [
       "error",
       "double"
-    ],
-    "imports-order": "warn",
-    "compiler-version": "warn"
+    ]
   }
 }
