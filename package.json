@@ -33,10 +33,10 @@
     "uml": "./scripts/utils/sol2uml.sh",
     "lint": "npm run lint:ts && npm run lint:sol",
     "lint:fix": "npm run lint:ts:fix && npm run lint:sol:fix",
-    "lint:sol": "prettier --log-level warn 'contracts/**/*.sol' --check && solhint 'contracts/**/*.sol'",
-    "lint:sol:fix": "prettier --log-level warn 'contracts/**/*.sol' --write",
+    "lint:sol": "solhint 'contracts/**/*.sol' && prettier --log-level warn 'contracts/**/*.sol' --check",
+    "lint:sol:fix": "npm run lint:sol -- --write",
     "lint:ts": "prettier --log-level warn '**/*.ts' --check && eslint .",
-    "lint:ts:fix": "prettier --log-level warn '**/*.ts' --write && eslint . --fix"
+    "lint:ts:fix": "npm run lint:ts -- --fix"
   },
   "lint-staged": {
     "*.ts": [
