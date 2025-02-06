@@ -26,7 +26,7 @@
     "upgrade": "hardhat run ./scripts/upgrade.ts",
     "test": "npx hardhat test",
     "coverage": "npx hardhat coverage",
-    "format": "npx prettier --write",
+    "format": "npx prettier --write '{scripts,test,contracts}/**/*.{ts,sol}'",
     "check-format": "prettier --check '{scripts,test,contracts}/**/*.{ts,sol}'",
     "check-types": "tsc --noEmit",
     "doc": "npx hardhat docgen",
