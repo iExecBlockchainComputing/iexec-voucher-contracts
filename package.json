@@ -35,7 +35,7 @@
     "lint:fix": "npm run lint:ts:fix && npm run lint:sol:fix",
     "lint:sol": "solhint 'contracts/**/*.sol' && prettier --log-level warn 'contracts/**/*.sol' --check",
     "lint:sol:fix": "npm run lint:sol -- --write",
-    "lint:ts": "prettier --log-level warn '**/*.ts' --check && eslint .",
+    "lint:ts": "eslint . && prettier --log-level warn '**/*.ts' --check",
     "lint:ts:fix": "npm run lint:ts -- --fix"
   },
   "lint-staged": {
