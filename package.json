@@ -26,17 +26,13 @@
     "upgrade": "hardhat run ./scripts/upgrade.ts",
     "test": "npx hardhat test",
     "coverage": "npx hardhat coverage",
-    "format": "npx prettier --write '{scripts,test,contracts}/**/*.{ts,sol}'",
-    "check-format": "prettier --check '{scripts,test,contracts}/**/*.{ts,sol}'",
     "check-types": "tsc --noEmit",
     "doc": "npx hardhat docgen",
     "uml": "./scripts/utils/sol2uml.sh",
-    "lint": "npm run lint:ts && npm run lint:sol",
-    "lint:fix": "npm run lint:ts:fix && npm run lint:sol:fix",
-    "lint:sol": "solhint 'contracts/**/*.sol' && prettier --log-level warn 'contracts/**/*.sol' --check",
-    "lint:sol:fix": "npm run lint:sol -- --write",
-    "lint:ts": "prettier --log-level warn '**/*.ts' --check && eslint .",
-    "lint:ts:fix": "npm run lint:ts -- --fix"
+    "check-format": "prettier --log-level warn 'contracts/**/*.sol' '**/*.ts' --check",
+    "format": "prettier --log-level warn 'contracts/**/*.sol' '**/*.ts' --write",
+    "check-lint": "solhint 'contracts/**/*.sol' && eslint .",
+    "lint": "solhint 'contracts/**/*.sol' --fix && eslint . --fix"
   },
   "lint-staged": {
     "*.ts": [
