@@ -26,12 +26,10 @@ jobs:
       run: npm ci
     - run: | # TODO: Commit all file changed and create PR
         echo "Network: $NETWORK"
+        echo "IS_LOCAL_FORK: $IS_LOCAL_FORK"
         echo "Fake: $FAKE_PRIVATE_KEY"
-        if [ "$NETWORK" == 'hardhat' ]; then 
-          export IS_LOCAL_FORK=true
-          echo "IS_LOCAL_FORK: $IS_LOCAL_FORK"
-        fi
         npm run upgrade -- --network $NETWORK
       env:
         NETWORK: ${{ inputs.network }}
+        IS_LOCAL_FORK: ${{ inputs.network == 'hardhat'}}
         FAKE_PRIVATE_KEY: ${{ inputs.network == 'hardhat' && secrets.FAKE_PRIVATE_KEY }}
