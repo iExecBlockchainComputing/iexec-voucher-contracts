@@ -33,4 +33,4 @@ jobs:
         npm run upgrade -- --network $NETWORK
       env:
         NETWORK: ${{ inputs.network }}
-        PROD_PRIVATE_KEY: ${{ secrets.PROD_PRIVATE_KEY }}
+        PROD_PRIVATE_KEY: ${{ inputs.network == 'bellecour' && secrets.PROD_PRIVATE_KEY }}
