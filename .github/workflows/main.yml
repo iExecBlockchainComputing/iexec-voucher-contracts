@@ -29,6 +29,8 @@ jobs:
         run: npm ci
       - name: Check Format
         run: npm run check-format
+      - name: Check Lint
+        run: npm run check-lint
       - name: Build
         run: npm run build
       - name: Check Types

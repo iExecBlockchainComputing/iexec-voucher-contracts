@@ -2,6 +2,7 @@
 
 ## vNEXT
 - Add upgrade workflow. (#64)
+- Add Halborn "Poco v5.5 & Voucher v1.0" audit report ( #70)
 - Add `dealId` to `TaskClaimedWithVoucher` event. (#61)
 - Add type-checking script (#53)
 - Run partial upgrade tests on fork.
