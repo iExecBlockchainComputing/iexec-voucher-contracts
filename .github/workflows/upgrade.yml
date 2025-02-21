@@ -13,6 +13,7 @@ on:
 jobs:
   upgrade:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.network }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -29,6 +30,7 @@ jobs:
           export IS_LOCAL_FORK=true
           echo "IS_LOCAL_FORK: $IS_LOCAL_FORK"
         fi
-        npm run upgrade
+        npm run upgrade -- --network $NETWORK
       env:
         NETWORK: ${{ inputs.network }}
+        PROD_PRIVATE_KEY: ${{ secrets.PROD_PRIVATE_KEY }}
