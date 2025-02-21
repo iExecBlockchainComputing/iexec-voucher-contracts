@@ -67,3 +67,7 @@ npx hardhat verify <voucherProxyAddress> --network bellecour <beaconAddress>
 
 Note: no need to verify all VoucherProxy contracts because Blockscout automatically
 matches all similar contracts with the submitted source code.
+
+## Audits
+
+All contract audit files can be found in [audit/](./audit/) folder.
