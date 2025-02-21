@@ -34,4 +34,4 @@ jobs:
         npm run upgrade -- --network $NETWORK
       env:
         NETWORK: ${{ inputs.network }}
-        FAKE_PRIVATE_KEY: ${{ inputs.network == 'bellecour' && secrets.FAKE_PRIVATE_KEY }}
+        FAKE_PRIVATE_KEY: ${{ inputs.network == 'hardhat' && 'test' }}
