@@ -13,6 +13,8 @@ on:
 jobs:
   upgrade:
     runs-on: ubuntu-latest
+    permissions:
+        contents: write # required by git-auto-commit-action
     environment: ${{ inputs.network }}
     steps:
     - name: Checkout
@@ -27,10 +29,10 @@ jobs:
     - run: | # TODO: Commit all file changed and create PR
         echo "Network: $NETWORK"
         echo "IS_LOCAL_FORK: $IS_LOCAL_FORK"
-        echo "Fake: $FAKE_PRIVATE_KEY"
         npm run upgrade -- --network $NETWORK
+        echo "Test" > test.txt
       env:
         NETWORK: ${{ inputs.network }}
         IS_LOCAL_FORK: ${{ inputs.network == 'hardhat'}}
-        FAKE_PRIVATE_KEY: ${{ inputs.network == 'hardhat' && secrets.FAKE_PRIVATE_KEY }}
         PROD_PRIVATE_KEY: ${{ inputs.network == 'bellecour' && secrets.PROD_PRIVATE_KEY || '' }}
+    - uses: stefanzweifel/git-auto-commit-action@v5
