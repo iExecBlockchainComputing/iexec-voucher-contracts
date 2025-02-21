@@ -1,6 +1,7 @@
 # Changelog
 
 ## vNEXT
+- Add upgrade workflow. (#64)
 - Add `dealId` to `TaskClaimedWithVoucher` event. (#61)
 - Add type-checking script (#53)
 - Run partial upgrade tests on fork.

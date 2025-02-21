@@ -1,15 +1,14 @@
+name: Upgrade
 on:
   workflow_dispatch:
       inputs:
         network:
             description: 'Network'
             required: true
-            default: 'hardhat'
             type: choice
             options:
             - hardhat
             - bellecour
-
 jobs:
   upgrade:
     runs-on: ubuntu-latest
@@ -30,9 +29,11 @@ jobs:
         echo "Network: $NETWORK"
         echo "IS_LOCAL_FORK: $IS_LOCAL_FORK"
         npm run upgrade -- --network $NETWORK
-        echo "Test" > test.txt
+        echo $(date) > deployments/last-$NETWORK-upgrade.txt
       env:
         NETWORK: ${{ inputs.network }}
         IS_LOCAL_FORK: ${{ inputs.network == 'hardhat'}}
         PROD_PRIVATE_KEY: ${{ inputs.network == 'bellecour' && secrets.PROD_PRIVATE_KEY || '' }}
     - uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: Save files changed during upgrade
