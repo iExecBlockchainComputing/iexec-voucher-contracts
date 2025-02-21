@@ -33,3 +33,4 @@ jobs:
         NETWORK: ${{ inputs.network }}
         IS_LOCAL_FORK: ${{ inputs.network == 'hardhat'}}
         FAKE_PRIVATE_KEY: ${{ inputs.network == 'hardhat' && secrets.FAKE_PRIVATE_KEY }}
+        PROD_PRIVATE_KEY: ${{ inputs.network == 'bellecour' && secrets.PROD_PRIVATE_KEY || '' }}
