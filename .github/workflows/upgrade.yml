@@ -27,9 +27,8 @@ jobs:
       run: npm ci
     - run: |
         echo "Network: $NETWORK"
-        echo "IS_LOCAL_FORK: $IS_LOCAL_FORK"
+        echo "Local fork: $IS_LOCAL_FORK"
         npm run upgrade -- --network $NETWORK
-        echo $(date) > deployments/last-$NETWORK-upgrade.txt
       env:
         NETWORK: ${{ inputs.network }}
         IS_LOCAL_FORK: ${{ inputs.network == 'hardhat'}}
