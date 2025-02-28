@@ -35,11 +35,8 @@
     "lint": "solhint 'contracts/**/*.sol' --fix && eslint . --fix"
   },
   "lint-staged": {
-    "*.ts": [
-      "npm run lint:ts"
-    ],
-    "*.sol": [
-      "npm run lint:sol"
+    "*.{ts,sol}": [
+      "npm run lint"
     ]
   },
   "devDependencies": {
