@@ -89,6 +89,6 @@ export async function getExpectedVoucherProxyCodeHash(voucherBeaconAddress: stri
          *
          * Also see test/NextVersionUpgrade.test.ts to double check behavior.
          */
-        return '0x31a4f4707138270dd34b040129096c67e1039fb242deebb8a0d0f8ed9da82232';
+        return '0xe0f74e59778f75b77efb2064c8358a84106c7a95517a2c8503e38996071e6522';
     }
 }

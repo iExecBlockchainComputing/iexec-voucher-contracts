@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
+// SPDX-FileCopyrightText: 2024-2025 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
 import {IexecLibOrders_v5} from "@iexec/poco/contracts/libs/IexecLibOrders_v5.sol";
@@ -11,7 +11,7 @@ interface IVoucher {
     event AccountUnauthorized(address indexed account);
     event OrdersMatchedWithVoucher(bytes32 indexed dealId);
     event OrdersBoostMatchedWithVoucher(bytes32 indexed dealId);
-    event TaskClaimedWithVoucher(bytes32 indexed taskId, bytes32 indexed dealId);
+    event TaskClaimedWithVoucher(bytes32 indexed taskId);
 
     function setExpiration(uint256 expiration) external;
     function authorizeAccount(address account) external;

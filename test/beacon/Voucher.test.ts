@@ -769,7 +769,7 @@ describe('Voucher', function () {
                     .to.emit(voucherHub, 'VoucherRefunded')
                     .withArgs(voucherAddress, taskSponsoredAmount)
                     .to.emit(voucherAsOwner, 'TaskClaimedWithVoucher')
-                    .withArgs(taskId, dealId);
+                    .withArgs(taskId);
                 const {
                     voucherCreditBalance: voucherCreditBalancePostClaim,
                     voucherSrlcBalance: voucherSrlcBalancePostClaim,
