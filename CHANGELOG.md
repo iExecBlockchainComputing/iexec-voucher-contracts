@@ -2,7 +2,7 @@
 
 ## vNEXT
 
-## v1.1.0
+## v1.0.1
 
 - Index first parameter of match an claim events in `Voucher` contract. (#61, #72)
 - Add upgrade workflow. (#64)
