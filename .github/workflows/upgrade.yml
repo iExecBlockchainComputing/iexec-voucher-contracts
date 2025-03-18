@@ -37,10 +37,10 @@ jobs:
       run: |
         case "${{ inputs.network }}" in
           "bellecour")
-            echo "PRIVATE_KEY=${{ secrets.BELLECOUR_PRIVATE_KEY }}" >> $GITHUB_ENV
+            echo "PROD_PRIVATE_KEY=${{ secrets.BELLECOUR_PRIVATE_KEY }}" >> $GITHUB_ENV
             ;;
           *)
-            echo "PRIVATE_KEY=''" >> $GITHUB_ENV
+            echo "PROD_PRIVATE_KEY=''" >> $GITHUB_ENV
             ;;
         esac
 
@@ -48,7 +48,6 @@ jobs:
       env:
         NETWORK: ${{ inputs.network }}
         IS_LOCAL_FORK: ${{ inputs.network == 'hardhat'}}
-        PROD_PRIVATE_KEY: ${{ env.PRIVATE_KEY }}
       run: |
         echo "Network: $NETWORK"
         echo "Local fork: $IS_LOCAL_FORK"
