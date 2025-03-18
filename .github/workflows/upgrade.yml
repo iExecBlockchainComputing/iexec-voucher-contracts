@@ -2,8 +2,8 @@ name: Upgrade
 on:
   workflow_dispatch:
       inputs:
-      network_type:
-        description: 'Network Type (mainnets or testnets)'
+      environment:  
+        description: 'Github environnment (mainnets or testnets)'
         required: true
         type: choice
         options:
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
         contents: write # required by git-auto-commit-action
-    environment: ${{ inputs.network_type }} # Secrets for an environment are already limited to deployments on specific branches
+    environment: ${{ inputs.environment }} # Secrets for an environment are already limited to deployments on specific branches
     steps:
     - name: Checkout
       uses: actions/checkout@v4
