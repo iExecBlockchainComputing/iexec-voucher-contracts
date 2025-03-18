@@ -16,7 +16,6 @@ on:
         options:
         - hardhat
         - bellecour
-        - viviani
 jobs:
   upgrade:
     runs-on: ubuntu-latest
@@ -39,9 +38,6 @@ jobs:
         case "${{ inputs.network }}" in
           "bellecour")
             echo "PRIVATE_KEY=${{ secrets.BELLECOUR_PRIVATE_KEY }}" >> $GITHUB_ENV
-            ;;
-          "viviani")
-            echo "PRIVATE_KEY=${{ secrets.VIVIANI_PRIVATE_KEY }}" >> $GITHUB_ENV
             ;;
           *)
             echo "PRIVATE_KEY=''" >> $GITHUB_ENV
