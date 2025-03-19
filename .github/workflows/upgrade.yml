@@ -2,20 +2,20 @@ name: Upgrade
 on:
   workflow_dispatch:
       inputs:
-      environment:  
-        description: 'Github environnment (mainnets or testnets)'
-        required: true
-        type: choice
-        options:
-        - mainnets
-        - testnets
-      network:
-        description: 'Network'
-        required: true
-        type: choice
-        options:
-        - hardhat
-        - bellecour
+        environment:  
+          description: 'Github environnment (mainnets or testnets)'
+          required: true
+          type: choice
+          options:
+          - mainnets
+          - testnets
+        network:
+          description: 'Network'
+          required: true
+          type: choice
+          options:
+          - hardhat
+          - bellecour
 jobs:
   upgrade:
     runs-on: ubuntu-latest
