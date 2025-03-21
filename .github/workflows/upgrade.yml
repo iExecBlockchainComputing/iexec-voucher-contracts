@@ -43,7 +43,6 @@ jobs:
             echo "PROD_PRIVATE_KEY=''" >> $GITHUB_ENV
             ;;
         esac
-
     - name: Upgrade
       env:
         NETWORK: ${{ inputs.network }}
