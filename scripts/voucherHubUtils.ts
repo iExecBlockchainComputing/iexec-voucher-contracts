@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
+// SPDX-FileCopyrightText: 2024-2025 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
 import { ContractFactory } from 'ethers';
@@ -33,22 +33,10 @@ export async function upgradeProxy(
     voucherHubAddress: string,
     newVoucherHubImplementationFactory: ContractFactory,
 ): Promise<VoucherHub> {
-    const contractUpgrade: unknown = await upgrades.upgradeProxy(
-        voucherHubAddress,
-        newVoucherHubImplementationFactory,
-    );
-    const voucherHubUpgrade = contractUpgrade as VoucherHub;
-    await voucherHubUpgrade.waitForDeployment();
-    const voucherBeaconAddress = await voucherHubUpgrade.getVoucherBeacon();
-    const expectedHash = await getExpectedVoucherProxyCodeHash(voucherBeaconAddress);
-    const actualHash = await voucherHubUpgrade.getVoucherProxyCodeHash();
-    if (actualHash !== expectedHash) {
-        throw new Error(
-            'Voucher proxy code hash in the new VoucherHub implementation does not match the real hash ' +
-                `[actual: ${actualHash}, expected:${expectedHash}]`,
-        );
-    }
-    return voucherHubUpgrade;
+    const contractUpgrade: unknown = await upgrades
+        .upgradeProxy(voucherHubAddress, newVoucherHubImplementationFactory)
+        .then((contract) => contract.waitForDeployment());
+    return contractUpgrade as VoucherHub;
 }
 
 /**
@@ -58,6 +46,11 @@ export async function upgradeProxy(
 export async function getExpectedVoucherProxyCodeHash(voucherBeaconAddress: string) {
     const chainId = (await ethers.provider.getNetwork()).chainId.toString();
     const config = await getDeploymentConfig(Number(chainId));
+    if (chainId == '134') {
+        // See https://blockscout.bellecour.iex.ec/token/0x3137B6DF4f36D338b82260eDBB2E7bab034AFEda?tab=read_proxy
+        // `getVoucherProxyCodeHash` >
+        return '0x2a2da9e75edfb4be8fa6cf0e9bd092957dd28ffa588d8528ca66a5cd3712ffa2';
+    }
     if (!config.factory || (hre as any).__SOLIDITY_COVERAGE_RUNNING) {
         /**
          * @dev Voucher proxy code hash is different from the production one:
@@ -93,7 +86,9 @@ export async function getExpectedVoucherProxyCodeHash(voucherBeaconAddress: stri
          *
          * Note: Look very carefully before updating this value to avoid messing with
          * existing vouchers already deployed in production.
+         *
+         * Also see test/NextVersionUpgrade.test.ts to double check behavior.
          */
-        return '0x1891638e9af48f5f31af8ab5c97eaccc41dcb99bf8bdd8909759f674e4a0a9a6';
+        return '0xe0f74e59778f75b77efb2064c8358a84106c7a95517a2c8503e38996071e6522';
     }
 }

@@ -1,0 +1,56 @@
+name: Upgrade
+on:
+  workflow_dispatch:
+      inputs:
+        environment:  
+          description: 'Github environnment (mainnets or testnets)'
+          required: true
+          type: choice
+          options:
+          - mainnets
+          - testnets
+        network:
+          description: 'Network'
+          required: true
+          type: choice
+          options:
+          - hardhat
+          - bellecour
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    permissions:
+        contents: write # required by git-auto-commit-action
+    environment: ${{ inputs.environment }} # Secrets for an environment are already limited to deployments on specific branches
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'npm'
+    - name: Install dependencies
+      run: npm ci
+    - name: Set private key based on network
+      id: set-private-key
+      run: |
+        case "${{ inputs.network }}" in
+          "bellecour")
+            echo "PROD_PRIVATE_KEY=${{ secrets.BELLECOUR_PRIVATE_KEY }}" >> $GITHUB_ENV
+            ;;
+          *)
+            echo "PROD_PRIVATE_KEY=''" >> $GITHUB_ENV
+            ;;
+        esac
+    - name: Upgrade
+      env:
+        NETWORK: ${{ inputs.network }}
+        IS_LOCAL_FORK: ${{ inputs.network == 'hardhat'}}
+      run: |
+        echo "Network: $NETWORK"
+        echo "Local fork: $IS_LOCAL_FORK"
+        npm run upgrade -- --network $NETWORK
+    - uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: Save files changed during upgrade
