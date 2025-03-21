@@ -85,19 +85,6 @@ describe('Next version upgrade', function () {
         };
     }
 
-    // TODO: Remove this test after next version upgrade
-    describe('Decimals', function () {
-        it('Should upgrade decimals from 18 to 9', async function () {
-            const { voucherHub: previousVoucherHub, upgrader } = await loadFixture(deployFixture);
-            expect(await previousVoucherHub.decimals()).equals('18');
-            const nextVoucherHub = await voucherHubUtils.upgradeProxy(
-                await previousVoucherHub.getAddress(),
-                new VoucherHub__factory().connect(upgrader),
-            );
-            expect(await nextVoucherHub.decimals()).to.equal('9');
-        });
-    });
-
     describe('Voucher address', function () {
         it('Should create and predict consistent voucher addresses across versions', async function () {
             const { voucherHub, upgrader, minter, voucherOwner1, voucherOwner2 } =
