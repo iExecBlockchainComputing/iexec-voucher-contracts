@@ -1,0 +1,15 @@
+name: Publish NPM Package
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    uses: iExecBlockchainComputing/github-actions-workflows/.github/workflows/publish-npm.yml@main
+    with:
+      scope: '@iExecBlockchainComputing'
+      node-version: '20'
+      registry-url: 'https://registry.npmjs.org'
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
