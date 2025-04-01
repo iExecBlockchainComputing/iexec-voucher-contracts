@@ -11,5 +11,6 @@ jobs:
       scope: '@iExecBlockchainComputing'
       node-version: '20'
       registry-url: 'https://registry.npmjs.org'
+      provenance: true
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
