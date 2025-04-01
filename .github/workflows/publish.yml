@@ -6,7 +6,7 @@ on:
 
 jobs:
   publish:
-    uses: iExecBlockchainComputing/github-actions-workflows/.github/workflows/publish-npm.yml@main
+    uses: iExecBlockchainComputing/github-actions-workflows/.github/workflows/publish-npm.yml@publish-npm-v1.0.0
     with:
       scope: '@iExecBlockchainComputing'
       node-version: '20'
