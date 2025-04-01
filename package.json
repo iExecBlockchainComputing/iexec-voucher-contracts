@@ -1,6 +1,6 @@
 {
   "name": "@iexec/voucher-contracts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Contracts related to iExec Voucher",
   "repository": {
     "type": "git",

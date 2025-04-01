@@ -1,13 +1,16 @@
 # Changelog
 
 ## vNEXT
+
+## v1.0.1
+
 - Index first parameter of match an claim events in `Voucher` contract. (#61, #72)
 - Add upgrade workflow. (#64)
 - Add Halborn "Poco v5.5 & Voucher v1.0" audit report ( #70)
 - Add type-checking script (#53)
 - Run partial upgrade tests on fork.
-    - Should maintain consistent voucher addresses (#61)
-    - Should upgrade decimals (#58)
+  - Should maintain consistent voucher addresses (#61)
+  - Should upgrade decimals (#58)
 - Implement `VoucherHub` upgrade and test it on GitHub Action CI using a local fork. (#57)
 - Relocate `decimals()` function in VoucherHub smart contract. (#56)
 - Better handling for env variables. (#55)

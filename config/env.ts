@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 const addressRegex = /^0x[a-fA-F0-9]{40}$/;
 const numericRegex = /^\d+$/;
-const privateKeyRegex = /^([a-fA-F0-9]{64})$/;
+const privateKeyRegex = /^(0x[a-fA-F0-9]{64})$/;
 
 const envSchema = z.object({
     IEXEC_VOUCHER_MANAGER_ACCOUNT_INDEX: z

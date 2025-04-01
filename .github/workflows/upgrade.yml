@@ -2,19 +2,26 @@ name: Upgrade
 on:
   workflow_dispatch:
       inputs:
+        environment:  
+          description: 'Github environnment (mainnets or testnets)'
+          required: true
+          type: choice
+          options:
+          - mainnets
+          - testnets
         network:
-            description: 'Network'
-            required: true
-            type: choice
-            options:
-            - hardhat
-            - bellecour
+          description: 'Network'
+          required: true
+          type: choice
+          options:
+          - hardhat
+          - bellecour
 jobs:
   upgrade:
     runs-on: ubuntu-latest
     permissions:
         contents: write # required by git-auto-commit-action
-    environment: ${{ inputs.network }} # Secrets for an environment are already limited to deployments on specific branches
+    environment: ${{ inputs.environment }} # Secrets for an environment are already limited to deployments on specific branches
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -25,11 +32,21 @@ jobs:
         cache: 'npm'
     - name: Install dependencies
       run: npm ci
+    - name: Set private key based on network
+      id: set-private-key
+      run: |
+        case "${{ inputs.network }}" in
+          "bellecour")
+            echo "PROD_PRIVATE_KEY=${{ secrets.BELLECOUR_PRIVATE_KEY }}" >> $GITHUB_ENV
+            ;;
+          *)
+            echo "PROD_PRIVATE_KEY=''" >> $GITHUB_ENV
+            ;;
+        esac
     - name: Upgrade
       env:
         NETWORK: ${{ inputs.network }}
         IS_LOCAL_FORK: ${{ inputs.network == 'hardhat'}}
-        PROD_PRIVATE_KEY: ${{ inputs.network == 'bellecour' && secrets.PROD_PRIVATE_KEY || '' }}
       run: |
         echo "Network: $NETWORK"
         echo "Local fork: $IS_LOCAL_FORK"
