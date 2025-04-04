@@ -2,6 +2,8 @@
 
 ## vNEXT
 
+- Add Github Action CI in order to publish NPM package
+
 ## v1.0.1
 
 - Index first parameter of match an claim events in `Voucher` contract. (#61, #72)
