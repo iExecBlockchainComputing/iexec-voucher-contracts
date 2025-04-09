@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2024 IEXEC BLOCKCHAIN TECH <contact@iex.ec>
 // SPDX-License-Identifier: Apache-2.0
 
-import * as helpers from '@nomicfoundation/hardhat-network-helpers';
 import { ContractFactory } from 'ethers';
 import { deployments, ethers, upgrades } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import deploymentConfig from '../config/deployment';
-import { isLocalFork } from '../hardhat.config';
+import { env } from '../config/env';
+import { mineBlockIfOnLocalFork } from '../scripts/utils/mineBlockIfOnLocalFork';
 import * as voucherHubUtils from '../scripts/voucherHubUtils';
 import * as voucherUtils from '../scripts/voucherUtils';
 import {
@@ -19,14 +19,7 @@ import {
 } from '../typechain-types';
 
 export default async function (hre: HardhatRuntimeEnvironment) {
-    if (isLocalFork) {
-        /**
-         * This fixes following issue when deploying to a local Bellecour fork:
-         * `ProviderError: No known hardfork for execution on historical block [...] in chain with id 134.`
-         * See: https://github.com/NomicFoundation/hardhat/issues/5511#issuecomment-2288072104
-         */
-        await helpers.mine();
-    }
+    mineBlockIfOnLocalFork();
     const { deployer, manager, minter } = await hre.getNamedAccounts();
     await deployAll(deployer, manager, minter);
 }
@@ -182,15 +175,15 @@ export async function getDeploymentConfig(chainId: number) {
     // Read default config of the target chain.
     const config = deploymentConfig[chainId];
     // Override config if required.
-    if (process.env.IEXEC_POCO_ADDRESS) {
-        config.pocoAddress = process.env.IEXEC_POCO_ADDRESS;
+    if (env.IEXEC_POCO_ADDRESS) {
+        config.pocoAddress = env.IEXEC_POCO_ADDRESS;
     }
     // Check final config.
     if (!ethers.isAddress(config.pocoAddress)) {
         throw new Error('Valid PoCo address must be provided');
     }
-    if (process.env.FACTORY) {
-        config.factory = process.env.FACTORY == 'true';
+    if (env.USE_FACTORY) {
+        config.factory = env.USE_FACTORY;
     }
     return config;
 }
